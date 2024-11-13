@@ -1,30 +1,14 @@
 package main
 
 import (
-	// "log"
-	// "net/http"
-
-	"context"
-	"net/http"
 	"os"
 	"os/signal"
-	"time"
 
-	"strconv"
-
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/awanishnathpandey/leaf/graph"
-	"github.com/awanishnathpandey/leaf/graph/resolvers"
-
+	"github.com/awanishnathpandey/leaf/pkg/db"
+	"github.com/awanishnathpandey/leaf/pkg/routes"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-
-	"github.com/joho/godotenv"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -33,97 +17,20 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(os.Stdout)
 
-	err := godotenv.Load()
+	// Initialize database connection
+	dbPool, err := db.ConnectDB()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error loading .env file")
-	}
-
-	// Load DB config from .env file
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.Fatal().Msg("DATABASE_URL not set in .env file")
-	}
-
-	// Load DB connection count from .env file (use default if not provided)
-	dbMaxConn := 20
-	if maxConnStr := os.Getenv("DB_MAX_CONNECTIONS"); maxConnStr != "" {
-		var err error
-		dbMaxConn, err = strconv.Atoi(maxConnStr)
-		if err != nil {
-			log.Fatal().Err(err).Msg("Invalid DB_MAX_CONNECTIONS value")
-		}
-	}
-
-	// Initialize database connection pool
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Could not connect to the database")
+		log.Fatal().Err(err).Msg("Error initializing database connection")
+		return
 	}
 	// Defer closing the database connection pool
-	defer func() {
-		log.Info().Msg("Running cleanup tasks...")
-		dbPool.Close()
-		log.Info().Msg("Database connection pool closed successfully")
-	}()
-
-	// Set connection pool max count
-	dbPool.Config().MaxConns = int32(dbMaxConn)
+	defer dbPool.Close()
 
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{})
 
-	// Custom logger middleware for Fiber using zerolog
-	app.Use(func(c *fiber.Ctx) error {
-		start := time.Now()
-		err := c.Next() // Process request
-
-		// Log request details
-		log.Info().
-			Str("method", c.Method()).
-			Str("url", c.OriginalURL()).
-			Int("status", c.Response().StatusCode()).
-			Dur("latency", time.Since(start)).
-			Msg("Request processed")
-
-		return err
-	})
-
-	// Initialize database connection
-	//  dbConn, err := db.Connect()
-	//  if err != nil {
-	// 	 log.Fatal().Err(err).Msg("Could not connect to the database")
-	//  }
-	//  defer dbConn.Close()
-
-	// GraphQL handler using gqlgen
-	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{}}))
-	//  graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: dbConn}}))
-
-	// Set up GraphQL endpoint with Fiber-compatible adapter
-	app.Post("/graphql", adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		graphqlHandler.ServeHTTP(w, r)
-	}))
-
-	// Set up GraphQL Playground with Fiber-compatible adapter
-	app.Get("/playground", adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		playground.Handler("GraphQL Playground", "/graphql").ServeHTTP(w, r)
-	}))
-
-	// Simple health check endpoint
-	app.Get("/health", func(c *fiber.Ctx) error {
-		log.Info().Msg("Health check accessed")
-		return c.SendString("OK")
-	})
-
-	app.Get("/db-health", func(c *fiber.Ctx) error {
-		row := dbPool.QueryRow(context.Background(), "SELECT 1")
-		var result int
-		if err := row.Scan(&result); err != nil {
-			log.Error().Err(err).Msg("Database health check failed")
-			return c.Status(fiber.StatusInternalServerError).SendString("Database connection error")
-		}
-		return c.SendString("Database is healthy")
-	})
+	// Setup routes using the routes package
+	routes.SetupRoutes(app, dbPool)
 
 	// Graceful shutdown
 	c := make(chan os.Signal, 1)
@@ -138,10 +45,5 @@ func main() {
 	if err := app.Listen(":3000"); err != nil {
 		log.Fatal().Err(err).Msg("Error starting server")
 	}
-
-	//  log.Info().Msg("Running cleanup tasks...")
-	//  if err := dbConn.Close(); err != nil {
-	// 	 log.Error().Err(err).Msg("Error closing database connection")
-	//  }
 	log.Info().Msg("Server stopped")
 }

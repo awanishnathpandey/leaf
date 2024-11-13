@@ -9,6 +9,7 @@ CREATE TABLE
         job_title VARCHAR(255),
         line_of_business VARCHAR(255),
         email_verified_at TIMESTAMPTZ,
+        last_seen_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         deleted_at TIMESTAMPTZ,
