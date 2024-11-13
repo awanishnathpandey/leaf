@@ -4,10 +4,13 @@ import (
 	// "log"
 	// "net/http"
 
+	"context"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"strconv"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -18,12 +21,53 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/joho/godotenv"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
+
 	// Set zerolog to output JSON format
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(os.Stdout)
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error loading .env file")
+	}
+
+	// Load DB config from .env file
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal().Msg("DATABASE_URL not set in .env file")
+	}
+
+	// Load DB connection count from .env file (use default if not provided)
+	dbMaxConn := 20
+	if maxConnStr := os.Getenv("DB_MAX_CONNECTIONS"); maxConnStr != "" {
+		var err error
+		dbMaxConn, err = strconv.Atoi(maxConnStr)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Invalid DB_MAX_CONNECTIONS value")
+		}
+	}
+
+	// Initialize database connection pool
+	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Could not connect to the database")
+	}
+	// Defer closing the database connection pool
+	defer func() {
+		log.Info().Msg("Running cleanup tasks...")
+		dbPool.Close()
+		log.Info().Msg("Database connection pool closed successfully")
+	}()
+
+	// Set connection pool max count
+	dbPool.Config().MaxConns = int32(dbMaxConn)
 
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{})
@@ -69,6 +113,16 @@ func main() {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		log.Info().Msg("Health check accessed")
 		return c.SendString("OK")
+	})
+
+	app.Get("/db-health", func(c *fiber.Ctx) error {
+		row := dbPool.QueryRow(context.Background(), "SELECT 1")
+		var result int
+		if err := row.Scan(&result); err != nil {
+			log.Error().Err(err).Msg("Database health check failed")
+			return c.Status(fiber.StatusInternalServerError).SendString("Database connection error")
+		}
+		return c.SendString("Database is healthy")
 	})
 
 	// Graceful shutdown

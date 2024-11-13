@@ -10,7 +10,16 @@ type NewTodo struct {
 	UserID string `json:"userId"`
 }
 
+type NewUser struct {
+	Name string `json:"name"`
+}
+
 type Query struct {
+}
+
+type UpdateUser struct {
+	ID   string  `json:"id"`
+	Name *string `json:"name,omitempty"`
 }
 
 type User struct {

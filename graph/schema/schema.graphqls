@@ -2,6 +2,20 @@
 #
 # https://gqlgen.com/getting-started/
 
+type User {
+  id: ID!
+  name: String!
+}
+
+input NewUser {
+  name: String!
+}
+
+input UpdateUser {
+  id: ID!
+  name: String
+}
+
 type Todo {
   id: ID!
   text: String!
@@ -9,20 +23,20 @@ type Todo {
   user: User!
 }
 
-type User {
-  id: ID!
-  name: String!
-}
-
-type Query {
-  todos: [Todo!]!
-}
-
 input NewTodo {
   text: String!
   userId: String!
 }
 
+type Query {
+  todos: [Todo!]!
+  users: [User!]!
+  getUser(id: ID!): User
+}
+
 type Mutation {
+  createUser(input: NewUser!): User!
+  updateUser(input: UpdateUser!): User!
+  deleteUser(id: ID!): Boolean  
   createTodo(input: NewTodo!): Todo!
 }
