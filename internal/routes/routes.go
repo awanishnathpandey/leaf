@@ -35,7 +35,7 @@ func SetupRoutes(app *fiber.App, dbPool *pgxpool.Pool) {
 	})
 
 	// GraphQL handler using gqlgen
-	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{}}))
+	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: dbPool}}))
 
 	// Set up GraphQL endpoint with Fiber-compatible adapter
 	app.Post("/graphql", adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {

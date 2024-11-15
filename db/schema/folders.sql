@@ -1,4 +1,4 @@
--- +goose Up
+-- db/schema/folders.sql
 CREATE TABLE
     folders (
         id SERIAL PRIMARY KEY,
@@ -8,6 +8,3 @@ CREATE TABLE
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
     );
-
--- +goose Down
-DROP TABLE folders;

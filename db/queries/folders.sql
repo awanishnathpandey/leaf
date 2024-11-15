@@ -10,17 +10,15 @@ ORDER BY name;
 INSERT INTO folders (
   name,
   slug,
-  description,
-  created_by,
-  updated_by
+  description
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3
 )
 RETURNING *;
 
 -- name: UpdateFolder :exec
 UPDATE folders
-  set name = $2, slug = $3, description = $4, created_by = $5, updated_by = $6
+  set name = $2, slug = $3, description = $4, updated_at = NOW()
 WHERE id = $1;
 
 -- name: DeleteFolder :exec

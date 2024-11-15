@@ -11,31 +11,31 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-  email
+  name, email, password
 ) VALUES (
-  $1
+  $1, $2, $3
 )
-RETURNING id, first_name, last_name, email, password, job_title, line_of_business, email_verified_at, created_at, updated_at, deleted_at, created_by, updated_by, deleted_by
+RETURNING id, name, email, password, email_verified_at, created_at, updated_at, deleted_at
 `
 
-func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, email)
+type CreateUserParams struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Email, arg.Password)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.FirstName,
-		&i.LastName,
+		&i.Name,
 		&i.Email,
 		&i.Password,
-		&i.JobTitle,
-		&i.LineOfBusiness,
 		&i.EmailVerifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.CreatedBy,
-		&i.UpdatedBy,
-		&i.DeletedBy,
 	)
 	return i, err
 }
@@ -51,7 +51,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, first_name, last_name, email, password, job_title, line_of_business, email_verified_at, created_at, updated_at, deleted_at, created_by, updated_by, deleted_by FROM users
+SELECT id, name, email, password, email_verified_at, created_at, updated_at, deleted_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -60,25 +60,19 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.FirstName,
-		&i.LastName,
+		&i.Name,
 		&i.Email,
 		&i.Password,
-		&i.JobTitle,
-		&i.LineOfBusiness,
 		&i.EmailVerifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.CreatedBy,
-		&i.UpdatedBy,
-		&i.DeletedBy,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, first_name, last_name, email, password, job_title, line_of_business, email_verified_at, created_at, updated_at, deleted_at, created_by, updated_by, deleted_by FROM users
+SELECT id, name, email, password, email_verified_at, created_at, updated_at, deleted_at FROM users
 ORDER BY email
 `
 
@@ -93,19 +87,13 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.FirstName,
-			&i.LastName,
+			&i.Name,
 			&i.Email,
 			&i.Password,
-			&i.JobTitle,
-			&i.LineOfBusiness,
 			&i.EmailVerifiedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
-			&i.CreatedBy,
-			&i.UpdatedBy,
-			&i.DeletedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -119,16 +107,17 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
-  set email = $2
+  set name = $2, email = $3, updated_at = NOW()
 WHERE id = $1
 `
 
 type UpdateUserParams struct {
 	ID    int32  `json:"id"`
+	Name  string `json:"name"`
 	Email string `json:"email"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.Exec(ctx, updateUser, arg.ID, arg.Email)
+	_, err := q.db.Exec(ctx, updateUser, arg.ID, arg.Name, arg.Email)
 	return err
 }

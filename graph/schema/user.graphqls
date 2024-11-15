@@ -5,38 +5,33 @@
 type User {
   id: ID!
   name: String!
+  email: String!
+  password: String!
+  emailVerifiedAt: String!
+  createdAt: String!
+  updatedAt: String!
+  deletedAt: String!
 }
 
 input NewUser {
   name: String!
+  email: String!
+  password: String!
 }
 
 input UpdateUser {
   id: ID!
-  name: String
+  name: String!
+  email: String!
 }
 
-type Todo {
-  id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
-}
-
-input NewTodo {
-  text: String!
-  userId: String!
-}
-
-type Query {
-  todos: [Todo!]!
+extend type Query {
   users: [User!]!
   getUser(id: ID!): User
 }
 
-type Mutation {
+extend type Mutation {
   createUser(input: NewUser!): User!
   updateUser(input: UpdateUser!): User!
-  deleteUser(id: ID!): Boolean  
-  createTodo(input: NewTodo!): Todo!
+  deleteUser(id: ID!): Boolean
 }

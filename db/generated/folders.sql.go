@@ -13,31 +13,21 @@ const createFolder = `-- name: CreateFolder :one
 INSERT INTO folders (
   name,
   slug,
-  description,
-  created_by,
-  updated_by
+  description
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3
 )
-RETURNING id, name, slug, description, created_at, updated_at, created_by, updated_by
+RETURNING id, name, slug, description, created_at, updated_at
 `
 
 type CreateFolderParams struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
 }
 
 func (q *Queries) CreateFolder(ctx context.Context, arg CreateFolderParams) (Folder, error) {
-	row := q.db.QueryRow(ctx, createFolder,
-		arg.Name,
-		arg.Slug,
-		arg.Description,
-		arg.CreatedBy,
-		arg.UpdatedBy,
-	)
+	row := q.db.QueryRow(ctx, createFolder, arg.Name, arg.Slug, arg.Description)
 	var i Folder
 	err := row.Scan(
 		&i.ID,
@@ -46,8 +36,6 @@ func (q *Queries) CreateFolder(ctx context.Context, arg CreateFolderParams) (Fol
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.CreatedBy,
-		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -63,7 +51,7 @@ func (q *Queries) DeleteFolder(ctx context.Context, id int32) error {
 }
 
 const getFolder = `-- name: GetFolder :one
-SELECT id, name, slug, description, created_at, updated_at, created_by, updated_by FROM folders
+SELECT id, name, slug, description, created_at, updated_at FROM folders
 WHERE id = $1 LIMIT 1
 `
 
@@ -77,14 +65,12 @@ func (q *Queries) GetFolder(ctx context.Context, id int32) (Folder, error) {
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.CreatedBy,
-		&i.UpdatedBy,
 	)
 	return i, err
 }
 
 const listFolders = `-- name: ListFolders :many
-SELECT id, name, slug, description, created_at, updated_at, created_by, updated_by FROM folders
+SELECT id, name, slug, description, created_at, updated_at FROM folders
 ORDER BY name
 `
 
@@ -104,8 +90,6 @@ func (q *Queries) ListFolders(ctx context.Context) ([]Folder, error) {
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.CreatedBy,
-			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -119,7 +103,7 @@ func (q *Queries) ListFolders(ctx context.Context) ([]Folder, error) {
 
 const updateFolder = `-- name: UpdateFolder :exec
 UPDATE folders
-  set name = $2, slug = $3, description = $4, created_by = $5, updated_by = $6
+  set name = $2, slug = $3, description = $4, updated_at = NOW()
 WHERE id = $1
 `
 
@@ -128,8 +112,6 @@ type UpdateFolderParams struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
 }
 
 func (q *Queries) UpdateFolder(ctx context.Context, arg UpdateFolderParams) error {
@@ -138,8 +120,6 @@ func (q *Queries) UpdateFolder(ctx context.Context, arg UpdateFolderParams) erro
 		arg.Name,
 		arg.Slug,
 		arg.Description,
-		arg.CreatedBy,
-		arg.UpdatedBy,
 	)
 	return err
 }

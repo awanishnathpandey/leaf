@@ -4,8 +4,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/awanishnathpandey/leaf/pkg/db"
-	"github.com/awanishnathpandey/leaf/pkg/routes"
+	"github.com/awanishnathpandey/leaf/internal/database"
+	"github.com/awanishnathpandey/leaf/internal/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -18,7 +18,7 @@ func main() {
 	log.Logger = log.Output(os.Stdout)
 
 	// Initialize database connection
-	dbPool, err := db.ConnectDB()
+	dbPool, err := database.ConnectDB()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error initializing database connection")
 		return

@@ -1,9 +1,9 @@
-package db
+package database
 
 import (
 	"context"
 
-	"github.com/awanishnathpandey/leaf/pkg/config"
+	"github.com/awanishnathpandey/leaf/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 )

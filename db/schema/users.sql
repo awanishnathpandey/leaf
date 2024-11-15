@@ -1,4 +1,4 @@
--- +goose Up
+-- db/schema/users.sql
 CREATE TABLE
     users (
         id SERIAL PRIMARY KEY,
@@ -10,6 +10,3 @@ CREATE TABLE
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         deleted_at TIMESTAMPTZ
     );
-
--- +goose Down
-DROP TABLE users;

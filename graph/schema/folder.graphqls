@@ -1,0 +1,36 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Folder {
+  id: ID!
+  name: String!
+  slug: String!
+  description: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input NewFolder {
+  name: String!
+  slug: String!
+  description: String!
+}
+
+input UpdateFolder {
+  id: ID!
+  name: String!
+  slug: String!
+  description: String!
+}
+
+extend type Query {
+  folders: [Folder!]!
+  getFolder(id: ID!): Folder
+}
+
+extend type Mutation {
+  createFolder(input: NewFolder!): Folder!
+  updateFolder(input: UpdateFolder!): Folder!
+  deleteFolder(id: ID!): Boolean 
+}

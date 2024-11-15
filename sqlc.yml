@@ -2,7 +2,7 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries: "db/queries"
-    schema: "db/migrations"
+    schema: "db/schema"
     gen:
       go:
         package: "generated"
@@ -10,6 +10,5 @@ sql:
         sql_package: "pgx/v5"
         emit_json_tags: true
         emit_interface: true
-        emit_methods_with_db_argument: true
-        emit_pointers_for_null_types: true
+
 
