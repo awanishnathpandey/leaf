@@ -7,16 +7,16 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/resolvers"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 )
 
 // SetupRoutes configures all routes for the application
-func SetupRoutes(app *fiber.App, dbPool *pgxpool.Pool) {
+func SetupRoutes(app *fiber.App, queries *generated.Queries) {
 
 	// Custom logger middleware for Fiber using zerolog
 	app.Use(func(c *fiber.Ctx) error {
@@ -35,7 +35,7 @@ func SetupRoutes(app *fiber.App, dbPool *pgxpool.Pool) {
 	})
 
 	// GraphQL handler using gqlgen
-	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: dbPool}}))
+	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries}}))
 
 	// Set up GraphQL endpoint with Fiber-compatible adapter
 	app.Post("/graphql", adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -55,9 +55,9 @@ func SetupRoutes(app *fiber.App, dbPool *pgxpool.Pool) {
 
 	// Database health check endpoint
 	app.Get("/db-health", func(c *fiber.Ctx) error {
-		row := dbPool.QueryRow(context.Background(), "SELECT 1")
-		var result int
-		if err := row.Scan(&result); err != nil {
+		// Use the generated sqlc query method to check the database health
+		err := queries.CheckHealth(context.Background())
+		if err != nil {
 			log.Error().Err(err).Msg("Database health check failed")
 			return c.Status(fiber.StatusInternalServerError).SendString("Database connection error")
 		}

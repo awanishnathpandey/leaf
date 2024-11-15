@@ -23,18 +23,12 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, input model.NewFold
 		return nil, utils.FormatValidationErrors(err)
 	}
 
-	// Create a queries object to interact with the database
-	queries := generated.New(r.DB)
-
-	// Create the CreateFolderParams struct from the input
-	params := generated.CreateFolderParams{
+	// Call the generated CreateFolder function with the params
+	folder, err := r.DB.CreateFolder(ctx, generated.CreateFolderParams{
 		Name:        input.Name,
 		Slug:        input.Slug,
 		Description: input.Description,
-	}
-
-	// Call the generated CreateFolder function with the params
-	folder, err := queries.CreateFolder(ctx, params)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -52,30 +46,25 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, input model.NewFold
 
 // UpdateFolder is the resolver for the UpdateFolder field.
 func (r *mutationResolver) UpdateFolder(ctx context.Context, input model.UpdateFolder) (*model.Folder, error) {
-	queries := generated.New(r.DB)
-
 	// Check if the folder exists
-	_, err := queries.GetFolder(ctx, input.ID)
+	_, err := r.DB.GetFolder(ctx, input.ID)
 	if err != nil {
 		return nil, fmt.Errorf("folder not found: %w", err)
 	}
 
-	// Prepare update parameters
-	params := generated.UpdateFolderParams{
+	// Update the folder
+	err = r.DB.UpdateFolder(ctx, generated.UpdateFolderParams{
 		ID:          input.ID,
 		Name:        input.Name,
 		Slug:        input.Slug,
 		Description: input.Description,
-	}
-
-	// Update the folder
-	err = queries.UpdateFolder(ctx, params)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update folder: %w", err)
 	}
 
 	// Fetch the updated folder
-	updatedFolder, err := queries.GetFolder(ctx, input.ID)
+	updatedFolder, err := r.DB.GetFolder(ctx, input.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve updated folder: %w", err)
 	}
@@ -93,18 +82,15 @@ func (r *mutationResolver) UpdateFolder(ctx context.Context, input model.UpdateF
 
 // DeleteFolder is the resolver for the deleteFolder field.
 func (r *mutationResolver) DeleteFolder(ctx context.Context, id int32) (*bool, error) {
-	// Initialize sqlc queries
-	queries := generated.New(r.DB)
-
 	// Check if the folder exists (optional)
-	_, err := queries.GetFolder(ctx, id)
+	_, err := r.DB.GetFolder(ctx, id)
 	if err != nil {
 		var failed bool = false
 		return &failed, fmt.Errorf("folder not found: %w", err)
 	}
 
 	// Attempt to delete the folder
-	err = queries.DeleteFolder(ctx, id)
+	err = r.DB.DeleteFolder(ctx, id)
 	if err != nil {
 		var failed bool = false
 		return &failed, fmt.Errorf("failed to delete folder: %w", err)
@@ -115,11 +101,8 @@ func (r *mutationResolver) DeleteFolder(ctx context.Context, id int32) (*bool, e
 
 // Folders is the resolver for the folders field.
 func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {
-	// Initialize sqlc queries instance
-	queries := generated.New(r.DB)
-
 	// Fetch folders using sqlc
-	rows, err := queries.ListFolders(ctx) // Assuming ListFolders is the sqlc query method
+	rows, err := r.DB.ListFolders(ctx) // Assuming ListFolders is the sqlc query method
 	if err != nil {
 		return nil, err
 	}
@@ -142,11 +125,8 @@ func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {
 
 // GetFolder is the resolver for the getFolder field.
 func (r *queryResolver) GetFolder(ctx context.Context, id int32) (*model.Folder, error) {
-	// Create a new query instance using sqlc generated code
-	queries := generated.New(r.DB)
-
 	// Call the generated GetFolder query
-	folder, err := queries.GetFolder(ctx, id) // assuming input.ID is of type string
+	folder, err := r.DB.GetFolder(ctx, id) // assuming input.ID is of type string
 	if err != nil {
 		return nil, fmt.Errorf("failed to get folder: %w", err)
 	}

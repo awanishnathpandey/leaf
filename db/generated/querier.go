@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	CheckHealth(ctx context.Context) error
 	CreateFolder(ctx context.Context, arg CreateFolderParams) (Folder, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteFolder(ctx context.Context, id int32) error
