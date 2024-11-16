@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
-	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 )
@@ -137,8 +136,3 @@ func (r *queryResolver) GetFolder(ctx context.Context, id int64) (*model.Folder,
 		UpdatedAt:   folder.UpdatedAt, // assuming you're using timestamptz
 	}, nil
 }
-
-// Query returns graph.QueryResolver implementation.
-func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
-
-type queryResolver struct{ *Resolver }

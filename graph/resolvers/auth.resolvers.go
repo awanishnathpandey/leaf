@@ -100,21 +100,34 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (bool,
 	panic(fmt.Errorf("not implemented: VerifyEmail - verifyEmail"))
 }
 
+// Me is the resolver for the me field.
+func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
+	// Retrieve userID from context
+	userID := ctx.Value("userID").(int64) // Access the user ID from the context
+
+	// Fetch user from DB based on the userID
+	user, err := r.DB.GetUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map the generated.User to model.User
+	modelUser := &model.User{
+		ID:        user.ID, // Assuming both have the same field names
+		Name:      user.Name,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+
+	return modelUser, nil
+}
+
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
 
-type mutationResolver struct{ *Resolver }
+// Query returns graph.QueryResolver implementation.
+func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *loginResponseResolver) User(ctx context.Context, obj *model.LoginResponse) (*model.AuthUser, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
-}
-func (r *Resolver) LoginResponse() graph.LoginResponseResolver { return &loginResponseResolver{r} }
-type loginResponseResolver struct{ *Resolver }
-*/
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

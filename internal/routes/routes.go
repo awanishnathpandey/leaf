@@ -10,6 +10,7 @@ import (
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/resolvers"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/rs/zerolog/log"
@@ -33,6 +34,9 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries) {
 
 		return err
 	})
+
+	// Add JWT authentication middleware to protect the GraphQL route
+	app.Use("/graphql", middleware.JWTMiddleware())
 
 	// GraphQL handler using gqlgen
 	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries}}))

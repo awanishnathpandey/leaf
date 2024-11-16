@@ -41,11 +41,9 @@ input changePassword {
 }
 
 
-# extend type Query {
-#   users: [User!]!
-#   getUser(id: ID!): User!
-#   getUserByEmail(email: String!): User!
-# }
+extend type Query {
+  me: User!
+}
 
 extend type Mutation {
   register(input: register!): User!

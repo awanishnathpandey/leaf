@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -40,4 +41,25 @@ func GenerateJWT(userID int64) (string, error) {
 	}
 
 	return signedToken, nil
+}
+
+// VerifyJWT verifies the provided JWT token and returns the claims
+func VerifyJWT(tokenString string) (*jwt.RegisteredClaims, error) {
+	secretKey := []byte(os.Getenv("JWT_SECRET"))
+
+	// Parse the token
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Return the secret key for verification
+		return secretKey, nil
+	})
+	if err != nil || !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	// Return the claims (you can extract any custom claim here)
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+	if !ok {
+		return nil, errors.New("invalid token claims")
+	}
+	return claims, nil
 }
