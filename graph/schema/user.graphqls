@@ -7,10 +7,10 @@ type User {
   name: String!
   email: String!
   password: String!
-  emailVerifiedAt: String!
-  createdAt: String!
-  updatedAt: String!
-  deletedAt: String!
+  emailVerifiedAt: Int
+  createdAt: Int!
+  updatedAt: Int!
+  deletedAt: Int
 }
 
 input NewUser {

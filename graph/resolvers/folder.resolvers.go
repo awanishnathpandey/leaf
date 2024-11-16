@@ -7,7 +7,6 @@ package resolvers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
@@ -35,12 +34,12 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, input model.NewFold
 
 	// Return the newly created folder
 	return &model.Folder{
-		ID:          folder.ID, // Convert int32 to string
+		ID:          folder.ID,
 		Name:        folder.Name,
 		Slug:        folder.Slug,
 		Description: folder.Description,
-		CreatedAt:   folder.CreatedAt.Time.Format(time.RFC3339),
-		UpdatedAt:   folder.UpdatedAt.Time.Format(time.RFC3339),
+		CreatedAt:   folder.CreatedAt,
+		UpdatedAt:   folder.UpdatedAt,
 	}, nil
 }
 
@@ -75,13 +74,13 @@ func (r *mutationResolver) UpdateFolder(ctx context.Context, input model.UpdateF
 		Name:        updatedFolder.Name,
 		Slug:        updatedFolder.Slug,
 		Description: updatedFolder.Description,
-		CreatedAt:   updatedFolder.CreatedAt.Time.Format(time.RFC3339),
-		UpdatedAt:   updatedFolder.UpdatedAt.Time.Format(time.RFC3339),
+		CreatedAt:   updatedFolder.CreatedAt,
+		UpdatedAt:   updatedFolder.UpdatedAt,
 	}, nil
 }
 
 // DeleteFolder is the resolver for the deleteFolder field.
-func (r *mutationResolver) DeleteFolder(ctx context.Context, id int32) (*bool, error) {
+func (r *mutationResolver) DeleteFolder(ctx context.Context, id int64) (*bool, error) {
 	// Check if the folder exists (optional)
 	_, err := r.DB.GetFolder(ctx, id)
 	if err != nil {
@@ -115,8 +114,8 @@ func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {
 			Name:        row.Name,
 			Slug:        row.Slug,
 			Description: row.Description,
-			CreatedAt:   row.CreatedAt.Time.Format(time.RFC3339), // Or use row.CreatedAt.Time.String()
-			UpdatedAt:   row.UpdatedAt.Time.Format(time.RFC3339), // Or use row.UpdatedAt.Time.String()
+			CreatedAt:   row.CreatedAt, // Or use row.CreatedAt.Time.String()
+			UpdatedAt:   row.UpdatedAt, // Or use row.UpdatedAt.Time.String()
 		})
 	}
 
@@ -124,7 +123,7 @@ func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {
 }
 
 // GetFolder is the resolver for the getFolder field.
-func (r *queryResolver) GetFolder(ctx context.Context, id int32) (*model.Folder, error) {
+func (r *queryResolver) GetFolder(ctx context.Context, id int64) (*model.Folder, error) {
 	// Call the generated GetFolder query
 	folder, err := r.DB.GetFolder(ctx, id) // assuming input.ID is of type string
 	if err != nil {
@@ -137,8 +136,8 @@ func (r *queryResolver) GetFolder(ctx context.Context, id int32) (*model.Folder,
 		Name:        folder.Name,
 		Slug:        folder.Slug,
 		Description: folder.Description,
-		CreatedAt:   folder.CreatedAt.Time.Format(time.RFC3339), // assuming you're using timestamptz
-		UpdatedAt:   folder.UpdatedAt.Time.Format(time.RFC3339), // assuming you're using timestamptz
+		CreatedAt:   folder.CreatedAt, // assuming you're using timestamptz
+		UpdatedAt:   folder.UpdatedAt, // assuming you're using timestamptz
 	}, nil
 }
 

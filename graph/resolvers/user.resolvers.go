@@ -22,7 +22,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 }
 
 // DeleteUser is the resolver for the deleteUser field.
-func (r *mutationResolver) DeleteUser(ctx context.Context, id int32) (*bool, error) {
+func (r *mutationResolver) DeleteUser(ctx context.Context, id int64) (*bool, error) {
 	panic(fmt.Errorf("not implemented: DeleteUser - deleteUser"))
 }
 
@@ -32,6 +32,6 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 }
 
 // GetUser is the resolver for the getUser field.
-func (r *queryResolver) GetUser(ctx context.Context, id int32) (*model.User, error) {
+func (r *queryResolver) GetUser(ctx context.Context, id int64) (*model.User, error) {
 	panic(fmt.Errorf("not implemented: GetUser - getUser"))
 }

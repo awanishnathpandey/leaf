@@ -12,10 +12,10 @@ type Querier interface {
 	CheckHealth(ctx context.Context) error
 	CreateFolder(ctx context.Context, arg CreateFolderParams) (Folder, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteFolder(ctx context.Context, id int32) error
-	DeleteUser(ctx context.Context, id int32) error
-	GetFolder(ctx context.Context, id int32) (Folder, error)
-	GetUser(ctx context.Context, id int32) (User, error)
+	DeleteFolder(ctx context.Context, id int64) error
+	DeleteUser(ctx context.Context, id int64) error
+	GetFolder(ctx context.Context, id int64) (Folder, error)
+	GetUser(ctx context.Context, id int64) (User, error)
 	ListFolders(ctx context.Context) ([]Folder, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	UpdateFolder(ctx context.Context, arg UpdateFolderParams) error

@@ -16,7 +16,7 @@ RETURNING *;
 
 -- name: UpdateUser :exec
 UPDATE users
-  set name = $2, email = $3, updated_at = NOW()
+  set name = $2, email = $3, updated_at = EXTRACT(EPOCH FROM NOW())
 WHERE id = $1;
 
 -- name: DeleteUser :exec

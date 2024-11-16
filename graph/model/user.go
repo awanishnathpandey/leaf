@@ -1,14 +1,14 @@
 package model
 
 type User struct {
-	ID              int32  `json:"id"`
+	ID              int64  `json:"id"`
 	Name            string `json:"name"`
 	Email           string `json:"email"`
 	Password        string `json:"password"`
-	EmailVerifiedAt string `json:"emailVerifiedAt"`
-	CreatedAt       string `json:"createdAt"`
-	UpdatedAt       string `json:"updatedAt"`
-	DeletedAt       string `json:"deletedAt"`
+	EmailVerifiedAt int64  `json:"emailVerifiedAt"`
+	CreatedAt       int64  `json:"createdAt"`
+	UpdatedAt       int64  `json:"updatedAt"`
+	DeletedAt       int64  `json:"deletedAt"`
 }
 
 type NewUser struct {
@@ -18,7 +18,7 @@ type NewUser struct {
 }
 
 type UpdateUser struct {
-	ID    int32  `json:"id"`
+	ID    int64  `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }

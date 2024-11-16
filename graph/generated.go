@@ -59,16 +59,16 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreateFolder func(childComplexity int, input model.NewFolder) int
 		CreateUser   func(childComplexity int, input model.NewUser) int
-		DeleteFolder func(childComplexity int, id int32) int
-		DeleteUser   func(childComplexity int, id int32) int
+		DeleteFolder func(childComplexity int, id int64) int
+		DeleteUser   func(childComplexity int, id int64) int
 		UpdateFolder func(childComplexity int, input model.UpdateFolder) int
 		UpdateUser   func(childComplexity int, input model.UpdateUser) int
 	}
 
 	Query struct {
 		Folders   func(childComplexity int) int
-		GetFolder func(childComplexity int, id int32) int
-		GetUser   func(childComplexity int, id int32) int
+		GetFolder func(childComplexity int, id int64) int
+		GetUser   func(childComplexity int, id int64) int
 		Users     func(childComplexity int) int
 	}
 
@@ -87,16 +87,16 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateFolder(ctx context.Context, input model.NewFolder) (*model.Folder, error)
 	UpdateFolder(ctx context.Context, input model.UpdateFolder) (*model.Folder, error)
-	DeleteFolder(ctx context.Context, id int32) (*bool, error)
+	DeleteFolder(ctx context.Context, id int64) (*bool, error)
 	CreateUser(ctx context.Context, input model.NewUser) (*model.User, error)
 	UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error)
-	DeleteUser(ctx context.Context, id int32) (*bool, error)
+	DeleteUser(ctx context.Context, id int64) (*bool, error)
 }
 type QueryResolver interface {
 	Folders(ctx context.Context) ([]*model.Folder, error)
-	GetFolder(ctx context.Context, id int32) (*model.Folder, error)
+	GetFolder(ctx context.Context, id int64) (*model.Folder, error)
 	Users(ctx context.Context) ([]*model.User, error)
-	GetUser(ctx context.Context, id int32) (*model.User, error)
+	GetUser(ctx context.Context, id int64) (*model.User, error)
 }
 
 type executableSchema struct {
@@ -194,7 +194,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteFolder(childComplexity, args["id"].(int32)), true
+		return e.complexity.Mutation.DeleteFolder(childComplexity, args["id"].(int64)), true
 
 	case "Mutation.deleteUser":
 		if e.complexity.Mutation.DeleteUser == nil {
@@ -206,7 +206,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteUser(childComplexity, args["id"].(int32)), true
+		return e.complexity.Mutation.DeleteUser(childComplexity, args["id"].(int64)), true
 
 	case "Mutation.updateFolder":
 		if e.complexity.Mutation.UpdateFolder == nil {
@@ -249,7 +249,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetFolder(childComplexity, args["id"].(int32)), true
+		return e.complexity.Query.GetFolder(childComplexity, args["id"].(int64)), true
 
 	case "Query.getUser":
 		if e.complexity.Query.GetUser == nil {
@@ -261,7 +261,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUser(childComplexity, args["id"].(int32)), true
+		return e.complexity.Query.GetUser(childComplexity, args["id"].(int64)), true
 
 	case "Query.users":
 		if e.complexity.Query.Users == nil {
@@ -514,13 +514,13 @@ func (ec *executionContext) field_Mutation_deleteFolder_args(ctx context.Context
 func (ec *executionContext) field_Mutation_deleteFolder_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (int32, error) {
+) (int64, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNID2int32(ctx, tmp)
+		return ec.unmarshalNID2int64(ctx, tmp)
 	}
 
-	var zeroVal int32
+	var zeroVal int64
 	return zeroVal, nil
 }
 
@@ -537,13 +537,13 @@ func (ec *executionContext) field_Mutation_deleteUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_deleteUser_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (int32, error) {
+) (int64, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNID2int32(ctx, tmp)
+		return ec.unmarshalNID2int64(ctx, tmp)
 	}
 
-	var zeroVal int32
+	var zeroVal int64
 	return zeroVal, nil
 }
 
@@ -629,13 +629,13 @@ func (ec *executionContext) field_Query_getFolder_args(ctx context.Context, rawA
 func (ec *executionContext) field_Query_getFolder_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (int32, error) {
+) (int64, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNID2int32(ctx, tmp)
+		return ec.unmarshalNID2int64(ctx, tmp)
 	}
 
-	var zeroVal int32
+	var zeroVal int64
 	return zeroVal, nil
 }
 
@@ -652,13 +652,13 @@ func (ec *executionContext) field_Query_getUser_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Query_getUser_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (int32, error) {
+) (int64, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNID2int32(ctx, tmp)
+		return ec.unmarshalNID2int64(ctx, tmp)
 	}
 
-	var zeroVal int32
+	var zeroVal int64
 	return zeroVal, nil
 }
 
@@ -742,9 +742,9 @@ func (ec *executionContext) _Folder_id(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int32)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNID2int32(ctx, field.Selections, res)
+	return ec.marshalNID2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Folder_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -918,9 +918,9 @@ func (ec *executionContext) _Folder_createdAt(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Folder_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -930,7 +930,7 @@ func (ec *executionContext) fieldContext_Folder_createdAt(_ context.Context, fie
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -962,9 +962,9 @@ func (ec *executionContext) _Folder_updatedAt(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Folder_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -974,7 +974,7 @@ func (ec *executionContext) fieldContext_Folder_updatedAt(_ context.Context, fie
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1132,7 +1132,7 @@ func (ec *executionContext) _Mutation_deleteFolder(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteFolder(rctx, fc.Args["id"].(int32))
+		return ec.resolvers.Mutation().DeleteFolder(rctx, fc.Args["id"].(int64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1330,7 +1330,7 @@ func (ec *executionContext) _Mutation_deleteUser(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteUser(rctx, fc.Args["id"].(int32))
+		return ec.resolvers.Mutation().DeleteUser(rctx, fc.Args["id"].(int64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1440,7 +1440,7 @@ func (ec *executionContext) _Query_getFolder(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetFolder(rctx, fc.Args["id"].(int32))
+		return ec.resolvers.Query().GetFolder(rctx, fc.Args["id"].(int64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1568,7 +1568,7 @@ func (ec *executionContext) _Query_getUser(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUser(rctx, fc.Args["id"].(int32))
+		return ec.resolvers.Query().GetUser(rctx, fc.Args["id"].(int64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1779,9 +1779,9 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int32)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNID2int32(ctx, field.Selections, res)
+	return ec.marshalNID2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1950,14 +1950,11 @@ func (ec *executionContext) _User_emailVerifiedAt(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_emailVerifiedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1967,7 +1964,7 @@ func (ec *executionContext) fieldContext_User_emailVerifiedAt(_ context.Context,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1999,9 +1996,9 @@ func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2011,7 +2008,7 @@ func (ec *executionContext) fieldContext_User_createdAt(_ context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2043,9 +2040,9 @@ func (ec *executionContext) _User_updatedAt(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2055,7 +2052,7 @@ func (ec *executionContext) fieldContext_User_updatedAt(_ context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2082,14 +2079,11 @@ func (ec *executionContext) _User_deletedAt(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2099,7 +2093,7 @@ func (ec *executionContext) fieldContext_User_deletedAt(_ context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3976,7 +3970,7 @@ func (ec *executionContext) unmarshalInputUpdateFolder(ctx context.Context, obj 
 		switch k {
 		case "id":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2int32(ctx, v)
+			data, err := ec.unmarshalNID2int64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4024,7 +4018,7 @@ func (ec *executionContext) unmarshalInputUpdateUser(ctx context.Context, obj in
 		switch k {
 		case "id":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2int32(ctx, v)
+			data, err := ec.unmarshalNID2int64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4364,9 +4358,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "emailVerifiedAt":
 			out.Values[i] = ec._User_emailVerifiedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "createdAt":
 			out.Values[i] = ec._User_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4379,9 +4370,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "deletedAt":
 			out.Values[i] = ec._User_deletedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4804,13 +4792,28 @@ func (ec *executionContext) marshalNFolder2ᚖgithubᚗcomᚋawanishnathpandey�
 	return ec._Folder(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNID2int32(ctx context.Context, v interface{}) (int32, error) {
-	res, err := graphql.UnmarshalInt32(v)
+func (ec *executionContext) unmarshalNID2int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNID2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
-	res := graphql.MarshalInt32(v)
+func (ec *executionContext) marshalNID2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5196,6 +5199,16 @@ func (ec *executionContext) marshalOFolder2ᚖgithubᚗcomᚋawanishnathpandey�
 		return graphql.Null
 	}
 	return ec._Folder(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

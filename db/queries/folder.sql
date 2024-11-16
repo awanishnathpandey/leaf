@@ -18,7 +18,7 @@ RETURNING *;
 
 -- name: UpdateFolder :exec
 UPDATE folders
-  set name = $2, slug = $3, description = $4, updated_at = NOW()
+  set name = $2, slug = $3, description = $4, updated_at = EXTRACT(EPOCH FROM NOW())
 WHERE id = $1;
 
 -- name: DeleteFolder :exec

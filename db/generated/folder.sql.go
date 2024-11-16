@@ -45,7 +45,7 @@ DELETE FROM folders
 WHERE id = $1
 `
 
-func (q *Queries) DeleteFolder(ctx context.Context, id int32) error {
+func (q *Queries) DeleteFolder(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteFolder, id)
 	return err
 }
@@ -55,7 +55,7 @@ SELECT id, name, slug, description, created_at, updated_at FROM folders
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetFolder(ctx context.Context, id int32) (Folder, error) {
+func (q *Queries) GetFolder(ctx context.Context, id int64) (Folder, error) {
 	row := q.db.QueryRow(ctx, getFolder, id)
 	var i Folder
 	err := row.Scan(
@@ -103,12 +103,12 @@ func (q *Queries) ListFolders(ctx context.Context) ([]Folder, error) {
 
 const updateFolder = `-- name: UpdateFolder :exec
 UPDATE folders
-  set name = $2, slug = $3, description = $4, updated_at = NOW()
+  set name = $2, slug = $3, description = $4, updated_at = EXTRACT(EPOCH FROM NOW())
 WHERE id = $1
 `
 
 type UpdateFolderParams struct {
-	ID          int32  `json:"id"`
+	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
