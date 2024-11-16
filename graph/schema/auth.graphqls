@@ -2,6 +2,14 @@
 #
 # https://gqlgen.com/getting-started/
 
+type AuthUser {
+  id: ID!
+  name: String!
+  email: String!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
 input register {
   name: String!
   email: String!
@@ -11,6 +19,11 @@ input register {
 input login {
   password: String!
   email: String!
+}
+
+type LoginResponse {
+  token: String!
+  user: AuthUser!
 }
 
 input forgotPassword {
@@ -36,7 +49,7 @@ input changePassword {
 
 extend type Mutation {
   register(input: register!): User!
-  login(input: login!): String! # Returns JWT token
+  login(input: login!): LoginResponse! # Returns JWT token
   forgotPassword(input: forgotPassword!): Boolean!
   resetPassword(input: resetPassword!): Boolean!
   changePassword(input: changePassword!): Boolean!

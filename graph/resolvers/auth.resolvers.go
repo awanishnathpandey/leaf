@@ -51,17 +51,33 @@ func (r *mutationResolver) Register(ctx context.Context, input model.Register) (
 }
 
 // Login is the resolver for the login field.
-func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
+func (r *mutationResolver) Login(ctx context.Context, input model.Login) (*model.LoginResponse, error) {
 	user, err := r.DB.GetUserByEmail(ctx, input.Email)
 	if err != nil {
-		return "", fmt.Errorf("user not found: %w", err)
+		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	if err := utils.CheckPassword(user.Password, input.Password); err != nil {
-		return "", fmt.Errorf("invalid credentials")
+		return nil, fmt.Errorf("invalid credentials")
 	}
 	token, err := utils.GenerateJWT(user.ID)
-	return token, nil
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token")
+	}
+
+	// Return the token and user in the response
+	loginResponse := &model.LoginResponse{
+		Token: token,
+		User: &model.AuthUser{
+			ID:        user.ID,
+			Name:      user.Name,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+	}
+
+	return loginResponse, nil
 }
 
 // ForgotPassword is the resolver for the forgotPassword field.
@@ -96,9 +112,9 @@ type mutationResolver struct{ *Resolver }
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
 /*
-	func (r *loginResolver) Password(ctx context.Context, obj *model.Login, data string) error {
-	panic(fmt.Errorf("not implemented: Password - password"))
+	func (r *loginResponseResolver) User(ctx context.Context, obj *model.LoginResponse) (*model.AuthUser, error) {
+	panic(fmt.Errorf("not implemented: User - user"))
 }
-func (r *Resolver) Login() graph.LoginResolver { return &loginResolver{r} }
-type loginResolver struct{ *Resolver }
+func (r *Resolver) LoginResponse() graph.LoginResponseResolver { return &loginResponseResolver{r} }
+type loginResponseResolver struct{ *Resolver }
 */
