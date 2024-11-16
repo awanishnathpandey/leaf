@@ -11,7 +11,7 @@ type Folder {
   updatedAt: Int!
 }
 
-input NewFolder {
+input CreateFolder {
   name: String!
   slug: String!
   description: String!
@@ -30,7 +30,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  createFolder(input: NewFolder!): Folder!
+  createFolder(input: CreateFolder!): Folder!
   updateFolder(input: UpdateFolder!): Folder!
   deleteFolder(id: ID!): Boolean 
 }

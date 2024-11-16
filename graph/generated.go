@@ -57,8 +57,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateFolder func(childComplexity int, input model.NewFolder) int
-		CreateUser   func(childComplexity int, input model.NewUser) int
+		CreateFolder func(childComplexity int, input model.CreateFolder) int
+		CreateUser   func(childComplexity int, input model.CreateUser) int
 		DeleteFolder func(childComplexity int, id int64) int
 		DeleteUser   func(childComplexity int, id int64) int
 		UpdateFolder func(childComplexity int, input model.UpdateFolder) int
@@ -85,10 +85,10 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateFolder(ctx context.Context, input model.NewFolder) (*model.Folder, error)
+	CreateFolder(ctx context.Context, input model.CreateFolder) (*model.Folder, error)
 	UpdateFolder(ctx context.Context, input model.UpdateFolder) (*model.Folder, error)
 	DeleteFolder(ctx context.Context, id int64) (*bool, error)
-	CreateUser(ctx context.Context, input model.NewUser) (*model.User, error)
+	CreateUser(ctx context.Context, input model.CreateUser) (*model.User, error)
 	UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error)
 	DeleteUser(ctx context.Context, id int64) (*bool, error)
 }
@@ -170,7 +170,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateFolder(childComplexity, args["input"].(model.NewFolder)), true
+		return e.complexity.Mutation.CreateFolder(childComplexity, args["input"].(model.CreateFolder)), true
 
 	case "Mutation.createUser":
 		if e.complexity.Mutation.CreateUser == nil {
@@ -182,7 +182,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(model.NewUser)), true
+		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(model.CreateUser)), true
 
 	case "Mutation.deleteFolder":
 		if e.complexity.Mutation.DeleteFolder == nil {
@@ -334,8 +334,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputNewFolder,
-		ec.unmarshalInputNewUser,
+		ec.unmarshalInputCreateFolder,
+		ec.unmarshalInputCreateUser,
 		ec.unmarshalInputUpdateFolder,
 		ec.unmarshalInputUpdateUser,
 	)
@@ -468,13 +468,13 @@ func (ec *executionContext) field_Mutation_createFolder_args(ctx context.Context
 func (ec *executionContext) field_Mutation_createFolder_argsInput(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (model.NewFolder, error) {
+) (model.CreateFolder, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNNewFolder2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐNewFolder(ctx, tmp)
+		return ec.unmarshalNCreateFolder2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐCreateFolder(ctx, tmp)
 	}
 
-	var zeroVal model.NewFolder
+	var zeroVal model.CreateFolder
 	return zeroVal, nil
 }
 
@@ -491,13 +491,13 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_createUser_argsInput(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (model.NewUser, error) {
+) (model.CreateUser, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNNewUser2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐNewUser(ctx, tmp)
+		return ec.unmarshalNCreateUser2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐCreateUser(ctx, tmp)
 	}
 
-	var zeroVal model.NewUser
+	var zeroVal model.CreateUser
 	return zeroVal, nil
 }
 
@@ -994,7 +994,7 @@ func (ec *executionContext) _Mutation_createFolder(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateFolder(rctx, fc.Args["input"].(model.NewFolder))
+		return ec.resolvers.Mutation().CreateFolder(rctx, fc.Args["input"].(model.CreateFolder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1184,7 +1184,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateUser(rctx, fc.Args["input"].(model.NewUser))
+		return ec.resolvers.Mutation().CreateUser(rctx, fc.Args["input"].(model.CreateUser))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1952,9 +1952,9 @@ func (ec *executionContext) _User_emailVerifiedAt(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(int64)
+	res := resTmp.(*int64)
 	fc.Result = res
-	return ec.marshalOInt2int64(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_emailVerifiedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2081,9 +2081,9 @@ func (ec *executionContext) _User_deletedAt(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(int64)
+	res := resTmp.(*int64)
 	fc.Result = res
-	return ec.marshalOInt2int64(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3872,8 +3872,8 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputNewFolder(ctx context.Context, obj interface{}) (model.NewFolder, error) {
-	var it model.NewFolder
+func (ec *executionContext) unmarshalInputCreateFolder(ctx context.Context, obj interface{}) (model.CreateFolder, error) {
+	var it model.CreateFolder
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -3913,8 +3913,8 @@ func (ec *executionContext) unmarshalInputNewFolder(ctx context.Context, obj int
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj interface{}) (model.NewUser, error) {
-	var it model.NewUser
+func (ec *executionContext) unmarshalInputCreateUser(ctx context.Context, obj interface{}) (model.CreateUser, error) {
+	var it model.CreateUser
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -4734,6 +4734,16 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCreateFolder2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐCreateFolder(ctx context.Context, v interface{}) (model.CreateFolder, error) {
+	res, err := ec.unmarshalInputCreateFolder(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateUser2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐCreateUser(ctx context.Context, v interface{}) (model.CreateUser, error) {
+	res, err := ec.unmarshalInputCreateUser(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNFolder2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolder(ctx context.Context, sel ast.SelectionSet, v model.Folder) graphql.Marshaler {
 	return ec._Folder(ctx, sel, &v)
 }
@@ -4820,16 +4830,6 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNNewFolder2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐNewFolder(ctx context.Context, v interface{}) (model.NewFolder, error) {
-	res, err := ec.unmarshalInputNewFolder(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNNewUser2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐNewUser(ctx context.Context, v interface{}) (model.NewUser, error) {
-	res, err := ec.unmarshalInputNewUser(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -5201,13 +5201,19 @@ func (ec *executionContext) marshalOFolder2ᚖgithubᚗcomᚋawanishnathpandey�
 	return ec._Folder(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
+func (ec *executionContext) unmarshalOInt2ᚖint64(ctx context.Context, v interface{}) (*int64, error) {
+	if v == nil {
+		return nil, nil
+	}
 	res, err := graphql.UnmarshalInt64(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
-	res := graphql.MarshalInt64(v)
+func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
 	return res
 }
 

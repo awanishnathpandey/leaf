@@ -15,7 +15,7 @@ import (
 )
 
 // CreateFolder is the resolver for the createFolder field.
-func (r *mutationResolver) CreateFolder(ctx context.Context, input model.NewFolder) (*model.Folder, error) {
+func (r *mutationResolver) CreateFolder(ctx context.Context, input model.CreateFolder) (*model.Folder, error) {
 	// Validate input
 	if err := input.Validate(); err != nil {
 		// Call the reusable validation error formatter

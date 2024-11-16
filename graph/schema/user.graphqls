@@ -13,7 +13,7 @@ type User {
   deletedAt: Int
 }
 
-input NewUser {
+input CreateUser {
   name: String!
   email: String!
   password: String!
@@ -31,7 +31,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  createUser(input: NewUser!): User!
+  createUser(input: CreateUser!): User!
   updateUser(input: UpdateUser!): User!
   deleteUser(id: ID!): Boolean
 }
