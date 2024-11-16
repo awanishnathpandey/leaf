@@ -86,41 +86,35 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 }
 
 // DeleteUser is the resolver for the deleteUser field.
-func (r *mutationResolver) DeleteUser(ctx context.Context, id int64) (*bool, error) {
+func (r *mutationResolver) DeleteUser(ctx context.Context, id int64) (bool, error) {
 	// Check if the user exists (optional)
 	_, err := r.DB.GetUser(ctx, id)
 	if err != nil {
-		var failed bool = false
-		return &failed, fmt.Errorf("user not found: %w", err)
+		return false, fmt.Errorf("user not found: %w", err)
 	}
 
 	// Attempt to delete the user
 	err = r.DB.DeleteUser(ctx, id)
 	if err != nil {
-		var failed bool = false
-		return &failed, fmt.Errorf("failed to delete user: %w", err)
+		return false, fmt.Errorf("failed to delete user: %w", err)
 	}
-	var success bool = true
-	return &success, nil
+	return true, nil
 }
 
 // UpdateUserEmailVerifiedAt is the resolver for the UpdateUserEmailVerifiedAt field.
-func (r *mutationResolver) UpdateUserEmailVerifiedAt(ctx context.Context, id int64) (*bool, error) {
+func (r *mutationResolver) UpdateUserEmailVerifiedAt(ctx context.Context, id int64) (bool, error) {
 	// Check if the user exists (optional)
 	_, err := r.DB.GetUser(ctx, id)
 	if err != nil {
-		var failed bool = false
-		return &failed, fmt.Errorf("user not found: %w", err)
+		return false, fmt.Errorf("user not found: %w", err)
 	}
 
 	// Attempt to update the user email verified at
 	err = r.DB.UpdateUserEmailVerifiedAt(ctx, id)
 	if err != nil {
-		var failed bool = false
-		return &failed, fmt.Errorf("failed to delete user: %w", err)
+		return false, fmt.Errorf("failed to delete user: %w", err)
 	}
-	var success bool = true
-	return &success, nil
+	return true, nil
 }
 
 // Users is the resolver for the users field.
@@ -187,15 +181,3 @@ func (r *queryResolver) GetUserByEmail(ctx context.Context, email string) (*mode
 		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
 	}, nil
 }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *mutationResolver) UpdateEmailVerifiedAt(ctx context.Context, id int64) (*bool, error) {
-	panic(fmt.Errorf("not implemented: UpdateEmailVerifiedAt - updateEmailVerifiedAt"))
-}
-*/

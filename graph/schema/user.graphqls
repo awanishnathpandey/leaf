@@ -27,13 +27,13 @@ input UpdateUser {
 
 extend type Query {
   users: [User!]!
-  getUser(id: ID!): User
-  getUserByEmail(email: String!): User
+  getUser(id: ID!): User!
+  getUserByEmail(email: String!): User!
 }
 
 extend type Mutation {
   createUser(input: CreateUser!): User!
   updateUser(input: UpdateUser!): User!
-  deleteUser(id: ID!): Boolean
-  UpdateUserEmailVerifiedAt(id: ID!): Boolean
+  deleteUser(id: ID!): Boolean!
+  UpdateUserEmailVerifiedAt(id: ID!): Boolean!
 }

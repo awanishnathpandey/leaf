@@ -1,0 +1,44 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+input register {
+  name: String!
+  email: String!
+  password: String!
+}
+
+input login {
+  password: String!
+  email: String!
+}
+
+input forgotPassword {
+  email: String!
+}
+
+input resetPassword {
+  name: String!
+  email: String!
+}
+
+input changePassword {
+  oldPassword: String!
+  newPassword: String!
+}
+
+
+# extend type Query {
+#   users: [User!]!
+#   getUser(id: ID!): User!
+#   getUserByEmail(email: String!): User!
+# }
+
+extend type Mutation {
+  register(input: register!): User!
+  login(input: login!): String! # Returns JWT token
+  forgotPassword(input: forgotPassword!): Boolean!
+  resetPassword(input: resetPassword!): Boolean!
+  changePassword(input: changePassword!): Boolean!
+  verifyEmail(token: String!): Boolean!
+}

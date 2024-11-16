@@ -80,22 +80,19 @@ func (r *mutationResolver) UpdateFolder(ctx context.Context, input model.UpdateF
 }
 
 // DeleteFolder is the resolver for the deleteFolder field.
-func (r *mutationResolver) DeleteFolder(ctx context.Context, id int64) (*bool, error) {
+func (r *mutationResolver) DeleteFolder(ctx context.Context, id int64) (bool, error) {
 	// Check if the folder exists (optional)
 	_, err := r.DB.GetFolder(ctx, id)
 	if err != nil {
-		var failed bool = false
-		return &failed, fmt.Errorf("folder not found: %w", err)
+		return false, fmt.Errorf("folder not found: %w", err)
 	}
 
 	// Attempt to delete the folder
 	err = r.DB.DeleteFolder(ctx, id)
 	if err != nil {
-		var failed bool = false
-		return &failed, fmt.Errorf("failed to delete folder: %w", err)
+		return false, fmt.Errorf("failed to delete folder: %w", err)
 	}
-	var success bool = true
-	return &success, nil
+	return true, nil
 }
 
 // Folders is the resolver for the folders field.
@@ -141,11 +138,7 @@ func (r *queryResolver) GetFolder(ctx context.Context, id int64) (*model.Folder,
 	}, nil
 }
 
-// Mutation returns graph.MutationResolver implementation.
-func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
-
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

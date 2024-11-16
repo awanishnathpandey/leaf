@@ -26,11 +26,11 @@ input UpdateFolder {
 
 extend type Query {
   folders: [Folder!]!
-  getFolder(id: ID!): Folder
+  getFolder(id: ID!): Folder!
 }
 
 extend type Mutation {
   createFolder(input: CreateFolder!): Folder!
   updateFolder(input: UpdateFolder!): Folder!
-  deleteFolder(id: ID!): Boolean 
+  deleteFolder(id: ID!): Boolean!
 }
