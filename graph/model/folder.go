@@ -1,7 +1,5 @@
 package model
 
-import "github.com/go-playground/validator/v10"
-
 type Folder struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
@@ -23,8 +21,6 @@ type UpdateFolder struct {
 	Slug        string `json:"slug" validate:"required,min=3,max=50"`
 	Description string `json:"description" validate:"required,max=500"`
 }
-
-var validate = validator.New()
 
 // Validate function to validate NewFolder struct
 func (f *CreateFolder) Validate() error {

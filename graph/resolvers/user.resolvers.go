@@ -8,30 +8,194 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph/model"
+	"github.com/awanishnathpandey/leaf/internal/utils"
 )
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
+	// Validate input
+	if err := input.Validate(); err != nil {
+		// Call the reusable validation error formatter
+		return nil, utils.FormatValidationErrors(err)
+	}
+
+	// Hash the password
+	hashedPassword, err := utils.HashPassword(input.Password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	// Call the generated CreateUser function with the params
+	user, err := r.DB.CreateUser(ctx, generated.CreateUserParams{
+		Name:     input.Name,
+		Email:    input.Email,
+		Password: hashedPassword,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the newly created user
+	return &model.User{
+		ID:              user.ID,
+		Name:            user.Name,
+		Email:           user.Email,
+		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
+		CreatedAt:       user.CreatedAt,
+		UpdatedAt:       user.UpdatedAt,
+		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+	}, nil
 }
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: UpdateUser - updateUser"))
+	// Check if the user exists
+	_, err := r.DB.GetUser(ctx, input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("folder not found: %w", err)
+	}
+
+	// Update the user
+	err = r.DB.UpdateUser(ctx, generated.UpdateUserParams{
+		ID:    input.ID,
+		Name:  input.Name,
+		Email: input.Email,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
+
+	// Fetch the updated user
+	updatedUser, err := r.DB.GetUser(ctx, input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve updated folder: %w", err)
+	}
+
+	// Map the SQLC model to the GraphQL model
+	return &model.User{
+		ID:              updatedUser.ID,
+		Name:            updatedUser.Name,
+		Email:           updatedUser.Email,
+		EmailVerifiedAt: (*int64)(&updatedUser.EmailVerifiedAt.Int64),
+		CreatedAt:       updatedUser.CreatedAt,
+		UpdatedAt:       updatedUser.UpdatedAt,
+		DeletedAt:       (*int64)(&updatedUser.DeletedAt.Int64),
+	}, nil
 }
 
 // DeleteUser is the resolver for the deleteUser field.
 func (r *mutationResolver) DeleteUser(ctx context.Context, id int64) (*bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteUser - deleteUser"))
+	// Check if the user exists (optional)
+	_, err := r.DB.GetUser(ctx, id)
+	if err != nil {
+		var failed bool = false
+		return &failed, fmt.Errorf("user not found: %w", err)
+	}
+
+	// Attempt to delete the user
+	err = r.DB.DeleteUser(ctx, id)
+	if err != nil {
+		var failed bool = false
+		return &failed, fmt.Errorf("failed to delete user: %w", err)
+	}
+	var success bool = true
+	return &success, nil
+}
+
+// UpdateUserEmailVerifiedAt is the resolver for the UpdateUserEmailVerifiedAt field.
+func (r *mutationResolver) UpdateUserEmailVerifiedAt(ctx context.Context, id int64) (*bool, error) {
+	// Check if the user exists (optional)
+	_, err := r.DB.GetUser(ctx, id)
+	if err != nil {
+		var failed bool = false
+		return &failed, fmt.Errorf("user not found: %w", err)
+	}
+
+	// Attempt to update the user email verified at
+	err = r.DB.UpdateUserEmailVerifiedAt(ctx, id)
+	if err != nil {
+		var failed bool = false
+		return &failed, fmt.Errorf("failed to delete user: %w", err)
+	}
+	var success bool = true
+	return &success, nil
 }
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	return r.users, nil
+	// Fetch users using sqlc
+	rows, err := r.DB.ListUsers(ctx) // Assuming ListUsers is the sqlc query method
+	if err != nil {
+		return nil, err
+	}
+
+	// Map sqlc rows to GraphQL models
+	var users []*model.User
+	for _, row := range rows {
+		users = append(users, &model.User{
+			ID:              row.ID,
+			Name:            row.Name,
+			Email:           row.Email,
+			EmailVerifiedAt: (*int64)(&row.EmailVerifiedAt.Int64),
+			CreatedAt:       row.CreatedAt,
+			UpdatedAt:       row.UpdatedAt,
+			DeletedAt:       (*int64)(&row.DeletedAt.Int64),
+		})
+	}
+
+	return users, nil
 }
 
 // GetUser is the resolver for the getUser field.
 func (r *queryResolver) GetUser(ctx context.Context, id int64) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: GetUser - getUser"))
+	// Call the generated GetUser query
+	user, err := r.DB.GetUser(ctx, id) // assuming input.ID is of type string
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Convert the SQL result to GraphQL model
+	return &model.User{
+		ID:              user.ID,
+		Name:            user.Name,
+		Email:           user.Email,
+		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
+		CreatedAt:       user.CreatedAt,
+		UpdatedAt:       user.UpdatedAt,
+		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+	}, nil
 }
+
+// GetUserByEmail is the resolver for the getUserByEmail field.
+func (r *queryResolver) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	// Call the generated GetUserByEmail query
+	user, err := r.DB.GetUserByEmail(ctx, email) // assuming email is of type string
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Convert the SQL result to GraphQL model
+	return &model.User{
+		ID:              user.ID,
+		Name:            user.Name,
+		Email:           user.Email,
+		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
+		CreatedAt:       user.CreatedAt,
+		UpdatedAt:       user.UpdatedAt,
+		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+	}, nil
+}
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *mutationResolver) UpdateEmailVerifiedAt(ctx context.Context, id int64) (*bool, error) {
+	panic(fmt.Errorf("not implemented: UpdateEmailVerifiedAt - updateEmailVerifiedAt"))
+}
+*/

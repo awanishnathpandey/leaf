@@ -16,10 +16,12 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id int64) error
 	GetFolder(ctx context.Context, id int64) (Folder, error)
 	GetUser(ctx context.Context, id int64) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 	ListFolders(ctx context.Context) ([]Folder, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	UpdateFolder(ctx context.Context, arg UpdateFolderParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
+	UpdateUserEmailVerifiedAt(ctx context.Context, id int64) error
 }
 
 var _ Querier = (*Queries)(nil)

@@ -10,5 +10,9 @@ sql:
         sql_package: "pgx/v5"
         emit_json_tags: true
         emit_interface: true
+        overrides:
+          - db_type: "bigint"   # Map PostgreSQL BIGINT globally
+            go_type: "int64"    # Use int64 instead of pgtype.Int8
+
 
 
