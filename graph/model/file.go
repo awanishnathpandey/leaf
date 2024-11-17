@@ -1,13 +1,14 @@
 package model
 
 type File struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Slug      string `json:"slug"`
-	URL       string `json:"url"`
-	FolderID  int64  `json:"folderId"`
-	CreatedAt int64  `json:"createdAt"`
-	UpdatedAt int64  `json:"updatedAt"`
+	ID        int64   `json:"id"`
+	Name      string  `json:"name"`
+	Slug      string  `json:"slug"`
+	URL       string  `json:"url"`
+	FolderID  int64   `json:"folderId"`
+	Folder    *Folder `json:"folder"`
+	CreatedAt int64   `json:"createdAt"`
+	UpdatedAt int64   `json:"updatedAt"`
 }
 
 type UpdateFile struct {

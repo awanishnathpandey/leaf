@@ -98,3 +98,7 @@ models:
   UUID:
     model:
       - github.com/99designs/gqlgen/graphql.UUID
+  File:
+    fields:
+      folder:
+        resolver: true

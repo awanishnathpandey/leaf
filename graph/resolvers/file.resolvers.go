@@ -9,9 +9,29 @@ import (
 	"fmt"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 )
+
+// Folder is the resolver for the folder field.
+func (r *fileResolver) Folder(ctx context.Context, obj *model.File) (*model.Folder, error) {
+	// Fetch the folder by folderID
+	folder, err := r.DB.GetFolder(ctx, obj.FolderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch folder: %w", err)
+	}
+
+	// Map the folder data to the GraphQL model
+	return &model.Folder{
+		ID:          folder.ID,
+		Name:        folder.Name,
+		Slug:        folder.Slug,
+		Description: folder.Description,
+		CreatedAt:   folder.CreatedAt,
+		UpdatedAt:   folder.UpdatedAt,
+	}, nil
+}
 
 // CreateFile is the resolver for the createFile field.
 func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFile) (*model.File, error) {
@@ -88,7 +108,6 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, id int64) (bool, erro
 		return false, fmt.Errorf("failed to delete file: %w", err)
 	}
 	return true, nil
-
 }
 
 // Files is the resolver for the files field.
@@ -156,3 +175,8 @@ func (r *queryResolver) GetFilesByFolder(ctx context.Context, folderID int64) ([
 	}
 	return result, nil
 }
+
+// File returns graph.FileResolver implementation.
+func (r *Resolver) File() graph.FileResolver { return &fileResolver{r} }
+
+type fileResolver struct{ *Resolver }

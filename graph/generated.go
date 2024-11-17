@@ -39,6 +39,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	File() FileResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -58,6 +59,7 @@ type ComplexityRoot struct {
 
 	File struct {
 		CreatedAt func(childComplexity int) int
+		Folder    func(childComplexity int) int
 		FolderID  func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
@@ -124,6 +126,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type FileResolver interface {
+	Folder(ctx context.Context, obj *model.File) (*model.Folder, error)
+}
 type MutationResolver interface {
 	Register(ctx context.Context, input model.Register) (*model.User, error)
 	Login(ctx context.Context, input model.Login) (*model.LoginResponse, error)
@@ -221,6 +226,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.File.CreatedAt(childComplexity), true
+
+	case "File.folder":
+		if e.complexity.File.Folder == nil {
+			break
+		}
+
+		return e.complexity.File.Folder(childComplexity), true
 
 	case "File.folderId":
 		if e.complexity.File.FolderID == nil {
@@ -1845,6 +1857,64 @@ func (ec *executionContext) fieldContext_File_folderId(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _File_folder(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_File_folder(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.File().Folder(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Folder)
+	fc.Result = res
+	return ec.marshalNFolder2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolder(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_File_folder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "File",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Folder_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Folder_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Folder_slug(ctx, field)
+			case "description":
+				return ec.fieldContext_Folder_description(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Folder_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Folder_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Folder", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _File_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_createdAt(ctx, field)
 	if err != nil {
@@ -2704,6 +2774,8 @@ func (ec *executionContext) fieldContext_Mutation_createFile(ctx context.Context
 				return ec.fieldContext_File_url(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
+			case "folder":
+				return ec.fieldContext_File_folder(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_File_createdAt(ctx, field)
 			case "updatedAt":
@@ -2775,6 +2847,8 @@ func (ec *executionContext) fieldContext_Mutation_updateFile(ctx context.Context
 				return ec.fieldContext_File_url(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
+			case "folder":
+				return ec.fieldContext_File_folder(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_File_createdAt(ctx, field)
 			case "updatedAt":
@@ -3418,6 +3492,8 @@ func (ec *executionContext) fieldContext_Query_files(_ context.Context, field gr
 				return ec.fieldContext_File_url(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
+			case "folder":
+				return ec.fieldContext_File_folder(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_File_createdAt(ctx, field)
 			case "updatedAt":
@@ -3478,6 +3554,8 @@ func (ec *executionContext) fieldContext_Query_getFile(ctx context.Context, fiel
 				return ec.fieldContext_File_url(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
+			case "folder":
+				return ec.fieldContext_File_folder(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_File_createdAt(ctx, field)
 			case "updatedAt":
@@ -3549,6 +3627,8 @@ func (ec *executionContext) fieldContext_Query_getFilesByFolder(ctx context.Cont
 				return ec.fieldContext_File_url(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
+			case "folder":
+				return ec.fieldContext_File_folder(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_File_createdAt(ctx, field)
 			case "updatedAt":
@@ -6727,37 +6807,73 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._File_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._File_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "slug":
 			out.Values[i] = ec._File_slug(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "url":
 			out.Values[i] = ec._File_url(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "folderId":
 			out.Values[i] = ec._File_folderId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "folder":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._File_folder(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
 			out.Values[i] = ec._File_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._File_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
