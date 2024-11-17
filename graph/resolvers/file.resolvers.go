@@ -33,6 +33,11 @@ func (r *fileResolver) Folder(ctx context.Context, obj *model.File) (*model.Fold
 	}, nil
 }
 
+// Groups is the resolver for the groups field.
+func (r *fileResolver) Groups(ctx context.Context, obj *model.File) ([]*model.Group, error) {
+	panic(fmt.Errorf("not implemented: Groups - groups"))
+}
+
 // CreateFile is the resolver for the createFile field.
 func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFile) (*model.File, error) {
 	// Validate input

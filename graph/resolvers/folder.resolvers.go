@@ -9,9 +9,15 @@ import (
 	"fmt"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 )
+
+// Groups is the resolver for the groups field.
+func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder) ([]*model.Group, error) {
+	panic(fmt.Errorf("not implemented: Groups - groups"))
+}
 
 // CreateFolder is the resolver for the createFolder field.
 func (r *mutationResolver) CreateFolder(ctx context.Context, input model.CreateFolder) (*model.Folder, error) {
@@ -136,3 +142,8 @@ func (r *queryResolver) GetFolder(ctx context.Context, id int64) (*model.Folder,
 		UpdatedAt:   folder.UpdatedAt, // assuming you're using timestamptz
 	}, nil
 }
+
+// Folder returns graph.FolderResolver implementation.
+func (r *Resolver) Folder() graph.FolderResolver { return &folderResolver{r} }
+
+type folderResolver struct{ *Resolver }

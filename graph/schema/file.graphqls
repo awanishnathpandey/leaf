@@ -11,6 +11,7 @@ type File {
   folder: Folder!
   createdAt: Int!
   updatedAt: Int!
+  groups: [Group!]!
 }
 
 input CreateFile {

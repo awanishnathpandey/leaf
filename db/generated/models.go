@@ -27,6 +27,35 @@ type Folder struct {
 	UpdatedAt   int64  `json:"updated_at"`
 }
 
+type Group struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+}
+
+type GroupFile struct {
+	GroupID   int64 `json:"group_id"`
+	FileID    int64 `json:"file_id"`
+	CreatedAt int64 `json:"created_at"`
+	UpdatedAt int64 `json:"updated_at"`
+}
+
+type GroupFolder struct {
+	GroupID   int64 `json:"group_id"`
+	FolderID  int64 `json:"folder_id"`
+	CreatedAt int64 `json:"created_at"`
+	UpdatedAt int64 `json:"updated_at"`
+}
+
+type GroupUser struct {
+	GroupID   int64 `json:"group_id"`
+	UserID    int64 `json:"user_id"`
+	CreatedAt int64 `json:"created_at"`
+	UpdatedAt int64 `json:"updated_at"`
+}
+
 type User struct {
 	ID              int64       `json:"id"`
 	Name            string      `json:"name"`

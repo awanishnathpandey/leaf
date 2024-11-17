@@ -1,0 +1,45 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Group {
+    id: ID!
+    name: String!
+    description: String
+    createdAt: Int!
+    updatedAt: Int!
+    users: [User!]!
+    folders: [Folder!]!
+    files: [File!]!
+}
+
+input CreateGroup {
+  name: String!
+  description: String!
+}
+
+input UpdateGroup {
+  id: ID!
+  name: String!
+  description: String!
+}
+
+extend type Query {
+  groups: [Group!]!
+  getGroup(id: ID!): Group
+  getGroupUsers(id: ID!): [User!]
+  getGroupFolders(id: ID!): [Folder!]
+  getGroupFiles(id: ID!): [File!]
+}
+
+extend type Mutation {
+  createGroup(input: CreateGroup!): Group!
+  updateGroup(input: UpdateGroup!): Group!
+  deleteGroup(id: ID!): Boolean!
+  addUserToGroup(groupId: ID!, userId: ID!): Group!
+  removeUserFromGroup(groupId: ID!, userId: ID!): Group!
+  addFolderToGroup(groupId: ID!, folderId: ID!): Group!
+  removeFolderFromGroup(groupId: ID!, folderId: ID!): Group!
+  addFileToGroup(groupId: ID!, fileId: ID!): Group!
+  removeFileFromGroup(groupId: ID!, fileId: ID!): Group!
+}

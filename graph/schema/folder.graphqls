@@ -9,6 +9,7 @@ type Folder {
   description: String!
   createdAt: Int!
   updatedAt: Int!
+  groups: [Group!]!
 }
 
 input CreateFolder {
