@@ -36,7 +36,7 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries) {
 	})
 
 	// Add JWT authentication middleware to protect the GraphQL route
-	app.Use("/graphql", middleware.JWTMiddleware())
+	app.Use("/graphql", middleware.JWTMiddleware(queries))
 
 	// GraphQL handler using gqlgen
 	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries}}))

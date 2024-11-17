@@ -30,6 +30,7 @@ type AuthUser struct {
 	Name            string `json:"name"`
 	Email           string `json:"email"`
 	EmailVerifiedAt *int64 `json:"emailVerifiedAt,omitempty"`
+	LastSeenAt      int64  `json:"lastSeenAt"`
 	CreatedAt       int64  `json:"createdAt"`
 	UpdatedAt       int64  `json:"updatedAt"`
 }

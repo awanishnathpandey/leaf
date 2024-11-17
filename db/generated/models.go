@@ -23,6 +23,7 @@ type User struct {
 	Email           string      `json:"email"`
 	Password        string      `json:"password"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
+	LastSeenAt      int64       `json:"last_seen_at"`
 	CreatedAt       int64       `json:"created_at"`
 	UpdatedAt       int64       `json:"updated_at"`
 	DeletedAt       pgtype.Int8 `json:"deleted_at"`

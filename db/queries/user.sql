@@ -28,6 +28,11 @@ UPDATE users
   set email_verified_at = EXTRACT(EPOCH FROM NOW()), updated_at = EXTRACT(EPOCH FROM NOW())
 WHERE id = $1;
 
+-- name: UpdateUserLastSeenAt :exec
+UPDATE users
+  set last_seen_at = EXTRACT(EPOCH FROM NOW())
+WHERE id = $1;
+
 -- name: DeleteUser :exec
 DELETE FROM users
 WHERE id = $1;

@@ -8,6 +8,7 @@ type User {
   email: String!
   password: String!
   emailVerifiedAt: Int
+  lastSeenAt: Int!
   createdAt: Int!
   updatedAt: Int!
   deletedAt: Int

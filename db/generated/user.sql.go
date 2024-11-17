@@ -15,7 +15,7 @@ INSERT INTO users (
 ) VALUES (
   $1, $2, $3
 )
-RETURNING id, name, email, password, email_verified_at, created_at, updated_at, deleted_at
+RETURNING id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at
 `
 
 type CreateUserParams struct {
@@ -33,6 +33,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.Password,
 		&i.EmailVerifiedAt,
+		&i.LastSeenAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -51,7 +52,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password, email_verified_at, created_at, updated_at, deleted_at FROM users
+SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -64,6 +65,7 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.Email,
 		&i.Password,
 		&i.EmailVerifiedAt,
+		&i.LastSeenAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -72,7 +74,7 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password, email_verified_at, created_at, updated_at, deleted_at FROM users
+SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -85,6 +87,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 		&i.Password,
 		&i.EmailVerifiedAt,
+		&i.LastSeenAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -93,7 +96,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, password, email_verified_at, created_at, updated_at, deleted_at FROM users
+SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at FROM users
 ORDER BY email
 `
 
@@ -112,6 +115,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.Email,
 			&i.Password,
 			&i.EmailVerifiedAt,
+			&i.LastSeenAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -151,5 +155,16 @@ WHERE id = $1
 
 func (q *Queries) UpdateUserEmailVerifiedAt(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, updateUserEmailVerifiedAt, id)
+	return err
+}
+
+const updateUserLastSeenAt = `-- name: UpdateUserLastSeenAt :exec
+UPDATE users
+  set last_seen_at = EXTRACT(EPOCH FROM NOW())
+WHERE id = $1
+`
+
+func (q *Queries) UpdateUserLastSeenAt(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, updateUserLastSeenAt, id)
 	return err
 }

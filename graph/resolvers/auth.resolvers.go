@@ -44,6 +44,7 @@ func (r *mutationResolver) Register(ctx context.Context, input model.Register) (
 		Name:            user.Name,
 		Email:           user.Email,
 		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
+		LastSeenAt:      user.LastSeenAt,
 		CreatedAt:       user.CreatedAt,
 		UpdatedAt:       user.UpdatedAt,
 		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
@@ -69,11 +70,12 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (*model
 	loginResponse := &model.LoginResponse{
 		Token: token,
 		User: &model.AuthUser{
-			ID:        user.ID,
-			Name:      user.Name,
-			Email:     user.Email,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
+			ID:         user.ID,
+			Name:       user.Name,
+			Email:      user.Email,
+			LastSeenAt: user.LastSeenAt,
+			CreatedAt:  user.CreatedAt,
+			UpdatedAt:  user.UpdatedAt,
 		},
 	}
 
@@ -113,11 +115,12 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 
 	// Map the generated.User to model.User
 	modelUser := &model.User{
-		ID:        user.ID, // Assuming both have the same field names
-		Name:      user.Name,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:         user.ID, // Assuming both have the same field names
+		Name:       user.Name,
+		Email:      user.Email,
+		LastSeenAt: user.LastSeenAt,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
 	}
 
 	return modelUser, nil

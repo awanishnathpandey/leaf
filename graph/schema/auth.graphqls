@@ -6,6 +6,7 @@ type AuthUser {
   id: ID!
   name: String!
   email: String!
+  lastSeenAt: Int!
   createdAt: Int!
   updatedAt: Int!
 }

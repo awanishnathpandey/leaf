@@ -8,6 +8,7 @@ type User struct {
 	Email           string `json:"email"`
 	Password        string `json:"password"`
 	EmailVerifiedAt *int64 `json:"emailVerifiedAt,omitempty"`
+	LastSeenAt      int64  `json:"lastSeenAt"`
 	CreatedAt       int64  `json:"createdAt"`
 	UpdatedAt       int64  `json:"updatedAt"`
 	DeletedAt       *int64 `json:"deletedAt,omitempty"`

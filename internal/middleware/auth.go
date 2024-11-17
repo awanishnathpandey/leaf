@@ -1,12 +1,14 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -18,12 +20,12 @@ type MyClaims struct {
 }
 
 // JWTMiddleware is a custom middleware to authenticate requests using JWT
-func JWTMiddleware() fiber.Handler {
+func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Print loaded JWT_SECRET to debug
 		secretKey := []byte(os.Getenv("JWT_SECRET"))
-		fmt.Println("JWT_SECRET from environment:", secretKey)
-		fmt.Println("JWT Secret Key: ", string(secretKey))
+		// fmt.Println("JWT_SECRET from environment:", secretKey)
+		// fmt.Println("JWT Secret Key: ", string(secretKey))
 		body := c.Body()
 		if strings.Contains(string(body), "login") || strings.Contains(string(body), "register") {
 			return c.Next()
@@ -90,6 +92,22 @@ func JWTMiddleware() fiber.Handler {
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Invalid user ID in token",
+			})
+		}
+
+		// Check if user exists
+		ctx := context.Background()
+		_, err = queries.GetUser(ctx, uidInt64)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "User not found",
+			})
+		}
+
+		// Update last_seen in the database
+		if err := queries.UpdateUserLastSeenAt(ctx, uidInt64); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to update last seen",
 			})
 		}
 
