@@ -6,6 +6,7 @@ import (
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/internal/database"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -28,6 +29,8 @@ func main() {
 	defer dbPool.Close()
 
 	queries := generated.New(dbPool)
+	// Initialize middleware with queries object
+	middleware.InitializeQueries(queries)
 
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{})

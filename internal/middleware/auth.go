@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -19,17 +21,59 @@ type MyClaims struct {
 	CustomField string `json:"custom_field"`
 }
 
+// Global variable to hold queries object
+var queries *generated.Queries
+
+// Initialize the queries object once at the beginning of the app
+func InitializeQueries(q *generated.Queries) {
+	queries = q
+}
+
+// Asynchronous worker to update last_seen
+const numWorkers = 10                   // Number of workers in the pool
+var updateQueue = make(chan int64, 100) // Buffered channel for user IDs
+
+func init() {
+	// Start worker goroutines for processing updates
+	for i := 0; i < numWorkers; i++ {
+		go worker()
+	}
+}
+
+// Worker to process updates
+func worker() {
+	for userID := range updateQueue {
+		err := updateLastSeen(userID)
+		if err != nil {
+			log.Error().Err(err).Int64("userID", userID).Msg("Failed to update last_seen")
+			// log.Printf("Failed to update last_seen for user %d: %v\n", userID, err)
+		}
+	}
+}
+
+// Update the database asynchronously
+func updateLastSeen(userID int64) error {
+	ctx := context.Background()
+
+	// Update the last_seen in the database
+	err := queries.UpdateUserLastSeenAt(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update last_seen for user %d: %w", userID, err)
+	}
+	return nil
+}
+
 // JWTMiddleware is a custom middleware to authenticate requests using JWT
 func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Print loaded JWT_SECRET to debug
+		// Get the JWT_SECRET from the environment
 		secretKey := []byte(os.Getenv("JWT_SECRET"))
-		// fmt.Println("JWT_SECRET from environment:", secretKey)
-		// fmt.Println("JWT Secret Key: ", string(secretKey))
-		body := c.Body()
-		if strings.Contains(string(body), "login") || strings.Contains(string(body), "register") {
+
+		// Skip authentication for login/register routes
+		if strings.Contains(c.Path(), "login") || strings.Contains(c.Path(), "register") {
 			return c.Next()
 		}
+
 		// Get the JWT token from the request's Authorization header
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
@@ -39,13 +83,12 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 		}
 
 		// Validate that the token starts with "Bearer " prefix
-		tokenString := authHeader
-		if len(tokenString) <= 7 || tokenString[:7] != "Bearer " {
+		if len(authHeader) <= 7 || authHeader[:7] != "Bearer " {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Invalid authorization header format",
 			})
 		}
-		tokenString = tokenString[7:] // Extract token after "Bearer "
+		tokenString := authHeader[7:] // Extract token after "Bearer "
 
 		// Ensure the token is well-formed (has 3 parts)
 		parts := strings.Split(tokenString, ".")
@@ -104,12 +147,8 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 			})
 		}
 
-		// Update last_seen in the database
-		if err := queries.UpdateUserLastSeenAt(ctx, uidInt64); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to update last seen",
-			})
-		}
+		// Update last_seen in the database asynchronously by enqueueing the user ID
+		updateQueue <- uidInt64
 
 		// Use Locals to store userID for easy access later in your handlers
 		c.Locals("userID", uidInt64)
