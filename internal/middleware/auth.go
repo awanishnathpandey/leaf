@@ -70,7 +70,11 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 		secretKey := []byte(os.Getenv("JWT_SECRET"))
 
 		// Skip authentication for login/register routes
-		if strings.Contains(c.Path(), "login") || strings.Contains(c.Path(), "register") {
+		// if strings.Contains(c.Path(), "login") || strings.Contains(c.Path(), "register") {
+		// 	return c.Next()
+		// }
+		body := c.Body()
+		if strings.Contains(string(body), "login") || strings.Contains(string(body), "register") {
 			return c.Next()
 		}
 

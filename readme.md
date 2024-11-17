@@ -22,6 +22,11 @@
   
   pg_ctl -D "Dir to pgqlc data" start
 
+- Use below command to create migration. Example users table
+
+  goose -dir ./db/migrations create create_users_table sql
+
+
 - Use below goose command and run the database migrations
   
   goose -dir ./db/migrations postgres "postgres://postgres:password@localhost:5432/db_leaf?sslmode=disable" up

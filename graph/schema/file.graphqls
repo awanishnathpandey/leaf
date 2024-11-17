@@ -1,0 +1,39 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type File {
+  id: ID!
+  name: String!
+  slug: String!
+  url: String!
+  folderId: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+input CreateFile {
+  name: String!
+  slug: String!
+  url: String!
+  folderId: ID!       # The folder to which the file belongs
+}
+
+input UpdateFile {
+  id: ID!
+  name: String!
+  slug: String!
+  url: String!
+}
+
+extend type Query {
+  files: [File!]!          # Get all files
+  getFile(id: ID!): File!  # Get a single file by its ID
+  getFilesByFolder(folderId: ID!): [File!]!  # Get files by folder ID
+}
+
+extend type Mutation {
+  createFile(input: CreateFile!): File!
+  updateFile(input: UpdateFile!): File!
+  deleteFile(id: ID!): Boolean!
+}
