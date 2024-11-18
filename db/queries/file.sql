@@ -24,3 +24,7 @@ RETURNING id, name, slug, url, folder_id, created_at, updated_at;
 -- name: DeleteFile :exec
 DELETE FROM files
 WHERE id = $1;
+
+-- name: GetFilesByFolderID :many
+SELECT * FROM files
+WHERE folder_id = $1;

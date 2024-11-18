@@ -16,7 +16,44 @@ import (
 
 // Groups is the resolver for the groups field.
 func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder) ([]*model.Group, error) {
-	panic(fmt.Errorf("not implemented: Groups - groups"))
+	groups, err := r.DB.GetGroupsByFolderID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch groups for folder %d: %w", obj.ID, err)
+	}
+
+	var result []*model.Group
+	for _, group := range groups {
+		result = append(result, &model.Group{
+			ID:          group.ID,
+			Name:        group.Name,
+			Description: group.Description,
+			CreatedAt:   group.CreatedAt,
+			UpdatedAt:   group.UpdatedAt,
+		})
+	}
+	return result, nil
+}
+
+// Files is the resolver for the files field.
+func (r *folderResolver) Files(ctx context.Context, obj *model.Folder) ([]*model.File, error) {
+	files, err := r.DB.GetFilesByFolderID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch files for folder %d: %w", obj.ID, err)
+	}
+
+	var result []*model.File
+	for _, file := range files {
+		result = append(result, &model.File{
+			ID:        file.ID,
+			Name:      file.Name,
+			Slug:      file.Slug,
+			URL:       file.Url,
+			FolderID:  file.FolderID,
+			CreatedAt: file.CreatedAt,
+			UpdatedAt: file.UpdatedAt,
+		})
+	}
+	return result, nil
 }
 
 // CreateFolder is the resolver for the createFolder field.

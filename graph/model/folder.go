@@ -1,12 +1,14 @@
 package model
 
 type Folder struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"createdAt"`
-	UpdatedAt   int64  `json:"updatedAt"`
+	ID          int64    `json:"id"`
+	Name        string   `json:"name"`
+	Slug        string   `json:"slug"`
+	Description string   `json:"description"`
+	CreatedAt   int64    `json:"createdAt"`
+	UpdatedAt   int64    `json:"updatedAt"`
+	Groups      []*Group `json:"groups"`
+	Files       []*File  `json:"files"`
 }
 
 type CreateFolder struct {

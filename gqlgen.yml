@@ -110,3 +110,13 @@ models:
         resolver: true
       folders:
         resolver: true
+  Folder:
+    fields:
+      files:
+        resolver: true
+      groups:
+        resolver: true
+  User:
+    fields:
+      groups:
+        resolver: true

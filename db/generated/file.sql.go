@@ -105,6 +105,39 @@ func (q *Queries) GetFilesByFolder(ctx context.Context, folderID int64) ([]File,
 	return items, nil
 }
 
+const getFilesByFolderID = `-- name: GetFilesByFolderID :many
+SELECT id, name, slug, url, folder_id, created_at, updated_at FROM files
+WHERE folder_id = $1
+`
+
+func (q *Queries) GetFilesByFolderID(ctx context.Context, folderID int64) ([]File, error) {
+	rows, err := q.db.Query(ctx, getFilesByFolderID, folderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []File
+	for rows.Next() {
+		var i File
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Url,
+			&i.FolderID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFiles = `-- name: ListFiles :many
 SELECT id, name, slug, url, folder_id, created_at, updated_at FROM files
 ORDER BY name

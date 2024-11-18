@@ -190,7 +190,22 @@ func (r *queryResolver) GetUserByEmail(ctx context.Context, email string) (*mode
 
 // Groups is the resolver for the groups field.
 func (r *userResolver) Groups(ctx context.Context, obj *model.User) ([]*model.Group, error) {
-	panic(fmt.Errorf("not implemented: Groups - groups"))
+	groups, err := r.DB.GetGroupsByUserID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch groups for user %d: %w", obj.ID, err)
+	}
+
+	var result []*model.Group
+	for _, group := range groups {
+		result = append(result, &model.Group{
+			ID:          group.ID,
+			Name:        group.Name,
+			Description: group.Description,
+			CreatedAt:   group.CreatedAt,
+			UpdatedAt:   group.UpdatedAt,
+		})
+	}
+	return result, nil
 }
 
 // User returns graph.UserResolver implementation.

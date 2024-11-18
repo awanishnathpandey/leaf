@@ -10,6 +10,7 @@ type Folder {
   createdAt: Int!
   updatedAt: Int!
   groups: [Group!]!
+  files: [File!]!
 }
 
 input CreateFolder {

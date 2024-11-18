@@ -65,3 +65,21 @@ SELECT f.*
 FROM files f
 JOIN group_files gf ON f.id = gf.file_id
 WHERE gf.group_id = $1;
+
+-- name: GetGroupsByFolderID :many
+SELECT g.*
+FROM groups g
+JOIN group_folders gf ON g.id = gf.group_id
+WHERE gf.folder_id = $1;
+
+-- name: GetGroupsByUserID :many
+SELECT g.*
+FROM groups g
+JOIN group_users gu ON g.id = gu.group_id
+WHERE gu.user_id = $1;
+
+-- name: GetGroupsByFileID :many
+SELECT g.*
+FROM groups g
+JOIN group_files gf ON g.id = gf.group_id
+WHERE gf.file_id = $1;

@@ -181,6 +181,105 @@ func (q *Queries) GetGroup(ctx context.Context, id int64) (Group, error) {
 	return i, err
 }
 
+const getGroupsByFileID = `-- name: GetGroupsByFileID :many
+SELECT g.id, g.name, g.description, g.created_at, g.updated_at
+FROM groups g
+JOIN group_files gf ON g.id = gf.group_id
+WHERE gf.file_id = $1
+`
+
+func (q *Queries) GetGroupsByFileID(ctx context.Context, fileID int64) ([]Group, error) {
+	rows, err := q.db.Query(ctx, getGroupsByFileID, fileID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getGroupsByFolderID = `-- name: GetGroupsByFolderID :many
+SELECT g.id, g.name, g.description, g.created_at, g.updated_at
+FROM groups g
+JOIN group_folders gf ON g.id = gf.group_id
+WHERE gf.folder_id = $1
+`
+
+func (q *Queries) GetGroupsByFolderID(ctx context.Context, folderID int64) ([]Group, error) {
+	rows, err := q.db.Query(ctx, getGroupsByFolderID, folderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getGroupsByUserID = `-- name: GetGroupsByUserID :many
+SELECT g.id, g.name, g.description, g.created_at, g.updated_at
+FROM groups g
+JOIN group_users gu ON g.id = gu.group_id
+WHERE gu.user_id = $1
+`
+
+func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group, error) {
+	rows, err := q.db.Query(ctx, getGroupsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUsersByGroupID = `-- name: GetUsersByGroupID :many
 SELECT u.id, u.name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
 FROM users u
