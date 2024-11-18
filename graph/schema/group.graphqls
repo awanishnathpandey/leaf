@@ -27,19 +27,16 @@ input UpdateGroup {
 extend type Query {
   groups: [Group!]!
   getGroup(id: ID!): Group
-  getGroupUsers(id: ID!): [User!]
-  getGroupFolders(id: ID!): [Folder!]
-  getGroupFiles(id: ID!): [File!]
 }
 
 extend type Mutation {
   createGroup(input: CreateGroup!): Group!
   updateGroup(input: UpdateGroup!): Group!
   deleteGroup(id: ID!): Boolean!
-  addUserToGroup(groupId: ID!, userId: ID!): Group!
-  removeUserFromGroup(groupId: ID!, userId: ID!): Group!
-  addFolderToGroup(groupId: ID!, folderId: ID!): Group!
-  removeFolderFromGroup(groupId: ID!, folderId: ID!): Group!
-  addFileToGroup(groupId: ID!, fileId: ID!): Group!
-  removeFileFromGroup(groupId: ID!, fileId: ID!): Group!
+  addUserToGroup(groupId: ID!, userId: ID!): Boolean!
+  removeUserFromGroup(groupId: ID!, userId: ID!): Boolean!
+  addFolderToGroup(groupId: ID!, folderId: ID!): Boolean!
+  removeFolderFromGroup(groupId: ID!, folderId: ID!): Boolean!
+  addFileToGroup(groupId: ID!, fileId: ID!): Boolean!
+  removeFileFromGroup(groupId: ID!, fileId: ID!): Boolean!
 }

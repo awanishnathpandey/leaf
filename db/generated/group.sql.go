@@ -7,11 +7,13 @@ package generated
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const addFileToGroup = `-- name: AddFileToGroup :exec
-INSERT INTO group_files (group_id, file_id) 
-VALUES ($1, $2) 
+INSERT INTO group_files (group_id, file_id, created_at, updated_at) 
+VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 
 ON CONFLICT DO NOTHING
 `
 
@@ -26,8 +28,8 @@ func (q *Queries) AddFileToGroup(ctx context.Context, arg AddFileToGroupParams) 
 }
 
 const addFolderToGroup = `-- name: AddFolderToGroup :exec
-INSERT INTO group_folders (group_id, folder_id) 
-VALUES ($1, $2) 
+INSERT INTO group_folders (group_id, folder_id, created_at, updated_at) 
+VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 
 ON CONFLICT DO NOTHING
 `
 
@@ -42,8 +44,8 @@ func (q *Queries) AddFolderToGroup(ctx context.Context, arg AddFolderToGroupPara
 }
 
 const addUserToGroup = `-- name: AddUserToGroup :exec
-INSERT INTO group_users (group_id, user_id) 
-VALUES ($1, $2) 
+INSERT INTO group_users (group_id, user_id, created_at, updated_at) 
+VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 
 ON CONFLICT DO NOTHING
 `
 
@@ -91,14 +93,83 @@ func (q *Queries) DeleteGroup(ctx context.Context, id int64) error {
 	return err
 }
 
-const getGroupByID = `-- name: GetGroupByID :one
+const getFilesByGroupID = `-- name: GetFilesByGroupID :many
+SELECT f.id, f.name, f.slug, f.url, f.folder_id, f.created_at, f.updated_at
+FROM files f
+JOIN group_files gf ON f.id = gf.file_id
+WHERE gf.group_id = $1
+`
+
+func (q *Queries) GetFilesByGroupID(ctx context.Context, groupID int64) ([]File, error) {
+	rows, err := q.db.Query(ctx, getFilesByGroupID, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []File
+	for rows.Next() {
+		var i File
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Url,
+			&i.FolderID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFoldersByGroupID = `-- name: GetFoldersByGroupID :many
+SELECT f.id, f.name, f.slug, f.description, f.created_at, f.updated_at
+FROM folders f
+JOIN group_folders gf ON f.id = gf.folder_id
+WHERE gf.group_id = $1
+`
+
+func (q *Queries) GetFoldersByGroupID(ctx context.Context, groupID int64) ([]Folder, error) {
+	rows, err := q.db.Query(ctx, getFoldersByGroupID, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Folder
+	for rows.Next() {
+		var i Folder
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getGroup = `-- name: GetGroup :one
 SELECT id, name, description, created_at, updated_at 
 FROM groups 
 WHERE id = $1
 `
 
-func (q *Queries) GetGroupByID(ctx context.Context, id int64) (Group, error) {
-	row := q.db.QueryRow(ctx, getGroupByID, id)
+func (q *Queries) GetGroup(ctx context.Context, id int64) (Group, error) {
+	row := q.db.QueryRow(ctx, getGroup, id)
 	var i Group
 	err := row.Scan(
 		&i.ID,
@@ -110,28 +181,43 @@ func (q *Queries) GetGroupByID(ctx context.Context, id int64) (Group, error) {
 	return i, err
 }
 
-const getGroupFiles = `-- name: GetGroupFiles :many
-SELECT files.id, files.name 
-FROM files 
-JOIN group_files ON group_files.file_id = files.id 
-WHERE group_files.group_id = $1
+const getUsersByGroupID = `-- name: GetUsersByGroupID :many
+SELECT u.id, u.name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
+FROM users u
+JOIN group_users gu ON u.id = gu.user_id
+WHERE gu.group_id = $1
 `
 
-type GetGroupFilesRow struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+type GetUsersByGroupIDRow struct {
+	ID              int64       `json:"id"`
+	Name            string      `json:"name"`
+	Email           string      `json:"email"`
+	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
+	LastSeenAt      int64       `json:"last_seen_at"`
+	CreatedAt       int64       `json:"created_at"`
+	UpdatedAt       int64       `json:"updated_at"`
+	DeletedAt       pgtype.Int8 `json:"deleted_at"`
 }
 
-func (q *Queries) GetGroupFiles(ctx context.Context, groupID int64) ([]GetGroupFilesRow, error) {
-	rows, err := q.db.Query(ctx, getGroupFiles, groupID)
+func (q *Queries) GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUsersByGroupIDRow, error) {
+	rows, err := q.db.Query(ctx, getUsersByGroupID, groupID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetGroupFilesRow
+	var items []GetUsersByGroupIDRow
 	for rows.Next() {
-		var i GetGroupFilesRow
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		var i GetUsersByGroupIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.EmailVerifiedAt,
+			&i.LastSeenAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -142,78 +228,13 @@ func (q *Queries) GetGroupFiles(ctx context.Context, groupID int64) ([]GetGroupF
 	return items, nil
 }
 
-const getGroupFolders = `-- name: GetGroupFolders :many
-SELECT folders.id, folders.name 
-FROM folders 
-JOIN group_folders ON group_folders.folder_id = folders.id 
-WHERE group_folders.group_id = $1
+const listGroups = `-- name: ListGroups :many
+SELECT id, name, description, created_at, updated_at FROM groups
+ORDER BY name
 `
 
-type GetGroupFoldersRow struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
-func (q *Queries) GetGroupFolders(ctx context.Context, groupID int64) ([]GetGroupFoldersRow, error) {
-	rows, err := q.db.Query(ctx, getGroupFolders, groupID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetGroupFoldersRow
-	for rows.Next() {
-		var i GetGroupFoldersRow
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getGroupUsers = `-- name: GetGroupUsers :many
-SELECT users.id, users.name, users.email 
-FROM users 
-JOIN group_users ON group_users.user_id = users.id 
-WHERE group_users.group_id = $1
-`
-
-type GetGroupUsersRow struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-func (q *Queries) GetGroupUsers(ctx context.Context, groupID int64) ([]GetGroupUsersRow, error) {
-	rows, err := q.db.Query(ctx, getGroupUsers, groupID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetGroupUsersRow
-	for rows.Next() {
-		var i GetGroupUsersRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.Email); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getGroups = `-- name: GetGroups :many
-SELECT id, name, description, created_at, updated_at 
-FROM groups
-`
-
-func (q *Queries) GetGroups(ctx context.Context) ([]Group, error) {
-	rows, err := q.db.Query(ctx, getGroups)
+func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
+	rows, err := q.db.Query(ctx, listGroups)
 	if err != nil {
 		return nil, err
 	}

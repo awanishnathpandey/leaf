@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 )
@@ -186,3 +187,13 @@ func (r *queryResolver) GetUserByEmail(ctx context.Context, email string) (*mode
 		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
 	}, nil
 }
+
+// Groups is the resolver for the groups field.
+func (r *userResolver) Groups(ctx context.Context, obj *model.User) ([]*model.Group, error) {
+	panic(fmt.Errorf("not implemented: Groups - groups"))
+}
+
+// User returns graph.UserResolver implementation.
+func (r *Resolver) User() graph.UserResolver { return &userResolver{r} }
+
+type userResolver struct{ *Resolver }

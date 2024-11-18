@@ -12,6 +12,7 @@ type User {
   createdAt: Int!
   updatedAt: Int!
   deletedAt: Int
+  groups: [Group!]!
 }
 
 input CreateUser {

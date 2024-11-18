@@ -15,4 +15,6 @@ type Resolver struct {
 	DB      *generated.Queries
 	users   []*model.User
 	folders []*model.Folder
+	files   []*model.File
+	groups  []*model.Group
 }
