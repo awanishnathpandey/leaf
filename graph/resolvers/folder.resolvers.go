@@ -139,6 +139,13 @@ func (r *mutationResolver) DeleteFolder(ctx context.Context, id int64) (bool, er
 
 // Folders is the resolver for the folders field.
 func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Fetch folders using sqlc
 	rows, err := r.DB.ListFolders(ctx) // Assuming ListFolders is the sqlc query method
 	if err != nil {

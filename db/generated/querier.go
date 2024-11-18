@@ -33,6 +33,7 @@ type Querier interface {
 	GetGroupsByUserID(ctx context.Context, userID int64) ([]Group, error)
 	GetUser(ctx context.Context, id int64) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserPermissions(ctx context.Context, userID int64) ([]string, error)
 	GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUsersByGroupIDRow, error)
 	ListFiles(ctx context.Context) ([]File, error)
 	ListFolders(ctx context.Context) ([]Folder, error)

@@ -56,6 +56,29 @@ type GroupUser struct {
 	UpdatedAt int64 `json:"updated_at"`
 }
 
+type Permission struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+}
+
+type Role struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+}
+
+type RolePermission struct {
+	RoleID       int64 `json:"role_id"`
+	PermissionID int64 `json:"permission_id"`
+	CreatedAt    int64 `json:"created_at"`
+	UpdatedAt    int64 `json:"updated_at"`
+}
+
 type User struct {
 	ID              int64       `json:"id"`
 	Name            string      `json:"name"`
@@ -66,4 +89,11 @@ type User struct {
 	CreatedAt       int64       `json:"created_at"`
 	UpdatedAt       int64       `json:"updated_at"`
 	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+}
+
+type UserRole struct {
+	UserID    int64 `json:"user_id"`
+	RoleID    int64 `json:"role_id"`
+	CreatedAt int64 `json:"created_at"`
+	UpdatedAt int64 `json:"updated_at"`
 }
