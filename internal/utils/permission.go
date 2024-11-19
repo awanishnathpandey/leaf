@@ -2,52 +2,107 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 )
 
-// CheckUserPermissions is a utility function that fetches user permissions from the database
-// and checks if the user has the required permissions for an action.
+var (
+	// Cache to store user permissions with a read-write mutex for thread safety
+	userPermissionsCache  = make(map[int64][]string)
+	permissionsTimestamps = make(map[int64]time.Time) // Map to store the timestamp of when permissions were last fetched
+	cacheMutex            = &sync.RWMutex{}
+	cacheExpiry           = 5 * time.Minute // Cache expiration time
+)
+
+// CheckUserPermissions verifies if the user has the required permissions for an action,
+// with added caching to improve performance by reducing database queries.
 func CheckUserPermissions(ctx context.Context, requiredPermissions []string, queries *generated.Queries) error {
 	// Retrieve userID from context
-	userID, ok := ctx.Value("userID").(int64) // Access the user ID from the context
+	userID, ok := ctx.Value("userID").(int64)
 	if !ok {
-		return fmt.Errorf("user ID not found in context")
-	}
-	fmt.Println("Retrieved userID:", userID)
-
-	// Fetch user permissions from the database
-	userPermissions, err := queries.GetUserPermissions(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("failed to fetch user permissions: %v", err)
+		return errors.New("user ID not found in context")
 	}
 
-	// Log the retrieved permissions for debugging
-	fmt.Println("User Permissions: ", userPermissions)
+	// Check cache first
+	if permissions, found := getCachedPermissions(userID); found {
+		// If found in cache, use the cached permissions
+		if hasRequiredPermissions(permissions, requiredPermissions) {
+			return nil
+		}
+	} else {
+		// If not found in cache, fetch from database and update cache
+		userPermissions, err := queries.GetUserPermissions(ctx, userID)
+		if err != nil {
+			return fmt.Errorf("failed to fetch user permissions: %w", err)
+		}
 
-	// Check if the user has the required permissions
-	if !hasPermissions(userPermissions, requiredPermissions) {
-		return fmt.Errorf("insufficient permissions")
-	}
+		// Cache the fetched permissions with a timestamp
+		cachePermissions(userID, userPermissions)
 
-	return nil
-}
-
-// hasPermissions checks if the user has anyone of the required permissions.
-func hasPermissions(userPermissions []string, requiredPermissions []string) bool {
-	permissionMap := make(map[string]bool)
-	for _, p := range userPermissions {
-		permissionMap[p] = true
-	}
-
-	// Check if any of the required permissions are present in the user's permissions
-	for _, required := range requiredPermissions {
-		if permissionMap[required] {
-			return true // At least one permission matches
+		// Check permissions
+		if hasRequiredPermissions(userPermissions, requiredPermissions) {
+			return nil
 		}
 	}
 
-	// If no match was found, return false
+	// Return error if permissions are insufficient
+	return errors.New("insufficient permissions")
+}
+
+// getCachedPermissions retrieves cached permissions if they are still valid.
+func getCachedPermissions(userID int64) ([]string, bool) {
+	cacheMutex.RLock() // Read lock for cache
+	defer cacheMutex.RUnlock()
+
+	permissions, found := userPermissionsCache[userID]
+	if !found {
+		return nil, false
+	}
+
+	// If cache is stale (expired), return false
+	if time.Since(permissionsTimestamp(userID)) > cacheExpiry {
+		return nil, false
+	}
+
+	return permissions, true
+}
+
+// cachePermissions stores the permissions in cache with a timestamp.
+func cachePermissions(userID int64, permissions []string) {
+	cacheMutex.Lock() // Write lock for cache
+	defer cacheMutex.Unlock()
+
+	userPermissionsCache[userID] = permissions
+	permissionsTimestamps[userID] = time.Now() // Update the timestamp for this user
+}
+
+// permissionsTimestamp retrieves the timestamp of when the permissions were last updated.
+func permissionsTimestamp(userID int64) time.Time {
+	cacheMutex.RLock() // Read lock for cache
+	defer cacheMutex.RUnlock()
+
+	// Retrieve the timestamp from the map (if not found, return a zero value)
+	return permissionsTimestamps[userID]
+}
+
+// hasRequiredPermissions verifies if any required permission exists in the user's permissions.
+func hasRequiredPermissions(userPermissions, requiredPermissions []string) bool {
+	// Convert required permissions to a map for efficient lookup
+	requiredSet := make(map[string]struct{}, len(requiredPermissions))
+	for _, perm := range requiredPermissions {
+		requiredSet[perm] = struct{}{}
+	}
+
+	// Check for an intersection between userPermissions and requiredPermissions
+	for _, perm := range userPermissions {
+		if _, exists := requiredSet[perm]; exists {
+			return true
+		}
+	}
+
 	return false
 }

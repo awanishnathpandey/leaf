@@ -29,6 +29,18 @@ func InitializeQueries(q *generated.Queries) {
 	queries = q
 }
 
+// Cache for user existence checks (key = userID, value = cacheEntry)
+var userCache = make(map[int64]cacheEntry)
+
+// Cache entry structure, including the timestamp of when it was created
+type cacheEntry struct {
+	exists    bool
+	timestamp time.Time
+}
+
+// Cache expiration time (set to 5 minutes)
+const cacheExpiration = 5 * time.Minute
+
 // Asynchronous worker to update last_seen
 const numWorkers = 10                   // Number of workers in the pool
 var updateQueue = make(chan int64, 100) // Buffered channel for user IDs
@@ -142,13 +154,39 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 			})
 		}
 
-		// Check if user exists
+		// Check cache for user existence with expiration handling
+		if entry, found := userCache[uidInt64]; found {
+			// If the cache entry exists and is not expired, proceed
+			if time.Since(entry.timestamp) < cacheExpiration {
+				if !entry.exists {
+					return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+						"error": "User not found",
+					})
+				}
+			} else {
+				// Cache expired, remove the entry and recheck
+				delete(userCache, uidInt64)
+			}
+		}
+
+		// Query the database if the user is not in the cache or cache expired
 		ctx := context.Background()
 		_, err = queries.GetUser(ctx, uidInt64)
 		if err != nil {
+			// Cache the result as user not found
+			userCache[uidInt64] = cacheEntry{
+				exists:    false,
+				timestamp: time.Now(),
+			}
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "User not found",
 			})
+		}
+
+		// User found, update cache
+		userCache[uidInt64] = cacheEntry{
+			exists:    true,
+			timestamp: time.Now(),
 		}
 
 		// Update last_seen in the database asynchronously by enqueueing the user ID

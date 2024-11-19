@@ -3,9 +3,12 @@ package routes
 import (
 	"context"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
@@ -39,7 +42,23 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries) {
 	app.Use("/graphql", middleware.JWTMiddleware(queries))
 
 	// GraphQL handler using gqlgen
-	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries}}))
+	// graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries}}))
+
+	// Set up GraphQL endpoint with Fiber-compatible adapter
+	// app.Post("/graphql", adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	graphqlHandler.ServeHTTP(w, r)
+	// }))
+
+	// GraphQL handler using gqlgen
+	graphqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries}}))
+
+	// Add transports (e.g., POST method) if needed
+	graphqlHandler.AddTransport(transport.POST{})
+
+	// Conditionally enable introspection based on environment
+	if os.Getenv("ENVIRONMENT") == "development" {
+		graphqlHandler.Use(extension.Introspection{})
+	}
 
 	// Set up GraphQL endpoint with Fiber-compatible adapter
 	app.Post("/graphql", adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
