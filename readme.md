@@ -1,75 +1,102 @@
 # Leaf
 
-## Set up
+A modern backend project that utilizes a range of tools and libraries for type-safe database queries, GraphQL API, migration management, and more.
 
-- gqlgen : Graphql first type safe
-- goose : db migrations
-- go fiber : fastHTTP web requests
-- pgx v5 : postgresql driver pgx connection pool
-- sqlc : database queries type safe
-- dotenv : defining environment variables
-- validator v10 : input validation and custom messages
-- zerolog : logger for events
+## Key Technologies
 
+- gqlgen: GraphQL-first type-safe server.
+- Goose: Database migrations management.
+- Go Fiber: High-performance web framework using fastHTTP.
+- pgx v5: PostgreSQL driver with connection pooling.
+- sqlc: Type-safe database query generation.
+- dotenv: Manages environment variables.
+- Validator v10: Input validation with custom messages.
+- zerolog: Efficient logging for events and errors.
 
-## Steps to setup
+## Project Setup
 
-### PostgreSQL Database
+Follow the steps below to set up your development environment and get started with the Leaf project.
 
-- Install PostgreSQL 17 and create a database.
-- Set up the dsn in the enviroment variables in .env file.
-- Start the PostgreSQL service or you can you below command to start from command line
-  
-  pg_ctl -D "Dir to pgqlc data" start
+### 1. Set up PostgreSQL Database
 
-- Use below command to create migration. Example users table
-
-  goose -dir ./db/migrations create create_users_table sql
-
-
-- Use below goose command and run the database migrations
-  
-  goose -dir ./db/migrations postgres "postgres://postgres:password@localhost:5432/db_leaf?sslmode=disable" up
-
-- To undo the migration one step use below command
-  
-  goose -dir ./db/migrations postgres "postgres://postgres:password@localhost:5432/db_leaf?sslmode=disable" down
-
-- once migration is completed. You can run
-  
-  go run server.go
-
-### SQLC Install
-
-- Download the sqlc binary to create type safe database queries
-- The sqlc.yml file contains all configuration on path for schema and queries for generation.
-- Define the schema in db/schema
-- Define the queries in db/queries
-- For this project the models, queries and querier are generated under path db/generated
-- Use below command if the generated files does not exist.
-  
-  sqlc generate
-
-
-### gqlgen command
-
-- Project already as gqlgen installed to generate the type safe GraphQL first queries, mutations, model, resolvers, inputs, etc.
-- The gqlgen.yml file contains all the congfiguration for models, resolvers.
-- Use the below command you are setting adding new graphql and model.
-  
-  go run github.com/99designs/gqlgen generate
-
-- The generator reads all the graphl schemas under directory graph/schema/*.graphqls
-  
-  example user.graphqls
-
-- the models are generated under graph/model/models_gen.go and once its generated you can separate common models into separate model files 
-  
-  example user.go for all related to users
-
-- the resolvers are generated under graph/resolvers/{name}.resolvers.go
-  
-  example user.resolvers.go
+1. Install PostgreSQL (version 17 recommended). You can download it from the official PostgreSQL website (https://www.postgresql.org/download/).
+2. Create a new database by running the following commands in your PostgreSQL CLI or a database management tool:
+```sql
+CREATE DATABASE db_leaf;
+```
+3. Configure your environment variables: Add the PostgreSQL connection string (DSN) to your `.env` file:
+```env
+DATABASE_URL=postgres://postgres@localhost:5432/db_leaf?sslmode=disable
+```
+4. Start PostgreSQL: You can start the PostgreSQL service manually by running:
+```cmd
+pg_ctl -D "/path/to/your/pg_data" start
+```
+5. Create a migration: To create a new migration, such as a `users` table, run:
+```sql
+goose -dir ./db/migrations create create_users_table sql
+```
+6. Apply migrations: Run the following command to apply migrations to your PostgreSQL database:
+```cmd
+goose -dir ./db/migrations postgres "postgres://postgres@localhost:5432/db_leaf?sslmode=disable" up
+```
+7. Rollback a migration: If you want to undo the last migration, use:
+```cmd
+goose -dir ./db/migrations postgres "postgres://postgres@localhost:5432/db_leaf?sslmode=disable" down
+```
+8. Reset all migrations: To reset and rollback all migrations, run:
+```cmd
+goose -dir ./db/migrations postgres "postgres://postgres@localhost:5432/db_leaf?sslmode=disable" reset
+```
+9. Start the application: Once migrations are applied, run the application:
 
 
+---
 
+### 2. Install SQLC
+
+SQLC is used to generate type-safe database queries. Follow these steps to set it up:
+
+1. Install SQLC: Download and install SQLC to generate database queries:
+
+2. Configure SQLC: The `sqlc.yml` file contains configuration for your database schema and queries.
+
+3. Define the database schema: Place your SQL schema files in the `db/schema` directory.
+
+4. Define your queries: Write SQL queries in the `db/queries` directory.
+
+5. Generate models and queries: Run the following command to generate type-safe database code:
+```cmd
+sqlc generate
+```
+
+The generated models, queries, and queriers will be placed in the `db/generated` directory.
+
+---
+
+### 3. Set up GraphQL with gqlgen
+
+`gqlgen` is used to generate a type-safe GraphQL API. It provides tools for automatic generation of resolvers, types, and models.
+
+1. Install gqlgen: The project already has `gqlgen` installed. It is used to generate GraphQL queries, mutations, models, resolvers, inputs, and more.
+
+2. Configure gqlgen: The `gqlgen.yml` file contains configuration for the GraphQL models and resolvers.
+
+3. Generate GraphQL code: To generate the types, resolvers, and models, run:
+```cmd
+go run github.com/99designs/gqlgen generate
+```
+
+4. GraphQL Schemas: All GraphQL schemas are located in the `graph/schema/*.graphqls` directory. Example: `user.graphqls`.
+
+5. Generated Models: The models will be generated in `graph/model/models_gen.go`. You can separate them into individual files for better organization (e.g., `user.go` for user-related models).
+
+6. Generated Resolvers: The resolvers are created in `graph/resolvers/{name}.resolvers.go`. Example: `user.resolvers.go`.
+
+---
+
+## Additional Notes
+
+- Environment Variables: You can use a `.env` file to store and manage your environment variables securely.
+- Custom Validation: Use `validator.v10` for custom validation of user input in GraphQL mutations and queries.
+- Logging: The `zerolog` library is used for efficient logging of events and errors throughout the application.
