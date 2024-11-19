@@ -1,0 +1,65 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Role {
+    id: ID!
+    name: String!
+    description: String!
+    createdAt: Int!
+    updatedAt: Int!
+    permissions: [Permission!]!
+    users: [User!]!
+}
+
+type Permission {
+    id: ID!
+    name: String!
+    description: String!
+    createdAt: Int!
+    updatedAt: Int!
+    roles: [Role!]!
+}
+
+
+input CreateRole {
+  name: String!
+  description: String!
+}
+
+input CreatePermission {
+  name: String!
+  description: String!
+}
+
+input UpdateRole {
+  id: ID!
+  name: String!
+  description: String!
+}
+
+input UpdatePermission {
+  id: ID!
+  name: String!
+  description: String!
+}
+
+extend type Query {
+  roles: [Role!]!
+  permissions: [Permission!]!
+  getRole(id: ID!): Role!
+  getPermission(id: ID!): Permission!
+}
+
+extend type Mutation {
+  createRole(input: CreateRole!): Role!
+  updateRole(input: UpdateRole!): Role!
+  deleteRole(id: ID!): Boolean!
+  createPermission(input: CreatePermission!): Permission!
+  updatePermission(input: UpdatePermission!): Permission!
+  deletePermission(id: ID!): Boolean!
+  addRoleToUser(roleId: ID!, userId: ID!): Boolean!
+  removeRoleFromUser(roleId: ID!, userId: ID!): Boolean!
+  addPermissionToRole(roleId: ID!, permissionId: ID!): Boolean!
+  removePermissionFromRole(roleId: ID!, permissionId: ID!): Boolean!
+}

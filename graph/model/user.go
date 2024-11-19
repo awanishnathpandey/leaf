@@ -13,6 +13,7 @@ type User struct {
 	UpdatedAt       int64    `json:"updatedAt"`
 	DeletedAt       *int64   `json:"deletedAt,omitempty"`
 	Groups          []*Group `json:"groups"`
+	Roles           []*Role  `json:"roles"`
 }
 
 type CreateUser struct {

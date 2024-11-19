@@ -120,3 +120,15 @@ models:
     fields:
       groups:
         resolver: true
+      roles:
+        resolver: true
+  Role:
+    fields:
+      users:
+        resolver: true
+      permissions:
+        resolver: true
+  Permission:
+    fields:
+      roles:
+        resolver: true

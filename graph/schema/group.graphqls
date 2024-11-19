@@ -26,7 +26,7 @@ input UpdateGroup {
 
 extend type Query {
   groups: [Group!]!
-  getGroup(id: ID!): Group
+  getGroup(id: ID!): Group!
 }
 
 extend type Mutation {

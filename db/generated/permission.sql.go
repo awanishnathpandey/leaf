@@ -7,7 +7,246 @@ package generated
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const addPermissionToRole = `-- name: AddPermissionToRole :exec
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at) 
+VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 
+ON CONFLICT DO NOTHING
+`
+
+type AddPermissionToRoleParams struct {
+	RoleID       int64 `json:"role_id"`
+	PermissionID int64 `json:"permission_id"`
+}
+
+func (q *Queries) AddPermissionToRole(ctx context.Context, arg AddPermissionToRoleParams) error {
+	_, err := q.db.Exec(ctx, addPermissionToRole, arg.RoleID, arg.PermissionID)
+	return err
+}
+
+const addRoleToUser = `-- name: AddRoleToUser :exec
+INSERT INTO user_roles (role_id, user_id, created_at, updated_at) 
+VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 
+ON CONFLICT DO NOTHING
+`
+
+type AddRoleToUserParams struct {
+	RoleID int64 `json:"role_id"`
+	UserID int64 `json:"user_id"`
+}
+
+func (q *Queries) AddRoleToUser(ctx context.Context, arg AddRoleToUserParams) error {
+	_, err := q.db.Exec(ctx, addRoleToUser, arg.RoleID, arg.UserID)
+	return err
+}
+
+const createPermission = `-- name: CreatePermission :one
+INSERT INTO roles (name, description) 
+VALUES ($1, $2) 
+RETURNING id, name, description, created_at, updated_at
+`
+
+type CreatePermissionParams struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+func (q *Queries) CreatePermission(ctx context.Context, arg CreatePermissionParams) (Role, error) {
+	row := q.db.QueryRow(ctx, createPermission, arg.Name, arg.Description)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createRole = `-- name: CreateRole :one
+INSERT INTO roles (name, description) 
+VALUES ($1, $2) 
+RETURNING id, name, description, created_at, updated_at
+`
+
+type CreateRoleParams struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error) {
+	row := q.db.QueryRow(ctx, createRole, arg.Name, arg.Description)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deletePermission = `-- name: DeletePermission :exec
+DELETE FROM permissions 
+WHERE id = $1
+`
+
+func (q *Queries) DeletePermission(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deletePermission, id)
+	return err
+}
+
+const deleteRole = `-- name: DeleteRole :exec
+DELETE FROM roles 
+WHERE id = $1
+`
+
+func (q *Queries) DeleteRole(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteRole, id)
+	return err
+}
+
+const getPermission = `-- name: GetPermission :one
+SELECT id, name, description, created_at, updated_at 
+FROM permissions 
+WHERE id = $1
+`
+
+func (q *Queries) GetPermission(ctx context.Context, id int64) (Permission, error) {
+	row := q.db.QueryRow(ctx, getPermission, id)
+	var i Permission
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getPermissionsByRoleID = `-- name: GetPermissionsByRoleID :many
+SELECT p.id, p.name, p.description, p.created_at, p.updated_at
+FROM permissions p
+JOIN role_permissions rp ON p.id = rp.permission_id
+WHERE rp.role_id = $1
+`
+
+func (q *Queries) GetPermissionsByRoleID(ctx context.Context, roleID int64) ([]Permission, error) {
+	rows, err := q.db.Query(ctx, getPermissionsByRoleID, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Permission
+	for rows.Next() {
+		var i Permission
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRole = `-- name: GetRole :one
+SELECT id, name, description, created_at, updated_at 
+FROM roles 
+WHERE id = $1
+`
+
+func (q *Queries) GetRole(ctx context.Context, id int64) (Role, error) {
+	row := q.db.QueryRow(ctx, getRole, id)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getRolesByPermissionID = `-- name: GetRolesByPermissionID :many
+SELECT r.id, r.name, r.description, r.created_at, r.updated_at
+FROM roles r
+JOIN role_permissions rp ON r.id = rp.role_id
+WHERE rp.permission_id = $1
+`
+
+func (q *Queries) GetRolesByPermissionID(ctx context.Context, permissionID int64) ([]Role, error) {
+	rows, err := q.db.Query(ctx, getRolesByPermissionID, permissionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Role
+	for rows.Next() {
+		var i Role
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRolesByUserID = `-- name: GetRolesByUserID :many
+SELECT r.id, r.name, r.description, r.created_at, r.updated_at
+FROM roles r
+JOIN user_roles ur ON r.id = ur.role_id
+WHERE ur.user_id = $1
+`
+
+func (q *Queries) GetRolesByUserID(ctx context.Context, userID int64) ([]Role, error) {
+	rows, err := q.db.Query(ctx, getRolesByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Role
+	for rows.Next() {
+		var i Role
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const getUserPermissions = `-- name: GetUserPermissions :many
 SELECT p.name
@@ -35,4 +274,177 @@ func (q *Queries) GetUserPermissions(ctx context.Context, userID int64) ([]strin
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUsersByRoleID = `-- name: GetUsersByRoleID :many
+SELECT u.id, u.name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
+FROM users u
+JOIN user_roles ur ON u.id = ur.user_id
+WHERE ur.role_id = $1
+`
+
+type GetUsersByRoleIDRow struct {
+	ID              int64       `json:"id"`
+	Name            string      `json:"name"`
+	Email           string      `json:"email"`
+	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
+	LastSeenAt      int64       `json:"last_seen_at"`
+	CreatedAt       int64       `json:"created_at"`
+	UpdatedAt       int64       `json:"updated_at"`
+	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+}
+
+func (q *Queries) GetUsersByRoleID(ctx context.Context, roleID int64) ([]GetUsersByRoleIDRow, error) {
+	rows, err := q.db.Query(ctx, getUsersByRoleID, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUsersByRoleIDRow
+	for rows.Next() {
+		var i GetUsersByRoleIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.EmailVerifiedAt,
+			&i.LastSeenAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPermissions = `-- name: ListPermissions :many
+SELECT id, name, description, created_at, updated_at FROM permissions
+ORDER BY name
+`
+
+func (q *Queries) ListPermissions(ctx context.Context) ([]Permission, error) {
+	rows, err := q.db.Query(ctx, listPermissions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Permission
+	for rows.Next() {
+		var i Permission
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRoles = `-- name: ListRoles :many
+SELECT id, name, description, created_at, updated_at FROM roles
+ORDER BY name
+`
+
+func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
+	rows, err := q.db.Query(ctx, listRoles)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Role
+	for rows.Next() {
+		var i Role
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const removePermissionFromRole = `-- name: RemovePermissionFromRole :exec
+DELETE FROM role_permissions 
+WHERE role_id = $1 AND permission_id = $2
+`
+
+type RemovePermissionFromRoleParams struct {
+	RoleID       int64 `json:"role_id"`
+	PermissionID int64 `json:"permission_id"`
+}
+
+func (q *Queries) RemovePermissionFromRole(ctx context.Context, arg RemovePermissionFromRoleParams) error {
+	_, err := q.db.Exec(ctx, removePermissionFromRole, arg.RoleID, arg.PermissionID)
+	return err
+}
+
+const removeRoleFromUser = `-- name: RemoveRoleFromUser :exec
+DELETE FROM user_roles 
+WHERE role_id = $1 AND user_id = $2
+`
+
+type RemoveRoleFromUserParams struct {
+	RoleID int64 `json:"role_id"`
+	UserID int64 `json:"user_id"`
+}
+
+func (q *Queries) RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUserParams) error {
+	_, err := q.db.Exec(ctx, removeRoleFromUser, arg.RoleID, arg.UserID)
+	return err
+}
+
+const updatePermission = `-- name: UpdatePermission :exec
+UPDATE permissions 
+SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW())
+WHERE id = $3
+`
+
+type UpdatePermissionParams struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ID          int64  `json:"id"`
+}
+
+func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
+	_, err := q.db.Exec(ctx, updatePermission, arg.Name, arg.Description, arg.ID)
+	return err
+}
+
+const updateRole = `-- name: UpdateRole :exec
+UPDATE roles 
+SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW())
+WHERE id = $3
+`
+
+type UpdateRoleParams struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ID          int64  `json:"id"`
+}
+
+func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) error {
+	_, err := q.db.Exec(ctx, updateRole, arg.Name, arg.Description, arg.ID)
+	return err
 }

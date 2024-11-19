@@ -11,15 +11,21 @@ import (
 type Querier interface {
 	AddFileToGroup(ctx context.Context, arg AddFileToGroupParams) error
 	AddFolderToGroup(ctx context.Context, arg AddFolderToGroupParams) error
+	AddPermissionToRole(ctx context.Context, arg AddPermissionToRoleParams) error
+	AddRoleToUser(ctx context.Context, arg AddRoleToUserParams) error
 	AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error
 	CheckHealth(ctx context.Context) error
 	CreateFile(ctx context.Context, arg CreateFileParams) (File, error)
 	CreateFolder(ctx context.Context, arg CreateFolderParams) (Folder, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
+	CreatePermission(ctx context.Context, arg CreatePermissionParams) (Role, error)
+	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteFile(ctx context.Context, id int64) error
 	DeleteFolder(ctx context.Context, id int64) error
 	DeleteGroup(ctx context.Context, id int64) error
+	DeletePermission(ctx context.Context, id int64) error
+	DeleteRole(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
 	GetFile(ctx context.Context, id int64) (File, error)
 	GetFilesByFolder(ctx context.Context, folderID int64) ([]File, error)
@@ -31,21 +37,33 @@ type Querier interface {
 	GetGroupsByFileID(ctx context.Context, fileID int64) ([]Group, error)
 	GetGroupsByFolderID(ctx context.Context, folderID int64) ([]Group, error)
 	GetGroupsByUserID(ctx context.Context, userID int64) ([]Group, error)
+	GetPermission(ctx context.Context, id int64) (Permission, error)
+	GetPermissionsByRoleID(ctx context.Context, roleID int64) ([]Permission, error)
+	GetRole(ctx context.Context, id int64) (Role, error)
+	GetRolesByPermissionID(ctx context.Context, permissionID int64) ([]Role, error)
+	GetRolesByUserID(ctx context.Context, userID int64) ([]Role, error)
 	GetUser(ctx context.Context, id int64) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserPermissions(ctx context.Context, userID int64) ([]string, error)
 	GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUsersByGroupIDRow, error)
+	GetUsersByRoleID(ctx context.Context, roleID int64) ([]GetUsersByRoleIDRow, error)
 	ListFiles(ctx context.Context) ([]File, error)
 	ListFolders(ctx context.Context) ([]Folder, error)
 	ListGroups(ctx context.Context) ([]Group, error)
+	ListPermissions(ctx context.Context) ([]Permission, error)
+	ListRoles(ctx context.Context) ([]Role, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	RegisterUser(ctx context.Context, arg RegisterUserParams) (User, error)
 	RemoveFileFromGroup(ctx context.Context, arg RemoveFileFromGroupParams) error
 	RemoveFolderFromGroup(ctx context.Context, arg RemoveFolderFromGroupParams) error
+	RemovePermissionFromRole(ctx context.Context, arg RemovePermissionFromRoleParams) error
+	RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUserParams) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
 	UpdateFile(ctx context.Context, arg UpdateFileParams) (File, error)
 	UpdateFolder(ctx context.Context, arg UpdateFolderParams) error
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) error
+	UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error
+	UpdateRole(ctx context.Context, arg UpdateRoleParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpdateUserEmailVerifiedAt(ctx context.Context, id int64) error
 	UpdateUserLastSeenAt(ctx context.Context, id int64) error

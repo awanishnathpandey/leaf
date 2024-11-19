@@ -124,7 +124,7 @@ func (r *mutationResolver) UpdateGroup(ctx context.Context, input model.UpdateGr
 		return nil, fmt.Errorf("failed to update group: %w", err)
 	}
 
-	// Fetch the updated folder
+	// Fetch the updated group
 	updatedGroup, err := r.DB.GetGroup(ctx, input.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve updated group: %w", err)
@@ -303,7 +303,7 @@ func (r *mutationResolver) RemoveFileFromGroup(ctx context.Context, groupID int6
 // Groups is the resolver for the groups field.
 func (r *queryResolver) Groups(ctx context.Context) ([]*model.Group, error) {
 	// Fetch groups using sqlc
-	rows, err := r.DB.ListGroups(ctx) // Assuming ListFolders is the sqlc query method
+	rows, err := r.DB.ListGroups(ctx) // Assuming ListGroups is the sqlc query method
 	if err != nil {
 		return nil, err
 	}

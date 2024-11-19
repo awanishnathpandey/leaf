@@ -13,6 +13,7 @@ type User {
   updatedAt: Int!
   deletedAt: Int
   groups: [Group!]!
+  roles: [Role!]!
 }
 
 input CreateUser {

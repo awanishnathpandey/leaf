@@ -208,6 +208,26 @@ func (r *userResolver) Groups(ctx context.Context, obj *model.User) ([]*model.Gr
 	return result, nil
 }
 
+// Roles is the resolver for the roles field.
+func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*model.Role, error) {
+	roles, err := r.DB.GetRolesByUserID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch roles for user %d: %w", obj.ID, err)
+	}
+
+	var result []*model.Role
+	for _, role := range roles {
+		result = append(result, &model.Role{
+			ID:          role.ID,
+			Name:        role.Name,
+			Description: role.Description,
+			CreatedAt:   role.CreatedAt,
+			UpdatedAt:   role.UpdatedAt,
+		})
+	}
+	return result, nil
+}
+
 // User returns graph.UserResolver implementation.
 func (r *Resolver) User() graph.UserResolver { return &userResolver{r} }
 
