@@ -93,7 +93,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
-		Users       func(childComplexity int, first int64, after *string, filter *model.UserFilter, sort *model.UserSort) int
+		Users       func(childComplexity int, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) int
 	}
 
 	LoginResponse struct {
@@ -168,7 +168,7 @@ type ComplexityRoot struct {
 		Me               func(childComplexity int) int
 		Permissions      func(childComplexity int) int
 		Roles            func(childComplexity int) int
-		Users            func(childComplexity int, first int64, after *string, filter *model.UserFilter, sort *model.UserSort) int
+		Users            func(childComplexity int, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) int
 	}
 
 	Role struct {
@@ -214,7 +214,7 @@ type FolderResolver interface {
 	Files(ctx context.Context, obj *model.Folder) ([]*model.File, error)
 }
 type GroupResolver interface {
-	Users(ctx context.Context, obj *model.Group, first int64, after *string, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error)
+	Users(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error)
 	Folders(ctx context.Context, obj *model.Group) ([]*model.Folder, error)
 	Files(ctx context.Context, obj *model.Group) ([]*model.File, error)
 }
@@ -271,7 +271,7 @@ type QueryResolver interface {
 	Permissions(ctx context.Context) ([]*model.Permission, error)
 	GetRole(ctx context.Context, id int64) (*model.Role, error)
 	GetPermission(ctx context.Context, id int64) (*model.Permission, error)
-	Users(ctx context.Context, first int64, after *string, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error)
+	Users(ctx context.Context, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error)
 	GetUser(ctx context.Context, id int64) (*model.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 }
@@ -523,7 +523,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Group.Users(childComplexity, args["first"].(int64), args["after"].(*string), args["filter"].(*model.UserFilter), args["sort"].(*model.UserSort)), true
+		return e.complexity.Group.Users(childComplexity, args["first"].(int64), args["after"].(*int64), args["filter"].(*model.UserFilter), args["sort"].(*model.UserSort)), true
 
 	case "LoginResponse.token":
 		if e.complexity.LoginResponse.Token == nil {
@@ -1163,7 +1163,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Users(childComplexity, args["first"].(int64), args["after"].(*string), args["filter"].(*model.UserFilter), args["sort"].(*model.UserSort)), true
+		return e.complexity.Query.Users(childComplexity, args["first"].(int64), args["after"].(*int64), args["filter"].(*model.UserFilter), args["sort"].(*model.UserSort)), true
 
 	case "Role.createdAt":
 		if e.complexity.Role.CreatedAt == nil {
@@ -1508,13 +1508,13 @@ func (ec *executionContext) field_Group_users_argsFirst(
 func (ec *executionContext) field_Group_users_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (*string, error) {
+) (*int64, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+		return ec.unmarshalOInt2ᚖint64(ctx, tmp)
 	}
 
-	var zeroVal *string
+	var zeroVal *int64
 	return zeroVal, nil
 }
 
@@ -2777,13 +2777,13 @@ func (ec *executionContext) field_Query_users_argsFirst(
 func (ec *executionContext) field_Query_users_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (*string, error) {
+) (*int64, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+		return ec.unmarshalOInt2ᚖint64(ctx, tmp)
 	}
 
-	var zeroVal *string
+	var zeroVal *int64
 	return zeroVal, nil
 }
 
@@ -4187,7 +4187,7 @@ func (ec *executionContext) _Group_users(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Group().Users(rctx, obj, fc.Args["first"].(int64), fc.Args["after"].(*string), fc.Args["filter"].(*model.UserFilter), fc.Args["sort"].(*model.UserSort))
+		return ec.resolvers.Group().Users(rctx, obj, fc.Args["first"].(int64), fc.Args["after"].(*int64), fc.Args["filter"].(*model.UserFilter), fc.Args["sort"].(*model.UserSort))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7829,7 +7829,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx, fc.Args["first"].(int64), fc.Args["after"].(*string), fc.Args["filter"].(*model.UserFilter), fc.Args["sort"].(*model.UserSort))
+		return ec.resolvers.Query().Users(rctx, fc.Args["first"].(int64), fc.Args["after"].(*int64), fc.Args["filter"].(*model.UserFilter), fc.Args["sort"].(*model.UserSort))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

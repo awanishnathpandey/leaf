@@ -17,15 +17,11 @@ import (
 )
 
 // Users is the resolver for the users field.
-func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64, after *string, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
+func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
 	// Decode the cursor (if provided)
-	var offset int
-	if after != nil {
-		cursor, err := strconv.Atoi(*after) // Convert string cursor to int
-		if err != nil {
-			return nil, fmt.Errorf("invalid cursor: %v", err)
-		}
-		offset = cursor
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
 	// Prepare sorting
@@ -64,7 +60,7 @@ func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64
 	edges := make([]*model.UserEdge, len(users))
 	for i, user := range users {
 		edges[i] = &model.UserEdge{
-			Cursor: strconv.Itoa(offset + i + 1), // Create cursor from index
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
 			Node: &model.User{
 				ID:              user.ID,
 				Name:            user.Name,

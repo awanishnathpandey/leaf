@@ -68,7 +68,7 @@ type PageInfo {
 extend type Query {
   users(
     first: Int!
-    after: String
+    after: Int
     filter: UserFilter
     sort: UserSort
   ): UserConnection!

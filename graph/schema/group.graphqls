@@ -8,7 +8,7 @@ type Group {
     description: String!
     createdAt: Int!
     updatedAt: Int!
-    users(first: Int!, after: String, filter: UserFilter, sort: UserSort): UserConnection!
+    users(first: Int!, after: Int, filter: UserFilter, sort: UserSort): UserConnection!
     folders: [Folder!]!
     files: [File!]!
 }
