@@ -10,7 +10,7 @@ type Group {
     updatedAt: Int!
     users(first: Int!, after: Int, filter: UserFilter, sort: UserSort): UserConnection!
     folders: [Folder!]!
-    files: [File!]!
+    files(first: Int!, after: Int, filter: FileFilter, sort: FileSort): FileConnection!
 }
 
 input CreateGroup {

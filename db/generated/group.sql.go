@@ -280,6 +280,90 @@ func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group,
 	return items, nil
 }
 
+const getPaginatedFilesByGroupID = `-- name: GetPaginatedFilesByGroupID :many
+SELECT id, name, slug, url, folder_id, f.created_at, f.updated_at, group_id, file_id, gf.created_at, gf.updated_at FROM files f
+JOIN group_files gf ON f.id = gf.file_id
+WHERE 
+    gf.group_id = $3  -- Filter by group_id
+    AND (coalesce($4, '') = '' OR f.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR f.slug ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN f.name 
+        WHEN $6 = 'SLUG' AND $7 = 'ASC' THEN f.slug 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN f.name 
+        WHEN $6 = 'SLUG' AND $7 = 'DESC' THEN f.slug 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedFilesByGroupIDParams struct {
+	Limit      int32       `json:"limit"`
+	Offset     int32       `json:"offset"`
+	GroupID    pgtype.Int8 `json:"group_id"`
+	NameFilter interface{} `json:"name_filter"`
+	SlugFilter interface{} `json:"slug_filter"`
+	SortField  interface{} `json:"sort_field"`
+	SortOrder  interface{} `json:"sort_order"`
+}
+
+type GetPaginatedFilesByGroupIDRow struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Url         string `json:"url"`
+	FolderID    int64  `json:"folder_id"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+	GroupID     int64  `json:"group_id"`
+	FileID      int64  `json:"file_id"`
+	CreatedAt_2 int64  `json:"created_at_2"`
+	UpdatedAt_2 int64  `json:"updated_at_2"`
+}
+
+func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginatedFilesByGroupIDParams) ([]GetPaginatedFilesByGroupIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedFilesByGroupID,
+		arg.Limit,
+		arg.Offset,
+		arg.GroupID,
+		arg.NameFilter,
+		arg.SlugFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPaginatedFilesByGroupIDRow
+	for rows.Next() {
+		var i GetPaginatedFilesByGroupIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Url,
+			&i.FolderID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.GroupID,
+			&i.FileID,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPaginatedUsersByGroupID = `-- name: GetPaginatedUsersByGroupID :many
 SELECT 
     u.id, 

@@ -108,24 +108,72 @@ func (r *groupResolver) Folders(ctx context.Context, obj *model.Group) ([]*model
 }
 
 // Files is the resolver for the files field.
-func (r *groupResolver) Files(ctx context.Context, obj *model.Group) ([]*model.File, error) {
-	files, err := r.DB.GetFilesByGroupID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch files for group %d: %w", obj.ID, err)
+func (r *groupResolver) Files(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
-	var result []*model.File
-	for _, file := range files {
-		result = append(result, &model.File{
-			ID:        file.ID,
-			Name:      file.Name,
-			Slug:      file.Slug,
-			URL:       file.Url,
-			CreatedAt: file.CreatedAt,
-			UpdatedAt: file.UpdatedAt,
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, slugFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		slugFilter = filter.Slug
+	}
+
+	// Fetch users using the SQL query method for group ID
+	files, err := r.DB.GetPaginatedFilesByGroupID(ctx, generated.GetPaginatedFilesByGroupIDParams{
+		GroupID:    pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:      int32(first),                            // Limit based on 'first' argument
+		Offset:     int32(offset),                           // Offset based on 'after' cursor
+		NameFilter: nameFilter,                              // Name filter (optional)
+		SlugFilter: slugFilter,                              // Slug filter (optional)
+		SortField:  sortField,                               // Sorting field
+		SortOrder:  sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch files for group %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.FileEdge, len(files))
+	for i, file := range files {
+		edges[i] = &model.FileEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.File{
+				ID:        file.ID,
+				Name:      file.Name,
+				Slug:      file.Slug,
+				URL:       file.Url,
+				FolderID:  file.FolderID,
+				CreatedAt: file.CreatedAt,
+				UpdatedAt: file.UpdatedAt,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(files) == int(first)
+
+	return &model.FileConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // CreateGroup is the resolver for the createGroup field.
@@ -310,9 +358,9 @@ func (r *mutationResolver) AddFileToGroup(ctx context.Context, groupID int64, fi
 	}
 
 	// Check if the file exists
-	_, err := r.DB.GetFolder(ctx, fileID)
+	_, err := r.DB.GetFile(ctx, fileID)
 	if err != nil {
-		return false, fmt.Errorf("folder not found: %w", err)
+		return false, fmt.Errorf("file not found: %w", err)
 	}
 
 	err = r.DB.AddFileToGroup(ctx, generated.AddFileToGroupParams{

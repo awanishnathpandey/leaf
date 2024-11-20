@@ -13,7 +13,7 @@ type Group struct {
 	UpdatedAt   int64           `json:"updatedAt"`
 	Users       *UserConnection `json:"users"`
 	Folders     []*Folder       `json:"folders"`
-	Files       []*File         `json:"files"`
+	Files       *FileConnection `json:"files"`
 }
 
 type UpdateGroup struct {
