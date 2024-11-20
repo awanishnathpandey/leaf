@@ -7,6 +7,7 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
@@ -138,7 +139,7 @@ func (r *mutationResolver) DeleteFolder(ctx context.Context, id int64) (bool, er
 }
 
 // Folders is the resolver for the folders field.
-func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {
+func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) (*model.FolderConnection, error) {
 	// Define the required permissions for this action
 	requiredPermissions := []string{"all", "read_folder"}
 
@@ -146,26 +147,71 @@ func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {
 	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
-	// Fetch folders using sqlc
-	rows, err := r.DB.ListFolders(ctx) // Assuming ListFolders is the sqlc query method
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
+	}
+
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
+	}
+
+	// Prepare sorting
+	sortOrder := "ASC" // Default sort field
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, slugFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		slugFilter = filter.Slug
+		descriptionFilter = filter.Description
+	}
+	// Fetch users using sqlc
+	folders, err := r.DB.PaginatedFolders(ctx, generated.PaginatedFoldersParams{
+		Limit:             int32(first),
+		Offset:            int32(offset),
+		NameFilter:        nameFilter,
+		SlugFilter:        slugFilter,
+		DescriptionFilter: descriptionFilter,
+		SortField:         sortField,
+		SortOrder:         sortOrder,
+	}) // Assuming ListFiles is the sqlc query method
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query files: %v", err)
 	}
 
-	// Map sqlc rows to GraphQL models
-	var folders []*model.Folder
-	for _, row := range rows {
-		folders = append(folders, &model.Folder{
-			ID:          row.ID,
-			Name:        row.Name,
-			Slug:        row.Slug,
-			Description: row.Description,
-			CreatedAt:   row.CreatedAt, // Or use row.CreatedAt.Time.String()
-			UpdatedAt:   row.UpdatedAt, // Or use row.UpdatedAt.Time.String()
-		})
+	// Prepare edges and PageInfo
+	edges := make([]*model.FolderEdge, len(folders))
+	for i, folder := range folders {
+		edges[i] = &model.FolderEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Folder{
+				ID:          folder.ID,
+				Name:        folder.Name,
+				Slug:        folder.Slug,
+				Description: folder.Description,
+				CreatedAt:   folder.CreatedAt,
+				UpdatedAt:   folder.UpdatedAt,
+			},
+		}
 	}
 
-	return folders, nil
+	// Calculate hasNextPage
+	hasNextPage := len(folders) == int(first)
+
+	return &model.FolderConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // GetFolder is the resolver for the getFolder field.

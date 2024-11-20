@@ -24,3 +24,23 @@ WHERE id = $1;
 -- name: DeleteFolder :exec
 DELETE FROM folders
 WHERE id = $1;
+
+-- name: PaginatedFolders :many
+SELECT * FROM folders
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR slug ILIKE '%' || sqlc.narg(slug_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'SLUG' AND sqlc.narg(sort_order) = 'ASC' THEN slug 
+        WHEN sqlc.narg(sort_field) = 'DESCRPITION' AND sqlc.narg(sort_order) = 'ASC' THEN description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'SLUG' AND sqlc.narg(sort_order) = 'DESC' THEN slug 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN description 
+    END DESC
+LIMIT $1
+OFFSET $2;

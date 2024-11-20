@@ -9,7 +9,7 @@ type Group {
     createdAt: Int!
     updatedAt: Int!
     users(first: Int!, after: Int, filter: UserFilter, sort: UserSort): UserConnection!
-    folders: [Folder!]!
+    folders(first: Int!, after: Int, filter: FolderFilter, sort: FolderSort): FolderConnection!
     files(first: Int!, after: Int, filter: FileFilter, sort: FileSort): FileConnection!
 }
 

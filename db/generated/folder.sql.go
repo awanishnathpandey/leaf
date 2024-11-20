@@ -101,6 +101,72 @@ func (q *Queries) ListFolders(ctx context.Context) ([]Folder, error) {
 	return items, nil
 }
 
+const paginatedFolders = `-- name: PaginatedFolders :many
+SELECT id, name, slug, description, created_at, updated_at FROM folders
+WHERE 
+    (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
+    AND (coalesce($4, '') = '' OR slug ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR description ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN name 
+        WHEN $6 = 'SLUG' AND $7 = 'ASC' THEN slug 
+        WHEN $6 = 'DESCRPITION' AND $7 = 'ASC' THEN description 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN name 
+        WHEN $6 = 'SLUG' AND $7 = 'DESC' THEN slug 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'DESC' THEN description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type PaginatedFoldersParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	NameFilter        interface{} `json:"name_filter"`
+	SlugFilter        interface{} `json:"slug_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+func (q *Queries) PaginatedFolders(ctx context.Context, arg PaginatedFoldersParams) ([]Folder, error) {
+	rows, err := q.db.Query(ctx, paginatedFolders,
+		arg.Limit,
+		arg.Offset,
+		arg.NameFilter,
+		arg.SlugFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Folder
+	for rows.Next() {
+		var i Folder
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateFolder = `-- name: UpdateFolder :exec
 UPDATE folders
   set name = $2, slug = $3, description = $4, updated_at = EXTRACT(EPOCH FROM NOW())

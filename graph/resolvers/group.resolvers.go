@@ -87,24 +87,73 @@ func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64
 }
 
 // Folders is the resolver for the folders field.
-func (r *groupResolver) Folders(ctx context.Context, obj *model.Group) ([]*model.Folder, error) {
-	folders, err := r.DB.GetFoldersByGroupID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch folders for group %d: %w", obj.ID, err)
+func (r *groupResolver) Folders(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) (*model.FolderConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
-	var result []*model.Folder
-	for _, folder := range folders {
-		result = append(result, &model.Folder{
-			ID:          folder.ID,
-			Name:        folder.Name,
-			Slug:        folder.Slug,
-			Description: folder.Description,
-			CreatedAt:   folder.CreatedAt,
-			UpdatedAt:   folder.UpdatedAt,
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, slugFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		slugFilter = filter.Slug
+		descriptionFilter = filter.Description
+	}
+
+	// Fetch users using the SQL query method for group ID
+	folders, err := r.DB.GetPaginatedFoldersByGroupID(ctx, generated.GetPaginatedFoldersByGroupIDParams{
+		GroupID:           pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:             int32(first),                            // Limit based on 'first' argument
+		Offset:            int32(offset),                           // Offset based on 'after' cursor
+		NameFilter:        nameFilter,                              // Name filter (optional)
+		SlugFilter:        slugFilter,                              // Slug filter (optional)
+		DescriptionFilter: descriptionFilter,                       // Slug filter (optional)
+		SortField:         sortField,                               // Sorting field
+		SortOrder:         sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch folders for group %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.FolderEdge, len(folders))
+	for i, folder := range folders {
+		edges[i] = &model.FolderEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Folder{
+				ID:          folder.ID,
+				Name:        folder.Name,
+				Slug:        folder.Slug,
+				Description: folder.Description,
+				CreatedAt:   folder.CreatedAt,
+				UpdatedAt:   folder.UpdatedAt,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(folders) == int(first)
+
+	return &model.FolderConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // Files is the resolver for the files field.

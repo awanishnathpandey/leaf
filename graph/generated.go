@@ -95,11 +95,21 @@ type ComplexityRoot struct {
 		UpdatedAt   func(childComplexity int) int
 	}
 
+	FolderConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	FolderEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Group struct {
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
 		Files       func(childComplexity int, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) int
-		Folders     func(childComplexity int) int
+		Folders     func(childComplexity int, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
@@ -165,7 +175,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Files            func(childComplexity int, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) int
-		Folders          func(childComplexity int) int
+		Folders          func(childComplexity int, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) int
 		GetFile          func(childComplexity int, id int64) int
 		GetFilesByFolder func(childComplexity int, folderID int64) int
 		GetFolder        func(childComplexity int, id int64) int
@@ -225,7 +235,7 @@ type FolderResolver interface {
 }
 type GroupResolver interface {
 	Users(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error)
-	Folders(ctx context.Context, obj *model.Group) ([]*model.Folder, error)
+	Folders(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) (*model.FolderConnection, error)
 	Files(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error)
 }
 type MutationResolver interface {
@@ -273,7 +283,7 @@ type QueryResolver interface {
 	Files(ctx context.Context, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error)
 	GetFile(ctx context.Context, id int64) (*model.File, error)
 	GetFilesByFolder(ctx context.Context, folderID int64) ([]*model.File, error)
-	Folders(ctx context.Context) ([]*model.Folder, error)
+	Folders(ctx context.Context, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) (*model.FolderConnection, error)
 	GetFolder(ctx context.Context, id int64) (*model.Folder, error)
 	Groups(ctx context.Context) ([]*model.Group, error)
 	GetGroup(ctx context.Context, id int64) (*model.Group, error)
@@ -502,6 +512,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Folder.UpdatedAt(childComplexity), true
 
+	case "FolderConnection.edges":
+		if e.complexity.FolderConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.FolderConnection.Edges(childComplexity), true
+
+	case "FolderConnection.pageInfo":
+		if e.complexity.FolderConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.FolderConnection.PageInfo(childComplexity), true
+
+	case "FolderEdge.cursor":
+		if e.complexity.FolderEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.FolderEdge.Cursor(childComplexity), true
+
+	case "FolderEdge.node":
+		if e.complexity.FolderEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.FolderEdge.Node(childComplexity), true
+
 	case "Group.createdAt":
 		if e.complexity.Group.CreatedAt == nil {
 			break
@@ -533,7 +571,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Group.Folders(childComplexity), true
+		args, err := ec.field_Group_folders_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Group.Folders(childComplexity, args["first"].(int64), args["after"].(*int64), args["filter"].(*model.FolderFilter), args["sort"].(*model.FolderSort)), true
 
 	case "Group.id":
 		if e.complexity.Group.ID == nil {
@@ -1075,7 +1118,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Folders(childComplexity), true
+		args, err := ec.field_Query_folders_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Folders(childComplexity, args["first"].(int64), args["after"].(*int64), args["filter"].(*model.FolderFilter), args["sort"].(*model.FolderSort)), true
 
 	case "Query.getFile":
 		if e.complexity.Query.GetFile == nil {
@@ -1383,6 +1431,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateUser,
 		ec.unmarshalInputFileFilter,
 		ec.unmarshalInputFileSort,
+		ec.unmarshalInputFolderFilter,
+		ec.unmarshalInputFolderSort,
 		ec.unmarshalInputUpdateFile,
 		ec.unmarshalInputUpdateFolder,
 		ec.unmarshalInputUpdateGroup,
@@ -1591,6 +1641,83 @@ func (ec *executionContext) field_Group_files_argsSort(
 	}
 
 	var zeroVal *model.FileSort
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Group_folders_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Group_folders_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Group_folders_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Group_folders_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg2
+	arg3, err := ec.field_Group_folders_argsSort(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["sort"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Group_folders_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (int64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalNInt2int64(ctx, tmp)
+	}
+
+	var zeroVal int64
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Group_folders_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOInt2ᚖint64(ctx, tmp)
+	}
+
+	var zeroVal *int64
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Group_folders_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.FolderFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOFolderFilter2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderFilter(ctx, tmp)
+	}
+
+	var zeroVal *model.FolderFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Group_folders_argsSort(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.FolderSort, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
+	if tmp, ok := rawArgs["sort"]; ok {
+		return ec.unmarshalOFolderSort2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderSort(ctx, tmp)
+	}
+
+	var zeroVal *model.FolderSort
 	return zeroVal, nil
 }
 
@@ -2753,6 +2880,83 @@ func (ec *executionContext) field_Query_files_argsSort(
 	}
 
 	var zeroVal *model.FileSort
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_folders_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_folders_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Query_folders_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Query_folders_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg2
+	arg3, err := ec.field_Query_folders_argsSort(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["sort"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Query_folders_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (int64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalNInt2int64(ctx, tmp)
+	}
+
+	var zeroVal int64
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_folders_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOInt2ᚖint64(ctx, tmp)
+	}
+
+	var zeroVal *int64
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_folders_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.FolderFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOFolderFilter2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderFilter(ctx, tmp)
+	}
+
+	var zeroVal *model.FolderFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_folders_argsSort(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.FolderSort, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
+	if tmp, ok := rawArgs["sort"]; ok {
+		return ec.unmarshalOFolderSort2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderSort(ctx, tmp)
+	}
+
+	var zeroVal *model.FolderSort
 	return zeroVal, nil
 }
 
@@ -4365,6 +4569,212 @@ func (ec *executionContext) fieldContext_Folder_files(_ context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _FolderConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.FolderConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FolderConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.FolderEdge)
+	fc.Result = res
+	return ec.marshalNFolderEdge2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FolderConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FolderConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_FolderEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_FolderEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FolderEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FolderConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.FolderConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FolderConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FolderConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FolderConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FolderEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.FolderEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FolderEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FolderEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FolderEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FolderEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.FolderEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FolderEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Folder)
+	fc.Result = res
+	return ec.marshalNFolder2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolder(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FolderEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FolderEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Folder_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Folder_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Folder_slug(ctx, field)
+			case "description":
+				return ec.fieldContext_Folder_description(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Folder_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Folder_updatedAt(ctx, field)
+			case "groups":
+				return ec.fieldContext_Folder_groups(ctx, field)
+			case "files":
+				return ec.fieldContext_Folder_files(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Folder", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Group_id(ctx context.Context, field graphql.CollectedField, obj *model.Group) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Group_id(ctx, field)
 	if err != nil {
@@ -4660,7 +5070,7 @@ func (ec *executionContext) _Group_folders(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Group().Folders(rctx, obj)
+		return ec.resolvers.Group().Folders(rctx, obj, fc.Args["first"].(int64), fc.Args["after"].(*int64), fc.Args["filter"].(*model.FolderFilter), fc.Args["sort"].(*model.FolderSort))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4672,12 +5082,12 @@ func (ec *executionContext) _Group_folders(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Folder)
+	res := resTmp.(*model.FolderConnection)
 	fc.Result = res
-	return ec.marshalNFolder2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderᚄ(ctx, field.Selections, res)
+	return ec.marshalNFolderConnection2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_folders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_folders(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -4685,25 +5095,24 @@ func (ec *executionContext) fieldContext_Group_folders(_ context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Folder_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Folder_name(ctx, field)
-			case "slug":
-				return ec.fieldContext_Folder_slug(ctx, field)
-			case "description":
-				return ec.fieldContext_Folder_description(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Folder_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Folder_updatedAt(ctx, field)
-			case "groups":
-				return ec.fieldContext_Folder_groups(ctx, field)
-			case "files":
-				return ec.fieldContext_Folder_files(ctx, field)
+			case "edges":
+				return ec.fieldContext_FolderConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_FolderConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Folder", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type FolderConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Group_folders_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -7707,7 +8116,7 @@ func (ec *executionContext) _Query_folders(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Folders(rctx)
+		return ec.resolvers.Query().Folders(rctx, fc.Args["first"].(int64), fc.Args["after"].(*int64), fc.Args["filter"].(*model.FolderFilter), fc.Args["sort"].(*model.FolderSort))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7719,12 +8128,12 @@ func (ec *executionContext) _Query_folders(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Folder)
+	res := resTmp.(*model.FolderConnection)
 	fc.Result = res
-	return ec.marshalNFolder2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderᚄ(ctx, field.Selections, res)
+	return ec.marshalNFolderConnection2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_folders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_folders(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -7732,25 +8141,24 @@ func (ec *executionContext) fieldContext_Query_folders(_ context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Folder_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Folder_name(ctx, field)
-			case "slug":
-				return ec.fieldContext_Folder_slug(ctx, field)
-			case "description":
-				return ec.fieldContext_Folder_description(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Folder_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Folder_updatedAt(ctx, field)
-			case "groups":
-				return ec.fieldContext_Folder_groups(ctx, field)
-			case "files":
-				return ec.fieldContext_Folder_files(ctx, field)
+			case "edges":
+				return ec.fieldContext_FolderConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_FolderConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Folder", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type FolderConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_folders_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11712,6 +12120,81 @@ func (ec *executionContext) unmarshalInputFileSort(ctx context.Context, obj inte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputFolderFilter(ctx context.Context, obj interface{}) (model.FolderFilter, error) {
+	var it model.FolderFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "slug", "description"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "slug":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Slug = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputFolderSort(ctx context.Context, obj interface{}) (model.FolderSort, error) {
+	var it model.FolderSort
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"field", "order"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNFolderSortField2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderSortField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "order":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
+			data, err := ec.unmarshalNSortOrder2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐSortOrder(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Order = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateFile(ctx context.Context, obj interface{}) (model.UpdateFile, error) {
 	var it model.UpdateFile
 	asMap := map[string]interface{}{}
@@ -12593,6 +13076,94 @@ func (ec *executionContext) _Folder(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var folderConnectionImplementors = []string{"FolderConnection"}
+
+func (ec *executionContext) _FolderConnection(ctx context.Context, sel ast.SelectionSet, obj *model.FolderConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, folderConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FolderConnection")
+		case "edges":
+			out.Values[i] = ec._FolderConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._FolderConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var folderEdgeImplementors = []string{"FolderEdge"}
+
+func (ec *executionContext) _FolderEdge(ctx context.Context, sel ast.SelectionSet, obj *model.FolderEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, folderEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FolderEdge")
+		case "cursor":
+			out.Values[i] = ec._FolderEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._FolderEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14518,7 +15089,31 @@ func (ec *executionContext) marshalNFolder2githubᚗcomᚋawanishnathpandeyᚋle
 	return ec._Folder(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNFolder2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Folder) graphql.Marshaler {
+func (ec *executionContext) marshalNFolder2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolder(ctx context.Context, sel ast.SelectionSet, v *model.Folder) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Folder(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNFolderConnection2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderConnection(ctx context.Context, sel ast.SelectionSet, v model.FolderConnection) graphql.Marshaler {
+	return ec._FolderConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNFolderConnection2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderConnection(ctx context.Context, sel ast.SelectionSet, v *model.FolderConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FolderConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNFolderEdge2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FolderEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -14542,7 +15137,7 @@ func (ec *executionContext) marshalNFolder2ᚕᚖgithubᚗcomᚋawanishnathpande
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFolder2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolder(ctx, sel, v[i])
+			ret[i] = ec.marshalNFolderEdge2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -14562,14 +15157,24 @@ func (ec *executionContext) marshalNFolder2ᚕᚖgithubᚗcomᚋawanishnathpande
 	return ret
 }
 
-func (ec *executionContext) marshalNFolder2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolder(ctx context.Context, sel ast.SelectionSet, v *model.Folder) graphql.Marshaler {
+func (ec *executionContext) marshalNFolderEdge2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderEdge(ctx context.Context, sel ast.SelectionSet, v *model.FolderEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Folder(ctx, sel, v)
+	return ec._FolderEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFolderSortField2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderSortField(ctx context.Context, v interface{}) (model.FolderSortField, error) {
+	var res model.FolderSortField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFolderSortField2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderSortField(ctx context.Context, sel ast.SelectionSet, v model.FolderSortField) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNGroup2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v model.Group) graphql.Marshaler {
@@ -15308,6 +15913,22 @@ func (ec *executionContext) unmarshalOFileSort2ᚖgithubᚗcomᚋawanishnathpand
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputFileSort(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOFolderFilter2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderFilter(ctx context.Context, v interface{}) (*model.FolderFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputFolderFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOFolderSort2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolderSort(ctx context.Context, v interface{}) (*model.FolderSort, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputFolderSort(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

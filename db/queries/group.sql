@@ -132,3 +132,25 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: GetPaginatedFoldersByGroupID :many
+SELECT * FROM folders f
+JOIN group_folders gf ON f.id = gf.folder_id
+WHERE 
+    gf.group_id = sqlc.narg(group_id)  -- Filter by group_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR f.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR f.slug ILIKE '%' || sqlc.narg(slug_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR f.description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN f.name 
+        WHEN sqlc.narg(sort_field) = 'SLUG' AND sqlc.narg(sort_order) = 'ASC' THEN f.slug 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN f.description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN f.name 
+        WHEN sqlc.narg(sort_field) = 'SLUG' AND sqlc.narg(sort_order) = 'DESC' THEN f.slug 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN f.description 
+    END DESC
+LIMIT $1
+OFFSET $2;

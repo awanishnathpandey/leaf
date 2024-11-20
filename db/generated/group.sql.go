@@ -364,6 +364,93 @@ func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginat
 	return items, nil
 }
 
+const getPaginatedFoldersByGroupID = `-- name: GetPaginatedFoldersByGroupID :many
+SELECT id, name, slug, description, f.created_at, f.updated_at, group_id, folder_id, gf.created_at, gf.updated_at FROM folders f
+JOIN group_folders gf ON f.id = gf.folder_id
+WHERE 
+    gf.group_id = $3  -- Filter by group_id
+    AND (coalesce($4, '') = '' OR f.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR f.slug ILIKE '%' || $5 || '%')
+    AND (coalesce($6, '') = '' OR f.description ILIKE '%' || $6 || '%')
+ORDER BY 
+    CASE 
+        WHEN $7 = 'NAME' AND $8 = 'ASC' THEN f.name 
+        WHEN $7 = 'SLUG' AND $8 = 'ASC' THEN f.slug 
+        WHEN $7 = 'DESCRIPTION' AND $8 = 'ASC' THEN f.description 
+    END ASC,
+    CASE 
+        WHEN $7 = 'NAME' AND $8 = 'DESC' THEN f.name 
+        WHEN $7 = 'SLUG' AND $8 = 'DESC' THEN f.slug 
+        WHEN $7 = 'DESCRIPTION' AND $8 = 'DESC' THEN f.description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedFoldersByGroupIDParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	GroupID           pgtype.Int8 `json:"group_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	SlugFilter        interface{} `json:"slug_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+type GetPaginatedFoldersByGroupIDRow struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+	GroupID     int64  `json:"group_id"`
+	FolderID    int64  `json:"folder_id"`
+	CreatedAt_2 int64  `json:"created_at_2"`
+	UpdatedAt_2 int64  `json:"updated_at_2"`
+}
+
+func (q *Queries) GetPaginatedFoldersByGroupID(ctx context.Context, arg GetPaginatedFoldersByGroupIDParams) ([]GetPaginatedFoldersByGroupIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedFoldersByGroupID,
+		arg.Limit,
+		arg.Offset,
+		arg.GroupID,
+		arg.NameFilter,
+		arg.SlugFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPaginatedFoldersByGroupIDRow
+	for rows.Next() {
+		var i GetPaginatedFoldersByGroupIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.GroupID,
+			&i.FolderID,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPaginatedUsersByGroupID = `-- name: GetPaginatedUsersByGroupID :many
 SELECT 
     u.id, 

@@ -26,8 +26,45 @@ input UpdateFolder {
   description: String!
 }
 
+
+# Filters for Folders
+input FolderFilter {
+  name: String
+  slug: String
+  description: String
+}
+
+# Sorting for Folders
+input FolderSort {
+  field: FolderSortField!
+  order: SortOrder!
+}
+
+enum FolderSortField {
+  NAME
+  SLUG
+  DESCRIPTION
+}
+
+
+type FolderConnection {
+  edges: [FolderEdge!]!
+  pageInfo: PageInfo!
+}
+
+type FolderEdge {
+  cursor: String!
+  node: Folder!
+}
+
 extend type Query {
-  folders: [Folder!]!
+  # folders: [Folder!]!
+  folders(
+    first: Int!
+    after: Int
+    filter: FolderFilter
+    sort: FolderSort
+  ): FolderConnection!
   getFolder(id: ID!): Folder!
 }
 

@@ -8,6 +8,12 @@ import (
 	"strconv"
 )
 
+type CreateFolder struct {
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Description string `json:"description"`
+}
+
 type CreateUser struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
@@ -34,6 +40,38 @@ type FileSort struct {
 	Order SortOrder     `json:"order"`
 }
 
+type Folder struct {
+	ID          int64    `json:"id"`
+	Name        string   `json:"name"`
+	Slug        string   `json:"slug"`
+	Description string   `json:"description"`
+	CreatedAt   int64    `json:"createdAt"`
+	UpdatedAt   int64    `json:"updatedAt"`
+	Groups      []*Group `json:"groups"`
+	Files       []*File  `json:"files"`
+}
+
+type FolderConnection struct {
+	Edges    []*FolderEdge `json:"edges"`
+	PageInfo *PageInfo     `json:"pageInfo"`
+}
+
+type FolderEdge struct {
+	Cursor string  `json:"cursor"`
+	Node   *Folder `json:"node"`
+}
+
+type FolderFilter struct {
+	Name        *string `json:"name,omitempty"`
+	Slug        *string `json:"slug,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type FolderSort struct {
+	Field FolderSortField `json:"field"`
+	Order SortOrder       `json:"order"`
+}
+
 type Mutation struct {
 }
 
@@ -43,6 +81,13 @@ type PageInfo struct {
 }
 
 type Query struct {
+}
+
+type UpdateFolder struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Description string `json:"description"`
 }
 
 type UpdateUser struct {
@@ -123,6 +168,49 @@ func (e *FileSortField) UnmarshalGQL(v interface{}) error {
 }
 
 func (e FileSortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type FolderSortField string
+
+const (
+	FolderSortFieldName        FolderSortField = "NAME"
+	FolderSortFieldSlug        FolderSortField = "SLUG"
+	FolderSortFieldDescription FolderSortField = "DESCRIPTION"
+)
+
+var AllFolderSortField = []FolderSortField{
+	FolderSortFieldName,
+	FolderSortFieldSlug,
+	FolderSortFieldDescription,
+}
+
+func (e FolderSortField) IsValid() bool {
+	switch e {
+	case FolderSortFieldName, FolderSortFieldSlug, FolderSortFieldDescription:
+		return true
+	}
+	return false
+}
+
+func (e FolderSortField) String() string {
+	return string(e)
+}
+
+func (e *FolderSortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FolderSortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FolderSortField", str)
+	}
+	return nil
+}
+
+func (e FolderSortField) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
