@@ -171,7 +171,7 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 
 		// Query the database if the user is not in the cache or cache expired
 		ctx := context.Background()
-		_, err = queries.GetUser(ctx, uidInt64)
+		_, err = queries.GetUserID(ctx, uidInt64)
 		if err != nil {
 			// Cache the result as user not found
 			userCache[uidInt64] = cacheEntry{
