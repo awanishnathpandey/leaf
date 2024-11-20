@@ -130,6 +130,80 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const paginatedUsers = `-- name: PaginatedUsers :many
+SELECT 
+    id, 
+    name, 
+    email, 
+    password, 
+    email_verified_at, 
+    last_seen_at, 
+    created_at, 
+    updated_at, 
+    deleted_at
+FROM users
+WHERE 
+    (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
+    AND (coalesce($4, '') = '' OR email ILIKE '%' || $4 || '%')
+ORDER BY 
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'ASC' THEN name 
+        WHEN $5 = 'EMAIL' AND $6 = 'ASC' THEN email 
+    END ASC,
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'DESC' THEN name 
+        WHEN $5 = 'EMAIL' AND $6 = 'DESC' THEN email 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type PaginatedUsersParams struct {
+	Limit       int32       `json:"limit"`
+	Offset      int32       `json:"offset"`
+	NameFilter  interface{} `json:"name_filter"`
+	EmailFilter interface{} `json:"email_filter"`
+	SortField   interface{} `json:"sort_field"`
+	SortOrder   interface{} `json:"sort_order"`
+}
+
+func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, paginatedUsers,
+		arg.Limit,
+		arg.Offset,
+		arg.NameFilter,
+		arg.EmailFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Password,
+			&i.EmailVerifiedAt,
+			&i.LastSeenAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
   set name = $2, email = $3, updated_at = EXTRACT(EPOCH FROM NOW())

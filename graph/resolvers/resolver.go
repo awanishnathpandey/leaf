@@ -12,9 +12,11 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	DB      *generated.Queries
-	users   []*model.User
-	folders []*model.Folder
-	files   []*model.File
-	groups  []*model.Group
+	DB          *generated.Queries
+	users       []*model.User
+	folders     []*model.Folder
+	files       []*model.File
+	groups      []*model.Group
+	roles       []*model.Role
+	permissions []*model.Permission
 }

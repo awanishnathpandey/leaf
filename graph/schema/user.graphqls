@@ -28,8 +28,50 @@ input UpdateUser {
   email: String!
 }
 
+# Filters for Users
+input UserFilter {
+  name: String
+  email: String
+}
+
+# Sorting for Users
+input UserSort {
+  field: UserSortField!
+  order: SortOrder!
+}
+
+enum UserSortField {
+  NAME
+  EMAIL
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+}
+
+type UserEdge {
+  cursor: String!
+  node: User!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+}
+
 extend type Query {
-  users: [User!]!
+  users(
+    first: Int!
+    after: String
+    filter: UserFilter
+    sort: UserSort
+  ): UserConnection!
   getUser(id: ID!): User!
   getUserByEmail(email: String!): User!
 }

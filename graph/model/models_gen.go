@@ -2,8 +2,147 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
+type CreateUser struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type Mutation struct {
 }
 
+type PageInfo struct {
+	HasNextPage     bool `json:"hasNextPage"`
+	HasPreviousPage bool `json:"hasPreviousPage"`
+}
+
 type Query struct {
+}
+
+type UpdateUser struct {
+	ID    int64  `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type User struct {
+	ID              int64    `json:"id"`
+	Name            string   `json:"name"`
+	Email           string   `json:"email"`
+	Password        string   `json:"password"`
+	EmailVerifiedAt *int64   `json:"emailVerifiedAt,omitempty"`
+	LastSeenAt      int64    `json:"lastSeenAt"`
+	CreatedAt       int64    `json:"createdAt"`
+	UpdatedAt       int64    `json:"updatedAt"`
+	DeletedAt       *int64   `json:"deletedAt,omitempty"`
+	Groups          []*Group `json:"groups"`
+	Roles           []*Role  `json:"roles"`
+}
+
+type UserConnection struct {
+	Edges    []*UserEdge `json:"edges"`
+	PageInfo *PageInfo   `json:"pageInfo"`
+}
+
+type UserEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *User  `json:"node"`
+}
+
+type UserFilter struct {
+	Name  *string `json:"name,omitempty"`
+	Email *string `json:"email,omitempty"`
+}
+
+type UserSort struct {
+	Field UserSortField `json:"field"`
+	Order SortOrder     `json:"order"`
+}
+
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "ASC"
+	SortOrderDesc SortOrder = "DESC"
+)
+
+var AllSortOrder = []SortOrder{
+	SortOrderAsc,
+	SortOrderDesc,
+}
+
+func (e SortOrder) IsValid() bool {
+	switch e {
+	case SortOrderAsc, SortOrderDesc:
+		return true
+	}
+	return false
+}
+
+func (e SortOrder) String() string {
+	return string(e)
+}
+
+func (e *SortOrder) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SortOrder(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SortOrder", str)
+	}
+	return nil
+}
+
+func (e SortOrder) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type UserSortField string
+
+const (
+	UserSortFieldName  UserSortField = "NAME"
+	UserSortFieldEmail UserSortField = "EMAIL"
+)
+
+var AllUserSortField = []UserSortField{
+	UserSortFieldName,
+	UserSortFieldEmail,
+}
+
+func (e UserSortField) IsValid() bool {
+	switch e {
+	case UserSortFieldName, UserSortFieldEmail:
+		return true
+	}
+	return false
+}
+
+func (e UserSortField) String() string {
+	return string(e)
+}
+
+func (e *UserSortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UserSortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UserSortField", str)
+	}
+	return nil
+}
+
+func (e UserSortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

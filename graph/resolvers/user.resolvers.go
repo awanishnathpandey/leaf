@@ -7,6 +7,7 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
@@ -121,29 +122,77 @@ func (r *mutationResolver) UpdateUserEmailVerifiedAt(ctx context.Context, id int
 }
 
 // Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+func (r *queryResolver) Users(ctx context.Context, first int64, after *string, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int
+	if after != nil {
+		cursor, err := strconv.Atoi(*after) // Convert string cursor to int
+		if err != nil {
+			return nil, fmt.Errorf("invalid cursor: %v", err)
+		}
+		offset = cursor
+	}
+
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
+	}
+
+	// Prepare sorting
+	sortOrder := "ASC" // Default sort field
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, emailFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		emailFilter = filter.Email
+	}
 	// Fetch users using sqlc
-	rows, err := r.DB.ListUsers(ctx) // Assuming ListUsers is the sqlc query method
+	users, err := r.DB.PaginatedUsers(ctx, generated.PaginatedUsersParams{
+		Limit:       int32(first),
+		Offset:      int32(offset),
+		NameFilter:  nameFilter,
+		EmailFilter: emailFilter,
+		SortField:   sortField,
+		SortOrder:   sortOrder,
+	}) // Assuming ListUsers is the sqlc query method
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query users: %v", err)
 	}
 
-	// Map sqlc rows to GraphQL models
-	var users []*model.User
-	for _, row := range rows {
-		users = append(users, &model.User{
-			ID:              row.ID,
-			Name:            row.Name,
-			Email:           row.Email,
-			EmailVerifiedAt: (*int64)(&row.EmailVerifiedAt.Int64),
-			LastSeenAt:      row.LastSeenAt,
-			CreatedAt:       row.CreatedAt,
-			UpdatedAt:       row.UpdatedAt,
-			DeletedAt:       (*int64)(&row.DeletedAt.Int64),
-		})
+	// Prepare edges and PageInfo
+	edges := make([]*model.UserEdge, len(users))
+	for i, user := range users {
+		edges[i] = &model.UserEdge{
+			Cursor: strconv.Itoa(offset + i + 1), // Create cursor from index
+			Node: &model.User{
+				ID:              user.ID,
+				Name:            user.Name,
+				Email:           user.Email,
+				EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
+				LastSeenAt:      user.LastSeenAt,
+				CreatedAt:       user.CreatedAt,
+				UpdatedAt:       user.UpdatedAt,
+				DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+			},
+		}
 	}
 
-	return users, nil
+	// Calculate hasNextPage
+	hasNextPage := len(users) == int(first)
+
+	return &model.UserConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
+
 }
 
 // GetUser is the resolver for the getUser field.

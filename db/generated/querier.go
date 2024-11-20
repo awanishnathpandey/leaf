@@ -53,6 +53,7 @@ type Querier interface {
 	ListPermissions(ctx context.Context) ([]Permission, error)
 	ListRoles(ctx context.Context) ([]Role, error)
 	ListUsers(ctx context.Context) ([]User, error)
+	PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) ([]User, error)
 	RegisterUser(ctx context.Context, arg RegisterUserParams) (User, error)
 	RemoveFileFromGroup(ctx context.Context, arg RemoveFileFromGroupParams) error
 	RemoveFolderFromGroup(ctx context.Context, arg RemoveFolderFromGroupParams) error
