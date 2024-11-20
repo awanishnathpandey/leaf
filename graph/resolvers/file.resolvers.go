@@ -7,6 +7,7 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
@@ -111,28 +112,71 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, id int64) (bool, erro
 }
 
 // Files is the resolver for the files field.
-func (r *queryResolver) Files(ctx context.Context) ([]*model.File, error) {
-	// Fetch folders using sqlc
-	rows, err := r.DB.ListFiles(ctx) // Assuming ListFolders is the sqlc query method
+func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
+	}
+
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
+	}
+
+	// Prepare sorting
+	sortOrder := "ASC" // Default sort field
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, slugFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		slugFilter = filter.Slug
+	}
+	// Fetch files using sqlc
+	files, err := r.DB.PaginatedFiles(ctx, generated.PaginatedFilesParams{
+		Limit:      int32(first),
+		Offset:     int32(offset),
+		NameFilter: nameFilter,
+		SlugFilter: slugFilter,
+		SortField:  sortField,
+		SortOrder:  sortOrder,
+	}) // Assuming ListFiles is the sqlc query method
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query files: %v", err)
 	}
 
-	// Map sqlc rows to GraphQL models
-	var files []*model.File
-	for _, row := range rows {
-		files = append(files, &model.File{
-			ID:        row.ID,
-			Name:      row.Name,
-			Slug:      row.Slug,
-			URL:       row.Url,
-			FolderID:  row.FolderID,
-			CreatedAt: row.CreatedAt, // Or use row.CreatedAt.Time.String()
-			UpdatedAt: row.UpdatedAt, // Or use row.UpdatedAt.Time.String()
-		})
+	// Prepare edges and PageInfo
+	edges := make([]*model.FileEdge, len(files))
+	for i, file := range files {
+		edges[i] = &model.FileEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.File{
+				ID:        file.ID,
+				Name:      file.Name,
+				Slug:      file.Slug,
+				URL:       file.Url,
+				FolderID:  file.FolderID,
+				CreatedAt: file.CreatedAt,
+				UpdatedAt: file.UpdatedAt,
+			},
+		}
 	}
 
-	return files, nil
+	// Calculate hasNextPage
+	hasNextPage := len(files) == int(first)
+
+	return &model.FileConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // GetFile is the resolver for the getFile field.

@@ -28,8 +28,41 @@ input UpdateFile {
   url: String!
 }
 
+# Filters for Files
+input FileFilter {
+  name: String
+  slug: String
+}
+
+# Sorting for Files
+input FileSort {
+  field: FileSortField!
+  order: SortOrder!
+}
+
+enum FileSortField {
+  NAME
+  SLUG
+}
+
+
+type FileConnection {
+  edges: [FileEdge!]!
+  pageInfo: PageInfo!
+}
+
+type FileEdge {
+  cursor: String!
+  node: File!
+}
+
 extend type Query {
-  files: [File!]!          # Get all files
+  files(
+    first: Int!
+    after: Int
+    filter: FileFilter
+    sort: FileSort
+  ): FileConnection!
   getFile(id: ID!): File!  # Get a single file by its ID
   getFilesByFolder(folderId: ID!): [File!]!  # Get files by folder ID
 }

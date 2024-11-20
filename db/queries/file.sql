@@ -28,3 +28,20 @@ WHERE id = $1;
 -- name: GetFilesByFolderID :many
 SELECT * FROM files
 WHERE folder_id = $1;
+
+-- name: PaginatedFiles :many
+SELECT * FROM files
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR slug ILIKE '%' || sqlc.narg(slug_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'SLUG' AND sqlc.narg(sort_order) = 'ASC' THEN slug 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'SLUG' AND sqlc.narg(sort_order) = 'DESC' THEN slug 
+    END DESC
+LIMIT $1
+OFFSET $2;

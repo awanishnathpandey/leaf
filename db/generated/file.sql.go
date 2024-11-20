@@ -171,6 +171,68 @@ func (q *Queries) ListFiles(ctx context.Context) ([]File, error) {
 	return items, nil
 }
 
+const paginatedFiles = `-- name: PaginatedFiles :many
+SELECT id, name, slug, url, folder_id, created_at, updated_at FROM files
+WHERE 
+    (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
+    AND (coalesce($4, '') = '' OR slug ILIKE '%' || $4 || '%')
+ORDER BY 
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'ASC' THEN name 
+        WHEN $5 = 'SLUG' AND $6 = 'ASC' THEN slug 
+    END ASC,
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'DESC' THEN name 
+        WHEN $5 = 'SLUG' AND $6 = 'DESC' THEN slug 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type PaginatedFilesParams struct {
+	Limit      int32       `json:"limit"`
+	Offset     int32       `json:"offset"`
+	NameFilter interface{} `json:"name_filter"`
+	SlugFilter interface{} `json:"slug_filter"`
+	SortField  interface{} `json:"sort_field"`
+	SortOrder  interface{} `json:"sort_order"`
+}
+
+func (q *Queries) PaginatedFiles(ctx context.Context, arg PaginatedFilesParams) ([]File, error) {
+	rows, err := q.db.Query(ctx, paginatedFiles,
+		arg.Limit,
+		arg.Offset,
+		arg.NameFilter,
+		arg.SlugFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []File
+	for rows.Next() {
+		var i File
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Url,
+			&i.FolderID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateFile = `-- name: UpdateFile :one
 UPDATE files
 SET name = $2, slug = $3, url = $4, updated_at = EXTRACT(EPOCH FROM NOW())

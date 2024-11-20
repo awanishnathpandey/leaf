@@ -14,6 +14,26 @@ type CreateUser struct {
 	Password string `json:"password"`
 }
 
+type FileConnection struct {
+	Edges    []*FileEdge `json:"edges"`
+	PageInfo *PageInfo   `json:"pageInfo"`
+}
+
+type FileEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *File  `json:"node"`
+}
+
+type FileFilter struct {
+	Name *string `json:"name,omitempty"`
+	Slug *string `json:"slug,omitempty"`
+}
+
+type FileSort struct {
+	Field FileSortField `json:"field"`
+	Order SortOrder     `json:"order"`
+}
+
 type Mutation struct {
 }
 
@@ -63,6 +83,47 @@ type UserFilter struct {
 type UserSort struct {
 	Field UserSortField `json:"field"`
 	Order SortOrder     `json:"order"`
+}
+
+type FileSortField string
+
+const (
+	FileSortFieldName FileSortField = "NAME"
+	FileSortFieldSlug FileSortField = "SLUG"
+)
+
+var AllFileSortField = []FileSortField{
+	FileSortFieldName,
+	FileSortFieldSlug,
+}
+
+func (e FileSortField) IsValid() bool {
+	switch e {
+	case FileSortFieldName, FileSortFieldSlug:
+		return true
+	}
+	return false
+}
+
+func (e FileSortField) String() string {
+	return string(e)
+}
+
+func (e *FileSortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FileSortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FileSortField", str)
+	}
+	return nil
+}
+
+func (e FileSortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type SortOrder string

@@ -74,6 +74,16 @@ type ComplexityRoot struct {
 		UpdatedAt func(childComplexity int) int
 	}
 
+	FileConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	FileEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Folder struct {
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
@@ -154,7 +164,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Files            func(childComplexity int) int
+		Files            func(childComplexity int, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) int
 		Folders          func(childComplexity int) int
 		GetFile          func(childComplexity int, id int64) int
 		GetFilesByFolder func(childComplexity int, folderID int64) int
@@ -260,7 +270,7 @@ type PermissionResolver interface {
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
-	Files(ctx context.Context) ([]*model.File, error)
+	Files(ctx context.Context, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error)
 	GetFile(ctx context.Context, id int64) (*model.File, error)
 	GetFilesByFolder(ctx context.Context, folderID int64) ([]*model.File, error)
 	Folders(ctx context.Context) ([]*model.Folder, error)
@@ -407,6 +417,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.File.UpdatedAt(childComplexity), true
+
+	case "FileConnection.edges":
+		if e.complexity.FileConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.FileConnection.Edges(childComplexity), true
+
+	case "FileConnection.pageInfo":
+		if e.complexity.FileConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.FileConnection.PageInfo(childComplexity), true
+
+	case "FileEdge.cursor":
+		if e.complexity.FileEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.FileEdge.Cursor(childComplexity), true
+
+	case "FileEdge.node":
+		if e.complexity.FileEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.FileEdge.Node(childComplexity), true
 
 	case "Folder.createdAt":
 		if e.complexity.Folder.CreatedAt == nil {
@@ -1020,7 +1058,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Files(childComplexity), true
+		args, err := ec.field_Query_files_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Files(childComplexity, args["first"].(int64), args["after"].(*int64), args["filter"].(*model.FileFilter), args["sort"].(*model.FileSort)), true
 
 	case "Query.folders":
 		if e.complexity.Query.Folders == nil {
@@ -1333,6 +1376,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreatePermission,
 		ec.unmarshalInputCreateRole,
 		ec.unmarshalInputCreateUser,
+		ec.unmarshalInputFileFilter,
+		ec.unmarshalInputFileSort,
 		ec.unmarshalInputUpdateFile,
 		ec.unmarshalInputUpdateFolder,
 		ec.unmarshalInputUpdateGroup,
@@ -2552,6 +2597,83 @@ func (ec *executionContext) field_Query___type_argsName(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Query_files_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_files_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Query_files_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Query_files_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg2
+	arg3, err := ec.field_Query_files_argsSort(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["sort"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Query_files_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (int64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalNInt2int64(ctx, tmp)
+	}
+
+	var zeroVal int64
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_files_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOInt2ᚖint64(ctx, tmp)
+	}
+
+	var zeroVal *int64
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_files_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.FileFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOFileFilter2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileFilter(ctx, tmp)
+	}
+
+	var zeroVal *model.FileFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_files_argsSort(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.FileSort, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
+	if tmp, ok := rawArgs["sort"]; ok {
+		return ec.unmarshalOFileSort2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileSort(ctx, tmp)
+	}
+
+	var zeroVal *model.FileSort
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_getFile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3558,6 +3680,214 @@ func (ec *executionContext) fieldContext_File_groups(_ context.Context, field gr
 				return ec.fieldContext_Group_files(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Group", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.FileConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.FileEdge)
+	fc.Result = res
+	return ec.marshalNFileEdge2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_FileEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_FileEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FileEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.FileConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.FileEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.FileEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.File)
+	fc.Result = res
+	return ec.marshalNFile2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_File_id(ctx, field)
+			case "name":
+				return ec.fieldContext_File_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_File_slug(ctx, field)
+			case "url":
+				return ec.fieldContext_File_url(ctx, field)
+			case "folderId":
+				return ec.fieldContext_File_folderId(ctx, field)
+			case "folder":
+				return ec.fieldContext_File_folder(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_File_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_File_updatedAt(ctx, field)
+			case "groups":
+				return ec.fieldContext_File_groups(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
 		},
 	}
 	return fc, nil
@@ -7087,7 +7417,7 @@ func (ec *executionContext) _Query_files(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Files(rctx)
+		return ec.resolvers.Query().Files(rctx, fc.Args["first"].(int64), fc.Args["after"].(*int64), fc.Args["filter"].(*model.FileFilter), fc.Args["sort"].(*model.FileSort))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7099,12 +7429,12 @@ func (ec *executionContext) _Query_files(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.File)
+	res := resTmp.(*model.FileConnection)
 	fc.Result = res
-	return ec.marshalNFile2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileᚄ(ctx, field.Selections, res)
+	return ec.marshalNFileConnection2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_files(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -7112,27 +7442,24 @@ func (ec *executionContext) fieldContext_Query_files(_ context.Context, field gr
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_File_id(ctx, field)
-			case "name":
-				return ec.fieldContext_File_name(ctx, field)
-			case "slug":
-				return ec.fieldContext_File_slug(ctx, field)
-			case "url":
-				return ec.fieldContext_File_url(ctx, field)
-			case "folderId":
-				return ec.fieldContext_File_folderId(ctx, field)
-			case "folder":
-				return ec.fieldContext_File_folder(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_File_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_File_updatedAt(ctx, field)
-			case "groups":
-				return ec.fieldContext_File_groups(ctx, field)
+			case "edges":
+				return ec.fieldContext_FileConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_FileConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type FileConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_files_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11238,6 +11565,74 @@ func (ec *executionContext) unmarshalInputCreateUser(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputFileFilter(ctx context.Context, obj interface{}) (model.FileFilter, error) {
+	var it model.FileFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "slug"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "slug":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Slug = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputFileSort(ctx context.Context, obj interface{}) (model.FileSort, error) {
+	var it model.FileSort
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"field", "order"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNFileSortField2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileSortField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "order":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
+			data, err := ec.unmarshalNSortOrder2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐSortOrder(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Order = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateFile(ctx context.Context, obj interface{}) (model.UpdateFile, error) {
 	var it model.UpdateFile
 	asMap := map[string]interface{}{}
@@ -11894,6 +12289,94 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._File_groups(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var fileConnectionImplementors = []string{"FileConnection"}
+
+func (ec *executionContext) _FileConnection(ctx context.Context, sel ast.SelectionSet, obj *model.FileConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, fileConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FileConnection")
+		case "edges":
+			out.Values[i] = ec._FileConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._FileConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var fileEdgeImplementors = []string{"FileEdge"}
+
+func (ec *executionContext) _FileEdge(ctx context.Context, sel ast.SelectionSet, obj *model.FileEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, fileEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FileEdge")
+		case "cursor":
+			out.Values[i] = ec._FileEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._FileEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -13874,6 +14357,84 @@ func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋawanishnathpandeyᚋl
 	return ec._File(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNFileConnection2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileConnection(ctx context.Context, sel ast.SelectionSet, v model.FileConnection) graphql.Marshaler {
+	return ec._FileConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNFileConnection2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileConnection(ctx context.Context, sel ast.SelectionSet, v *model.FileConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FileConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNFileEdge2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FileEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNFileEdge2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNFileEdge2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileEdge(ctx context.Context, sel ast.SelectionSet, v *model.FileEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FileEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFileSortField2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileSortField(ctx context.Context, v interface{}) (model.FileSortField, error) {
+	var res model.FileSortField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFileSortField2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileSortField(ctx context.Context, sel ast.SelectionSet, v model.FileSortField) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNFolder2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFolder(ctx context.Context, sel ast.SelectionSet, v model.Folder) graphql.Marshaler {
 	return ec._Folder(ctx, sel, &v)
 }
@@ -14653,6 +15214,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOFileFilter2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileFilter(ctx context.Context, v interface{}) (*model.FileFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputFileFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOFileSort2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileSort(ctx context.Context, v interface{}) (*model.FileSort, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputFileSort(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint64(ctx context.Context, v interface{}) (*int64, error) {
