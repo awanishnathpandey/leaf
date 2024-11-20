@@ -7,34 +7,87 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Users is the resolver for the users field.
-func (r *groupResolver) Users(ctx context.Context, obj *model.Group) ([]*model.User, error) {
-	users, err := r.DB.GetUsersByGroupID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch users for group %d: %w", obj.ID, err)
+func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64, after *string, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int
+	if after != nil {
+		cursor, err := strconv.Atoi(*after) // Convert string cursor to int
+		if err != nil {
+			return nil, fmt.Errorf("invalid cursor: %v", err)
+		}
+		offset = cursor
 	}
 
-	var result []*model.User
-	for _, user := range users {
-		result = append(result, &model.User{
-			ID:              user.ID,
-			Name:            user.Name,
-			Email:           user.Email,
-			EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
-			LastSeenAt:      user.LastSeenAt,
-			CreatedAt:       user.CreatedAt,
-			UpdatedAt:       user.UpdatedAt,
-			DeletedAt:       (*int64)(&user.DeletedAt.Int64),
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, emailFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		emailFilter = filter.Email
+	}
+
+	// Fetch users using the SQL query method for group ID
+	users, err := r.DB.GetPaginatedUsersByGroupID(ctx, generated.GetPaginatedUsersByGroupIDParams{
+		GroupID:     pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:       int32(first),                            // Limit based on 'first' argument
+		Offset:      int32(offset),                           // Offset based on 'after' cursor
+		NameFilter:  nameFilter,                              // Name filter (optional)
+		EmailFilter: emailFilter,                             // Email filter (optional)
+		SortField:   sortField,                               // Sorting field
+		SortOrder:   sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch users for group %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.UserEdge, len(users))
+	for i, user := range users {
+		edges[i] = &model.UserEdge{
+			Cursor: strconv.Itoa(offset + i + 1), // Create cursor from index
+			Node: &model.User{
+				ID:              user.ID,
+				Name:            user.Name,
+				Email:           user.Email,
+				EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
+				LastSeenAt:      user.LastSeenAt,
+				CreatedAt:       user.CreatedAt,
+				UpdatedAt:       user.UpdatedAt,
+				DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(users) == int(first)
+
+	return &model.UserConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // Folders is the resolver for the folders field.

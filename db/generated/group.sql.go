@@ -280,6 +280,84 @@ func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group,
 	return items, nil
 }
 
+const getPaginatedUsersByGroupID = `-- name: GetPaginatedUsersByGroupID :many
+SELECT 
+    u.id, 
+    u.name, 
+    u.email, 
+    u.password, 
+    u.email_verified_at, 
+    u.last_seen_at, 
+    u.created_at, 
+    u.updated_at, 
+    u.deleted_at
+FROM users u
+JOIN group_users gu ON u.id = gu.user_id
+WHERE 
+    gu.group_id = $3  -- Filter by group_id
+    AND (coalesce($4, '') = '' OR u.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR u.email ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN u.name 
+        WHEN $6 = 'EMAIL' AND $7 = 'ASC' THEN u.email 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN u.name 
+        WHEN $6 = 'EMAIL' AND $7 = 'DESC' THEN u.email 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedUsersByGroupIDParams struct {
+	Limit       int32       `json:"limit"`
+	Offset      int32       `json:"offset"`
+	GroupID     pgtype.Int8 `json:"group_id"`
+	NameFilter  interface{} `json:"name_filter"`
+	EmailFilter interface{} `json:"email_filter"`
+	SortField   interface{} `json:"sort_field"`
+	SortOrder   interface{} `json:"sort_order"`
+}
+
+func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginatedUsersByGroupIDParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, getPaginatedUsersByGroupID,
+		arg.Limit,
+		arg.Offset,
+		arg.GroupID,
+		arg.NameFilter,
+		arg.EmailFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Password,
+			&i.EmailVerifiedAt,
+			&i.LastSeenAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUsersByGroupID = `-- name: GetUsersByGroupID :many
 SELECT u.id, u.name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
 FROM users u

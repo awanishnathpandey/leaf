@@ -6,14 +6,14 @@ type CreateGroup struct {
 }
 
 type Group struct {
-	ID          int64     `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	CreatedAt   int64     `json:"createdAt"`
-	UpdatedAt   int64     `json:"updatedAt"`
-	Users       []*User   `json:"users"`
-	Folders     []*Folder `json:"folders"`
-	Files       []*File   `json:"files"`
+	ID          int64           `json:"id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	CreatedAt   int64           `json:"createdAt"`
+	UpdatedAt   int64           `json:"updatedAt"`
+	Users       *UserConnection `json:"users"`
+	Folders     []*Folder       `json:"folders"`
+	Files       []*File         `json:"files"`
 }
 
 type UpdateGroup struct {

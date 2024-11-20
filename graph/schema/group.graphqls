@@ -5,10 +5,10 @@
 type Group {
     id: ID!
     name: String!
-    description: String
+    description: String!
     createdAt: Int!
     updatedAt: Int!
-    users: [User!]!
+    users(first: Int!, after: String, filter: UserFilter, sort: UserSort): UserConnection!
     folders: [Folder!]!
     files: [File!]!
 }

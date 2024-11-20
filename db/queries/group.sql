@@ -83,3 +83,32 @@ SELECT g.*
 FROM groups g
 JOIN group_files gf ON g.id = gf.group_id
 WHERE gf.file_id = $1;
+
+-- name: GetPaginatedUsersByGroupID :many
+SELECT 
+    u.id, 
+    u.name, 
+    u.email, 
+    u.password, 
+    u.email_verified_at, 
+    u.last_seen_at, 
+    u.created_at, 
+    u.updated_at, 
+    u.deleted_at
+FROM users u
+JOIN group_users gu ON u.id = gu.user_id
+WHERE 
+    gu.group_id = sqlc.narg(group_id)  -- Filter by group_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR u.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(email_filter), '') = '' OR u.email ILIKE '%' || sqlc.narg(email_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN u.name 
+        WHEN sqlc.narg(sort_field) = 'EMAIL' AND sqlc.narg(sort_order) = 'ASC' THEN u.email 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN u.name 
+        WHEN sqlc.narg(sort_field) = 'EMAIL' AND sqlc.narg(sort_order) = 'DESC' THEN u.email 
+    END DESC
+LIMIT $1
+OFFSET $2;

@@ -192,7 +192,6 @@ func (r *queryResolver) Users(ctx context.Context, first int64, after *string, f
 			HasPreviousPage: offset > 0,
 		},
 	}, nil
-
 }
 
 // GetUser is the resolver for the getUser field.
