@@ -86,4 +86,7 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries) {
 		}
 		return c.SendString("Database is healthy")
 	})
+
+	// Prometheus route
+	RegisterPrometheusRoute(app)
 }
