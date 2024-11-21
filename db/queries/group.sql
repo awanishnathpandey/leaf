@@ -208,3 +208,22 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: GetPaginatedGroupsByFileID :many
+SELECT * FROM groups g
+JOIN group_files gf ON g.id = gf.group_id
+WHERE 
+    gf.file_id = sqlc.narg(file_id)  -- Filter by user_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR g.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR g.description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN g.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN g.description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN g.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN g.description 
+    END DESC
+LIMIT $1
+OFFSET $2;

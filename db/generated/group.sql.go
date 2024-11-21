@@ -451,6 +451,86 @@ func (q *Queries) GetPaginatedFoldersByGroupID(ctx context.Context, arg GetPagin
 	return items, nil
 }
 
+const getPaginatedGroupsByFileID = `-- name: GetPaginatedGroupsByFileID :many
+SELECT id, name, description, g.created_at, g.updated_at, group_id, file_id, gf.created_at, gf.updated_at FROM groups g
+JOIN group_files gf ON g.id = gf.group_id
+WHERE 
+    gf.file_id = $3  -- Filter by user_id
+    AND (coalesce($4, '') = '' OR g.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR g.description ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN g.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'ASC' THEN g.description 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN g.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'DESC' THEN g.description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedGroupsByFileIDParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	FileID            pgtype.Int8 `json:"file_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+type GetPaginatedGroupsByFileIDRow struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+	GroupID     int64  `json:"group_id"`
+	FileID      int64  `json:"file_id"`
+	CreatedAt_2 int64  `json:"created_at_2"`
+	UpdatedAt_2 int64  `json:"updated_at_2"`
+}
+
+func (q *Queries) GetPaginatedGroupsByFileID(ctx context.Context, arg GetPaginatedGroupsByFileIDParams) ([]GetPaginatedGroupsByFileIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedGroupsByFileID,
+		arg.Limit,
+		arg.Offset,
+		arg.FileID,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPaginatedGroupsByFileIDRow
+	for rows.Next() {
+		var i GetPaginatedGroupsByFileIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.GroupID,
+			&i.FileID,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPaginatedGroupsByFolderID = `-- name: GetPaginatedGroupsByFolderID :many
 SELECT id, name, description, g.created_at, g.updated_at, group_id, folder_id, gf.created_at, gf.updated_at FROM groups g
 JOIN group_folders gf ON g.id = gf.group_id

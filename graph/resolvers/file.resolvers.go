@@ -13,6 +13,7 @@ import (
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Folder is the resolver for the folder field.
@@ -36,7 +37,69 @@ func (r *fileResolver) Folder(ctx context.Context, obj *model.File) (*model.Fold
 
 // Groups is the resolver for the groups field.
 func (r *fileResolver) Groups(ctx context.Context, obj *model.File, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) (*model.GroupConnection, error) {
-	panic(fmt.Errorf("not implemented: Groups - groups"))
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
+	}
+
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
+	}
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+	}
+
+	// Fetch groups using the SQL query method for rolder ID
+	groups, err := r.DB.GetPaginatedGroupsByFileID(ctx, generated.GetPaginatedGroupsByFileIDParams{
+		FileID:            pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:             int32(first),                            // Limit based on 'first' argument
+		Offset:            int32(offset),                           // Offset based on 'after' cursor
+		NameFilter:        nameFilter,                              // Name filter (optional)
+		DescriptionFilter: descriptionFilter,                       // Email filter (optional)
+		SortField:         sortField,                               // Sorting field
+		SortOrder:         sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch groups for file %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.GroupEdge, len(groups))
+	for i, group := range groups {
+		edges[i] = &model.GroupEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Group{
+				ID:          group.ID,
+				Name:        group.Name,
+				Description: group.Description,
+				CreatedAt:   group.CreatedAt,
+				UpdatedAt:   group.UpdatedAt,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(groups) == int(first)
+
+	return &model.GroupConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // CreateFile is the resolver for the createFile field.
