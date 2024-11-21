@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	gqlPrometheus "github.com/awanishnathpandey/leaf/internal/prometheus"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,6 +33,8 @@ func RegisterPrometheusRoute(app *fiber.App) {
 	// Optionally, register default metrics
 	reg.MustRegister(collectors.NewGoCollector())
 	reg.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+
+	gqlPrometheus.RegisterOn(reg)
 
 	// Create a Prometheus HTTP handler
 	prometheusHandler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})

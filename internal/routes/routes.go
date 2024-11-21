@@ -14,6 +14,7 @@ import (
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/resolvers"
 	"github.com/awanishnathpandey/leaf/internal/middleware"
+	gqlprometheus "github.com/awanishnathpandey/leaf/internal/prometheus"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/rs/zerolog/log"
@@ -54,6 +55,7 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries) {
 
 	// Add transports (e.g., POST method) if needed
 	graphqlHandler.AddTransport(transport.POST{})
+	graphqlHandler.Use(gqlprometheus.NewTracer()) // Use as extension here
 
 	// Conditionally enable introspection based on environment
 	if os.Getenv("ENVIRONMENT") == "development" {
