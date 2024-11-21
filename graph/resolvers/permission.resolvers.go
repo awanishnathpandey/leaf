@@ -7,11 +7,13 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // CreateRole is the resolver for the createRole field.
@@ -265,69 +267,202 @@ func (r *mutationResolver) RemovePermissionFromRole(ctx context.Context, roleID 
 }
 
 // Roles is the resolver for the roles field.
-func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission) ([]*model.Role, error) {
-	roles, err := r.DB.GetRolesByPermissionID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch roles for permission %d: %w", obj.ID, err)
+func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) (*model.RoleConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
-	var result []*model.Role
-	for _, role := range roles {
-		result = append(result, &model.Role{
-			ID:          role.ID,
-			Name:        role.Name,
-			Description: role.Description,
-			CreatedAt:   role.CreatedAt,
-			UpdatedAt:   role.UpdatedAt,
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+	}
+
+	// Fetch roles using the SQL query method for permission ID
+	roles, err := r.DB.GetPaginatedRolesByPermissionID(ctx, generated.GetPaginatedRolesByPermissionIDParams{
+		PermissionID:      pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:             int32(first),                            // Limit based on 'first' argument
+		Offset:            int32(offset),                           // Offset based on 'after' cursor
+		NameFilter:        nameFilter,                              // Name filter (optional)
+		DescriptionFilter: descriptionFilter,                       // Email filter (optional)
+		SortField:         sortField,                               // Sorting field
+		SortOrder:         sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch roles for permission %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.RoleEdge, len(roles))
+	for i, role := range roles {
+		edges[i] = &model.RoleEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Role{
+				ID:          role.ID,
+				Name:        role.Name,
+				Description: role.Description,
+				CreatedAt:   role.CreatedAt,
+				UpdatedAt:   role.UpdatedAt,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(roles) == int(first)
+
+	return &model.RoleConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // Roles is the resolver for the roles field.
-func (r *queryResolver) Roles(ctx context.Context) ([]*model.Role, error) {
+func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) (*model.RoleConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
+	}
+
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
+	}
+
+	// Prepare sorting
+	sortOrder := "ASC" // Default sort field
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+	}
 	// Fetch roles using sqlc
-	rows, err := r.DB.ListRoles(ctx) // Assuming ListRoles is the sqlc query method
+	roles, err := r.DB.PaginatedRoles(ctx, generated.PaginatedRolesParams{
+		Limit:             int32(first),
+		Offset:            int32(offset),
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+		SortField:         sortField,
+		SortOrder:         sortOrder,
+	}) // Assuming ListRoles is the sqlc query method
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query roles: %v", err)
 	}
 
-	// Map sqlc rows to GraphQL models
-	var roles []*model.Role
-	for _, row := range rows {
-		roles = append(roles, &model.Role{
-			ID:          row.ID,
-			Name:        row.Name,
-			Description: row.Description,
-			CreatedAt:   row.CreatedAt, // Or use row.CreatedAt.Time.String()
-			UpdatedAt:   row.UpdatedAt, // Or use row.UpdatedAt.Time.String()
-		})
+	// Prepare edges and PageInfo
+	edges := make([]*model.RoleEdge, len(roles))
+	for i, role := range roles {
+		edges[i] = &model.RoleEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Role{
+				ID:          role.ID,
+				Name:        role.Name,
+				Description: role.Description,
+				CreatedAt:   role.CreatedAt,
+				UpdatedAt:   role.UpdatedAt,
+			},
+		}
 	}
 
-	return roles, nil
+	// Calculate hasNextPage
+	hasNextPage := len(roles) == int(first)
+
+	return &model.RoleConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // Permissions is the resolver for the permissions field.
-func (r *queryResolver) Permissions(ctx context.Context) ([]*model.Permission, error) {
+func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int64, filter *model.PermissionFilter, sort *model.PermissionSort) (*model.PermissionConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
+	}
+
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
+	}
+
+	// Prepare sorting
+	sortOrder := "ASC" // Default sort field
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+	}
 	// Fetch permissions using sqlc
-	rows, err := r.DB.ListPermissions(ctx) // Assuming ListPermissions is the sqlc query method
+	permissions, err := r.DB.PaginatedPermissions(ctx, generated.PaginatedPermissionsParams{
+		Limit:             int32(first),
+		Offset:            int32(offset),
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+		SortField:         sortField,
+		SortOrder:         sortOrder,
+	}) // Assuming ListGroups is the sqlc query method
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query groups: %v", err)
 	}
 
-	// Map sqlc rows to GraphQL models
-	var permissions []*model.Permission
-	for _, row := range rows {
-		permissions = append(permissions, &model.Permission{
-			ID:          row.ID,
-			Name:        row.Name,
-			Description: row.Description,
-			CreatedAt:   row.CreatedAt, // Or use row.CreatedAt.Time.String()
-			UpdatedAt:   row.UpdatedAt, // Or use row.UpdatedAt.Time.String()
-		})
+	// Prepare edges and PageInfo
+	edges := make([]*model.PermissionEdge, len(permissions))
+	for i, permission := range permissions {
+		edges[i] = &model.PermissionEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Permission{
+				ID:          permission.ID,
+				Name:        permission.Name,
+				Description: permission.Description,
+				CreatedAt:   permission.CreatedAt,
+				UpdatedAt:   permission.UpdatedAt,
+			},
+		}
 	}
 
-	return permissions, nil
+	// Calculate hasNextPage
+	hasNextPage := len(permissions) == int(first)
+
+	return &model.PermissionConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // GetRole is the resolver for the getRole field.
@@ -367,46 +502,140 @@ func (r *queryResolver) GetPermission(ctx context.Context, id int64) (*model.Per
 }
 
 // Permissions is the resolver for the permissions field.
-func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role) ([]*model.Permission, error) {
-	permissions, err := r.DB.GetPermissionsByRoleID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch permissions for role %d: %w", obj.ID, err)
+func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first int64, after *int64, filter *model.PermissionFilter, sort *model.PermissionSort) (*model.PermissionConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
-	var result []*model.Permission
-	for _, role := range permissions {
-		result = append(result, &model.Permission{
-			ID:          role.ID,
-			Name:        role.Name,
-			Description: role.Description,
-			CreatedAt:   role.CreatedAt,
-			UpdatedAt:   role.UpdatedAt,
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+	}
+
+	// Fetch roles using the SQL query method for permission ID
+	permissions, err := r.DB.GetPaginatedPermissionsByRoleID(ctx, generated.GetPaginatedPermissionsByRoleIDParams{
+		RoleID:            pgtype.Int8{Int64: obj.ID, Valid: true}, // Role ID from the Group object
+		Limit:             int32(first),                            // Limit based on 'first' argument
+		Offset:            int32(offset),                           // Offset based on 'after' cursor
+		NameFilter:        nameFilter,                              // Name filter (optional)
+		DescriptionFilter: descriptionFilter,                       // Email filter (optional)
+		SortField:         sortField,                               // Sorting field
+		SortOrder:         sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch permissions for role %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.PermissionEdge, len(permissions))
+	for i, permission := range permissions {
+		edges[i] = &model.PermissionEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Permission{
+				ID:          permission.ID,
+				Name:        permission.Name,
+				Description: permission.Description,
+				CreatedAt:   permission.CreatedAt,
+				UpdatedAt:   permission.UpdatedAt,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(permissions) == int(first)
+
+	return &model.PermissionConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // Users is the resolver for the users field.
-func (r *roleResolver) Users(ctx context.Context, obj *model.Role) ([]*model.User, error) {
-	users, err := r.DB.GetUsersByRoleID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch users for role %d: %w", obj.ID, err)
+func (r *roleResolver) Users(ctx context.Context, obj *model.Role, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
-	var result []*model.User
-	for _, user := range users {
-		result = append(result, &model.User{
-			ID:              user.ID,
-			Name:            user.Name,
-			Email:           user.Email,
-			EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
-			LastSeenAt:      user.LastSeenAt,
-			CreatedAt:       user.CreatedAt,
-			UpdatedAt:       user.UpdatedAt,
-			DeletedAt:       (*int64)(&user.DeletedAt.Int64),
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, emailFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		emailFilter = filter.Email
+	}
+
+	// Fetch users using the SQL query method for role ID
+	users, err := r.DB.GetPaginatedUsersByRoleID(ctx, generated.GetPaginatedUsersByRoleIDParams{
+		RoleID:      pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:       int32(first),                            // Limit based on 'first' argument
+		Offset:      int32(offset),                           // Offset based on 'after' cursor
+		NameFilter:  nameFilter,                              // Name filter (optional)
+		EmailFilter: emailFilter,                             // Email filter (optional)
+		SortField:   sortField,                               // Sorting field
+		SortOrder:   sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch users for role %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.UserEdge, len(users))
+	for i, user := range users {
+		edges[i] = &model.UserEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.User{
+				ID:              user.ID,
+				Name:            user.Name,
+				Email:           user.Email,
+				EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
+				LastSeenAt:      user.LastSeenAt,
+				CreatedAt:       user.CreatedAt,
+				UpdatedAt:       user.UpdatedAt,
+				DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(users) == int(first)
+
+	return &model.UserConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // Permission returns graph.PermissionResolver implementation.

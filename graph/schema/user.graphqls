@@ -12,8 +12,8 @@ type User {
   createdAt: Int!
   updatedAt: Int!
   deletedAt: Int
-  groups: [Group!]!
-  roles: [Role!]!
+  groups(first: Int!, after: Int, filter: GroupFilter, sort: GroupSort): GroupConnection!
+  roles(first: Int!, after: Int, filter: RoleFilter, sort: RoleSort): RoleConnection!
 }
 
 input CreateUser {

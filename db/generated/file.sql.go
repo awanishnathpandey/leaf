@@ -7,6 +7,8 @@ package generated
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createFile = `-- name: CreateFile :one
@@ -112,6 +114,70 @@ WHERE folder_id = $1
 
 func (q *Queries) GetFilesByFolderID(ctx context.Context, folderID int64) ([]File, error) {
 	rows, err := q.db.Query(ctx, getFilesByFolderID, folderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []File
+	for rows.Next() {
+		var i File
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Url,
+			&i.FolderID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPaginatedFilesByFolderID = `-- name: GetPaginatedFilesByFolderID :many
+SELECT id, name, slug, url, folder_id, created_at, updated_at FROM files WHERE 
+    folder_id = $3  -- Filter by group_id
+    AND (coalesce($4, '') = '' OR f.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR f.slug ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN name 
+        WHEN $6 = 'SLUG' AND $7 = 'ASC' THEN slug 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN name 
+        WHEN $6 = 'SLUG' AND $7 = 'DESC' THEN slug 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedFilesByFolderIDParams struct {
+	Limit      int32       `json:"limit"`
+	Offset     int32       `json:"offset"`
+	FolderID   pgtype.Int8 `json:"folder_id"`
+	NameFilter interface{} `json:"name_filter"`
+	SlugFilter interface{} `json:"slug_filter"`
+	SortField  interface{} `json:"sort_field"`
+	SortOrder  interface{} `json:"sort_order"`
+}
+
+func (q *Queries) GetPaginatedFilesByFolderID(ctx context.Context, arg GetPaginatedFilesByFolderIDParams) ([]File, error) {
+	rows, err := q.db.Query(ctx, getPaginatedFilesByFolderID,
+		arg.Limit,
+		arg.Offset,
+		arg.FolderID,
+		arg.NameFilter,
+		arg.SlugFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
 	if err != nil {
 		return nil, err
 	}

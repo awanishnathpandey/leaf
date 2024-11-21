@@ -447,26 +447,69 @@ func (r *mutationResolver) RemoveFileFromGroup(ctx context.Context, groupID int6
 }
 
 // Groups is the resolver for the groups field.
-func (r *queryResolver) Groups(ctx context.Context) ([]*model.Group, error) {
+func (r *queryResolver) Groups(ctx context.Context, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) (*model.GroupConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
+	}
+
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
+	}
+
+	// Prepare sorting
+	sortOrder := "ASC" // Default sort field
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+	}
 	// Fetch groups using sqlc
-	rows, err := r.DB.ListGroups(ctx) // Assuming ListGroups is the sqlc query method
+	groups, err := r.DB.PaginatedGroups(ctx, generated.PaginatedGroupsParams{
+		Limit:             int32(first),
+		Offset:            int32(offset),
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+		SortField:         sortField,
+		SortOrder:         sortOrder,
+	}) // Assuming ListGroups is the sqlc query method
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query groups: %v", err)
 	}
 
-	// Map sqlc rows to GraphQL models
-	var groups []*model.Group
-	for _, row := range rows {
-		groups = append(groups, &model.Group{
-			ID:          row.ID,
-			Name:        row.Name,
-			Description: row.Description,
-			CreatedAt:   row.CreatedAt, // Or use row.CreatedAt.Time.String()
-			UpdatedAt:   row.UpdatedAt, // Or use row.UpdatedAt.Time.String()
-		})
+	// Prepare edges and PageInfo
+	edges := make([]*model.GroupEdge, len(groups))
+	for i, group := range groups {
+		edges[i] = &model.GroupEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Group{
+				ID:          group.ID,
+				Name:        group.Name,
+				Description: group.Description,
+				CreatedAt:   group.CreatedAt,
+				UpdatedAt:   group.UpdatedAt,
+			},
+		}
 	}
 
-	return groups, nil
+	// Calculate hasNextPage
+	hasNextPage := len(groups) == int(first)
+
+	return &model.GroupConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // GetGroup is the resolver for the getGroup field.

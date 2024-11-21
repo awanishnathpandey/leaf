@@ -8,8 +8,8 @@ type Role {
     description: String!
     createdAt: Int!
     updatedAt: Int!
-    permissions: [Permission!]!
-    users: [User!]!
+    permissions(first: Int!, after: Int, filter: PermissionFilter, sort: PermissionSort): PermissionConnection!
+    users(first: Int!, after: Int, filter: UserFilter, sort: UserSort): UserConnection!
 }
 
 type Permission {
@@ -18,7 +18,7 @@ type Permission {
     description: String!
     createdAt: Int!
     updatedAt: Int!
-    roles: [Role!]!
+    roles(first: Int!, after: Int, filter: RoleFilter, sort: RoleSort): RoleConnection!
 }
 
 
@@ -44,9 +44,73 @@ input UpdatePermission {
   description: String!
 }
 
+# Filters for Roles
+input RoleFilter {
+  name: String
+  description: String
+}
+
+# Sorting for Roles
+input RoleSort {
+  field: RoleSortField!
+  order: SortOrder!
+}
+
+enum RoleSortField {
+  NAME
+  DESCRIPTION
+}
+
+type RoleConnection {
+  edges: [RoleEdge!]!
+  pageInfo: PageInfo!
+}
+
+type RoleEdge {
+  cursor: String!
+  node: Role!
+}
+
+# Filters for Permission
+input PermissionFilter {
+  name: String
+  description: String
+}
+
+# Sorting for Permissions
+input PermissionSort {
+  field: PermissionSortField!
+  order: SortOrder!
+}
+
+enum PermissionSortField {
+  NAME
+  DESCRIPTION
+}
+
+type PermissionConnection {
+  edges: [PermissionEdge!]!
+  pageInfo: PageInfo!
+}
+
+type PermissionEdge {
+  cursor: String!
+  node: Permission!
+}
+
 extend type Query {
-  roles: [Role!]!
-  permissions: [Permission!]!
+  roles(
+    first: Int!
+    after: Int
+    filter: RoleFilter
+    sort: RoleSort
+  ): RoleConnection!
+  permissions(
+    first: Int!
+    after: Int
+    filter: PermissionFilter
+    sort: PermissionSort
+  ): PermissionConnection!
   getRole(id: ID!): Role!
   getPermission(id: ID!): Permission!
 }

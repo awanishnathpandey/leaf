@@ -111,6 +111,333 @@ func (q *Queries) DeleteRole(ctx context.Context, id int64) error {
 	return err
 }
 
+const getPaginatedPermissionsByRoleID = `-- name: GetPaginatedPermissionsByRoleID :many
+SELECT id, name, description, p.created_at, p.updated_at, role_id, permission_id, rp.created_at, rp.updated_at FROM permissions p
+JOIN role_permissions rp ON p.id = rp.permission_id
+WHERE 
+    rp.role_id = $3  -- Filter by permission_id
+    AND (coalesce($4, '') = '' OR p.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR p.description ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN p.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'ASC' THEN p.description 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN p.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'DESC' THEN p.description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedPermissionsByRoleIDParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	RoleID            pgtype.Int8 `json:"role_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+type GetPaginatedPermissionsByRoleIDRow struct {
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	CreatedAt    int64  `json:"created_at"`
+	UpdatedAt    int64  `json:"updated_at"`
+	RoleID       int64  `json:"role_id"`
+	PermissionID int64  `json:"permission_id"`
+	CreatedAt_2  int64  `json:"created_at_2"`
+	UpdatedAt_2  int64  `json:"updated_at_2"`
+}
+
+func (q *Queries) GetPaginatedPermissionsByRoleID(ctx context.Context, arg GetPaginatedPermissionsByRoleIDParams) ([]GetPaginatedPermissionsByRoleIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedPermissionsByRoleID,
+		arg.Limit,
+		arg.Offset,
+		arg.RoleID,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPaginatedPermissionsByRoleIDRow
+	for rows.Next() {
+		var i GetPaginatedPermissionsByRoleIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPaginatedRolesByPermissionID = `-- name: GetPaginatedRolesByPermissionID :many
+SELECT id, name, description, r.created_at, r.updated_at, role_id, permission_id, rp.created_at, rp.updated_at FROM roles r
+JOIN role_permissions rp ON r.id = rp.role_id
+WHERE 
+    rp.permission_id = $3  -- Filter by permission_id
+    AND (coalesce($4, '') = '' OR r.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR r.description ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN r.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'ASC' THEN r.description 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN r.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'DESC' THEN r.description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedRolesByPermissionIDParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	PermissionID      pgtype.Int8 `json:"permission_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+type GetPaginatedRolesByPermissionIDRow struct {
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	CreatedAt    int64  `json:"created_at"`
+	UpdatedAt    int64  `json:"updated_at"`
+	RoleID       int64  `json:"role_id"`
+	PermissionID int64  `json:"permission_id"`
+	CreatedAt_2  int64  `json:"created_at_2"`
+	UpdatedAt_2  int64  `json:"updated_at_2"`
+}
+
+func (q *Queries) GetPaginatedRolesByPermissionID(ctx context.Context, arg GetPaginatedRolesByPermissionIDParams) ([]GetPaginatedRolesByPermissionIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedRolesByPermissionID,
+		arg.Limit,
+		arg.Offset,
+		arg.PermissionID,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPaginatedRolesByPermissionIDRow
+	for rows.Next() {
+		var i GetPaginatedRolesByPermissionIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPaginatedRolesByUserID = `-- name: GetPaginatedRolesByUserID :many
+SELECT id, name, description, r.created_at, r.updated_at, user_id, role_id, ur.created_at, ur.updated_at FROM roles r
+JOIN user_roles ur ON r.id = ur.role_id
+WHERE 
+    ur.user_id = $3  -- Filter by user_id
+    AND (coalesce($4, '') = '' OR r.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR r.description ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN r.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'ASC' THEN r.description 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN r.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'DESC' THEN r.description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedRolesByUserIDParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	UserID            pgtype.Int8 `json:"user_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+type GetPaginatedRolesByUserIDRow struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+	UserID      int64  `json:"user_id"`
+	RoleID      int64  `json:"role_id"`
+	CreatedAt_2 int64  `json:"created_at_2"`
+	UpdatedAt_2 int64  `json:"updated_at_2"`
+}
+
+func (q *Queries) GetPaginatedRolesByUserID(ctx context.Context, arg GetPaginatedRolesByUserIDParams) ([]GetPaginatedRolesByUserIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedRolesByUserID,
+		arg.Limit,
+		arg.Offset,
+		arg.UserID,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPaginatedRolesByUserIDRow
+	for rows.Next() {
+		var i GetPaginatedRolesByUserIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.RoleID,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPaginatedUsersByRoleID = `-- name: GetPaginatedUsersByRoleID :many
+SELECT 
+    u.id, 
+    u.name, 
+    u.email, 
+    u.email_verified_at, 
+    u.last_seen_at, 
+    u.created_at, 
+    u.updated_at, 
+    u.deleted_at
+FROM users u
+JOIN user_roles ur ON u.id = ur.user_id
+WHERE 
+    ur.role_id = $3  -- Filter by group_id
+    AND (coalesce($4, '') = '' OR u.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR u.email ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN u.name 
+        WHEN $6 = 'EMAIL' AND $7 = 'ASC' THEN u.email 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN u.name 
+        WHEN $6 = 'EMAIL' AND $7 = 'DESC' THEN u.email 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedUsersByRoleIDParams struct {
+	Limit       int32       `json:"limit"`
+	Offset      int32       `json:"offset"`
+	RoleID      pgtype.Int8 `json:"role_id"`
+	NameFilter  interface{} `json:"name_filter"`
+	EmailFilter interface{} `json:"email_filter"`
+	SortField   interface{} `json:"sort_field"`
+	SortOrder   interface{} `json:"sort_order"`
+}
+
+type GetPaginatedUsersByRoleIDRow struct {
+	ID              int64       `json:"id"`
+	Name            string      `json:"name"`
+	Email           string      `json:"email"`
+	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
+	LastSeenAt      int64       `json:"last_seen_at"`
+	CreatedAt       int64       `json:"created_at"`
+	UpdatedAt       int64       `json:"updated_at"`
+	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+}
+
+func (q *Queries) GetPaginatedUsersByRoleID(ctx context.Context, arg GetPaginatedUsersByRoleIDParams) ([]GetPaginatedUsersByRoleIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedUsersByRoleID,
+		arg.Limit,
+		arg.Offset,
+		arg.RoleID,
+		arg.NameFilter,
+		arg.EmailFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPaginatedUsersByRoleIDRow
+	for rows.Next() {
+		var i GetPaginatedUsersByRoleIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.EmailVerifiedAt,
+			&i.LastSeenAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPermission = `-- name: GetPermission :one
 SELECT id, name, description, created_at, updated_at 
 FROM permissions 
@@ -361,6 +688,126 @@ ORDER BY name
 
 func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
 	rows, err := q.db.Query(ctx, listRoles)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Role
+	for rows.Next() {
+		var i Role
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const paginatedPermissions = `-- name: PaginatedPermissions :many
+SELECT id, name, description, created_at, updated_at FROM permissions
+WHERE 
+    (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
+    AND (coalesce($4, '') = '' OR description ILIKE '%' || $4 || '%')
+ORDER BY 
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'ASC' THEN name 
+        WHEN $5 = 'DESCRIPTION' AND $6 = 'ASC' THEN description 
+    END ASC,
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'DESC' THEN name 
+        WHEN $5 = 'DESCRIPTION' AND $6 = 'DESC' THEN description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type PaginatedPermissionsParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+func (q *Queries) PaginatedPermissions(ctx context.Context, arg PaginatedPermissionsParams) ([]Permission, error) {
+	rows, err := q.db.Query(ctx, paginatedPermissions,
+		arg.Limit,
+		arg.Offset,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Permission
+	for rows.Next() {
+		var i Permission
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const paginatedRoles = `-- name: PaginatedRoles :many
+SELECT id, name, description, created_at, updated_at FROM roles
+WHERE 
+    (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
+    AND (coalesce($4, '') = '' OR description ILIKE '%' || $4 || '%')
+ORDER BY 
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'ASC' THEN name 
+        WHEN $5 = 'DESCRIPTION' AND $6 = 'ASC' THEN description 
+    END ASC,
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'DESC' THEN name 
+        WHEN $5 = 'DESCRIPTION' AND $6 = 'DESC' THEN description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type PaginatedRolesParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+func (q *Queries) PaginatedRoles(ctx context.Context, arg PaginatedRolesParams) ([]Role, error) {
+	rows, err := q.db.Query(ctx, paginatedRoles,
+		arg.Limit,
+		arg.Offset,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
 	if err != nil {
 		return nil, err
 	}

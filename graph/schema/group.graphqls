@@ -24,8 +24,41 @@ input UpdateGroup {
   description: String!
 }
 
+
+# Filters for Groups
+input GroupFilter {
+  name: String
+  description: String
+}
+
+# Sorting for Groups
+input GroupSort {
+  field: GroupSortField!
+  order: SortOrder!
+}
+
+enum GroupSortField {
+  NAME
+  DESCRIPTION
+}
+
+type GroupConnection {
+  edges: [GroupEdge!]!
+  pageInfo: PageInfo!
+}
+
+type GroupEdge {
+  cursor: String!
+  node: Group!
+}
+
 extend type Query {
-  groups: [Group!]!
+  groups(
+    first: Int!
+    after: Int
+    filter: GroupFilter
+    sort: GroupSort
+  ): GroupConnection!
   getGroup(id: ID!): Group!
 }
 

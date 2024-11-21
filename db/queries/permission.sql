@@ -93,3 +93,123 @@ SELECT r.*
 FROM roles r
 JOIN role_permissions rp ON r.id = rp.role_id
 WHERE rp.permission_id = $1;
+
+-- name: PaginatedRoles :many
+SELECT * FROM roles
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN description 
+    END DESC
+LIMIT $1
+OFFSET $2;
+
+-- name: PaginatedPermissions :many
+SELECT * FROM permissions
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN description 
+    END DESC
+LIMIT $1
+OFFSET $2;
+
+
+-- name: GetPaginatedRolesByPermissionID :many
+SELECT * FROM roles r
+JOIN role_permissions rp ON r.id = rp.role_id
+WHERE 
+    rp.permission_id = sqlc.narg(permission_id)  -- Filter by permission_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR r.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR r.description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN r.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN r.description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN r.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN r.description 
+    END DESC
+LIMIT $1
+OFFSET $2;
+
+-- name: GetPaginatedPermissionsByRoleID :many
+SELECT * FROM permissions p
+JOIN role_permissions rp ON p.id = rp.permission_id
+WHERE 
+    rp.role_id = sqlc.narg(role_id)  -- Filter by permission_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR p.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR p.description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN p.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN p.description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN p.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN p.description 
+    END DESC
+LIMIT $1
+OFFSET $2;
+
+-- name: GetPaginatedUsersByRoleID :many
+SELECT 
+    u.id, 
+    u.name, 
+    u.email, 
+    u.email_verified_at, 
+    u.last_seen_at, 
+    u.created_at, 
+    u.updated_at, 
+    u.deleted_at
+FROM users u
+JOIN user_roles ur ON u.id = ur.user_id
+WHERE 
+    ur.role_id = sqlc.narg(role_id)  -- Filter by group_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR u.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(email_filter), '') = '' OR u.email ILIKE '%' || sqlc.narg(email_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN u.name 
+        WHEN sqlc.narg(sort_field) = 'EMAIL' AND sqlc.narg(sort_order) = 'ASC' THEN u.email 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN u.name 
+        WHEN sqlc.narg(sort_field) = 'EMAIL' AND sqlc.narg(sort_order) = 'DESC' THEN u.email 
+    END DESC
+LIMIT $1
+OFFSET $2;
+
+-- name: GetPaginatedRolesByUserID :many
+SELECT * FROM roles r
+JOIN user_roles ur ON r.id = ur.role_id
+WHERE 
+    ur.user_id = sqlc.narg(user_id)  -- Filter by user_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR r.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR r.description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN r.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN r.description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN r.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN r.description 
+    END DESC
+LIMIT $1
+OFFSET $2;

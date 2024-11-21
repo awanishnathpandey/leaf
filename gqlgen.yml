@@ -102,6 +102,8 @@ models:
     fields:
       folder:
         resolver: true
+      groups:
+        resolver: true
   Group:
     fields:
       users:

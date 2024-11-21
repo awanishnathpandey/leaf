@@ -9,8 +9,8 @@ type Folder {
   description: String!
   createdAt: Int!
   updatedAt: Int!
-  groups: [Group!]!
-  files: [File!]!
+  groups(first: Int!, after: Int, filter: GroupFilter, sort: GroupSort): GroupConnection!
+  files(first: Int!, after: Int, filter: FileFilter, sort: FileSort): FileConnection!
 }
 
 input CreateFolder {

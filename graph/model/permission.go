@@ -1,14 +1,14 @@
 package model
 
-type Role struct {
-	ID          int64         `json:"id"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	CreatedAt   int64         `json:"createdAt"`
-	UpdatedAt   int64         `json:"updatedAt"`
-	Permissions []*Permission `json:"permissions"`
-	Users       []*User       `json:"users"`
-}
+// type Role struct {
+// 	ID          int64         `json:"id"`
+// 	Name        string        `json:"name"`
+// 	Description string        `json:"description"`
+// 	CreatedAt   int64         `json:"createdAt"`
+// 	UpdatedAt   int64         `json:"updatedAt"`
+// 	Permissions []*Permission `json:"permissions"`
+// 	Users       []*User       `json:"users"`
+// }
 
 type UpdatePermission struct {
 	ID          int64  `json:"id"`
@@ -22,14 +22,14 @@ type UpdateRole struct {
 	Description string `json:"description"`
 }
 
-type Permission struct {
-	ID          int64   `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	CreatedAt   int64   `json:"createdAt"`
-	UpdatedAt   int64   `json:"updatedAt"`
-	Roles       []*Role `json:"roles"`
-}
+// type Permission struct {
+// 	ID          int64   `json:"id"`
+// 	Name        string  `json:"name"`
+// 	Description string  `json:"description"`
+// 	CreatedAt   int64   `json:"createdAt"`
+// 	UpdatedAt   int64   `json:"updatedAt"`
+// 	Roles       []*Role `json:"roles"`
+// }
 
 type CreatePermission struct {
 	Name        string `json:"name"`

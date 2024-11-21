@@ -13,48 +13,142 @@ import (
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Groups is the resolver for the groups field.
-func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder) ([]*model.Group, error) {
-	groups, err := r.DB.GetGroupsByFolderID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch groups for folder %d: %w", obj.ID, err)
+func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) (*model.GroupConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
-	var result []*model.Group
-	for _, group := range groups {
-		result = append(result, &model.Group{
-			ID:          group.ID,
-			Name:        group.Name,
-			Description: group.Description,
-			CreatedAt:   group.CreatedAt,
-			UpdatedAt:   group.UpdatedAt,
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+	}
+
+	// Fetch groups using the SQL query method for rolder ID
+	groups, err := r.DB.GetPaginatedGroupsByFolderID(ctx, generated.GetPaginatedGroupsByFolderIDParams{
+		FolderID:          pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:             int32(first),                            // Limit based on 'first' argument
+		Offset:            int32(offset),                           // Offset based on 'after' cursor
+		NameFilter:        nameFilter,                              // Name filter (optional)
+		DescriptionFilter: descriptionFilter,                       // Email filter (optional)
+		SortField:         sortField,                               // Sorting field
+		SortOrder:         sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch groups for folder %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.GroupEdge, len(groups))
+	for i, group := range groups {
+		edges[i] = &model.GroupEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Group{
+				ID:          group.ID,
+				Name:        group.Name,
+				Description: group.Description,
+				CreatedAt:   group.CreatedAt,
+				UpdatedAt:   group.UpdatedAt,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(groups) == int(first)
+
+	return &model.GroupConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // Files is the resolver for the files field.
-func (r *folderResolver) Files(ctx context.Context, obj *model.Folder) ([]*model.File, error) {
-	files, err := r.DB.GetFilesByFolderID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch files for folder %d: %w", obj.ID, err)
+func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
-	var result []*model.File
-	for _, file := range files {
-		result = append(result, &model.File{
-			ID:        file.ID,
-			Name:      file.Name,
-			Slug:      file.Slug,
-			URL:       file.Url,
-			FolderID:  file.FolderID,
-			CreatedAt: file.CreatedAt,
-			UpdatedAt: file.UpdatedAt,
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, slugFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		slugFilter = filter.Slug
+	}
+
+	// Fetch groups using the SQL query method for folder ID
+	files, err := r.DB.GetPaginatedFilesByFolderID(ctx, generated.GetPaginatedFilesByFolderIDParams{
+		FolderID:   pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:      int32(first),                            // Limit based on 'first' argument
+		Offset:     int32(offset),                           // Offset based on 'after' cursor
+		NameFilter: nameFilter,                              // Name filter (optional)
+		SlugFilter: slugFilter,                              // Email filter (optional)
+		SortField:  sortField,                               // Sorting field
+		SortOrder:  sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch files for folder %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.FileEdge, len(files))
+	for i, file := range files {
+		edges[i] = &model.FileEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.File{
+				ID:        file.ID,
+				Name:      file.Name,
+				Slug:      file.Slug,
+				URL:       file.Url,
+				CreatedAt: file.CreatedAt,
+				UpdatedAt: file.UpdatedAt,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(files) == int(first)
+
+	return &model.FileConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // CreateFolder is the resolver for the createFolder field.

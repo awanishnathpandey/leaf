@@ -84,12 +84,28 @@ FROM groups g
 JOIN group_files gf ON g.id = gf.group_id
 WHERE gf.file_id = $1;
 
+-- name: PaginatedGroups :many
+SELECT * FROM groups
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN description 
+    END DESC
+LIMIT $1
+OFFSET $2;
+
 -- name: GetPaginatedUsersByGroupID :many
 SELECT 
     u.id, 
     u.name, 
     u.email, 
-    u.password, 
     u.email_verified_at, 
     u.last_seen_at, 
     u.created_at, 
@@ -151,6 +167,44 @@ ORDER BY
         WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN f.name 
         WHEN sqlc.narg(sort_field) = 'SLUG' AND sqlc.narg(sort_order) = 'DESC' THEN f.slug 
         WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN f.description 
+    END DESC
+LIMIT $1
+OFFSET $2;
+
+-- name: GetPaginatedGroupsByUserID :many
+SELECT * FROM groups g
+JOIN group_users gu ON g.id = gu.group_id
+WHERE 
+    gu.user_id = sqlc.narg(user_id)  -- Filter by user_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR g.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR g.description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN g.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN g.description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN g.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN g.description 
+    END DESC
+LIMIT $1
+OFFSET $2;
+
+-- name: GetPaginatedGroupsByFolderID :many
+SELECT * FROM groups g
+JOIN group_folders gf ON g.id = gf.group_id
+WHERE 
+    gf.folder_id = sqlc.narg(folder_id)  -- Filter by user_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR g.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR g.description ILIKE '%' || sqlc.narg(description_filter) || '%')
+ORDER BY 
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN g.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'ASC' THEN g.description 
+    END ASC,
+    CASE 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN g.name 
+        WHEN sqlc.narg(sort_field) = 'DESCRIPTION' AND sqlc.narg(sort_order) = 'DESC' THEN g.description 
     END DESC
 LIMIT $1
 OFFSET $2;

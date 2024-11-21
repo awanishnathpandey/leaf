@@ -13,6 +13,7 @@ import (
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -233,43 +234,137 @@ func (r *queryResolver) GetUserByEmail(ctx context.Context, email string) (*mode
 }
 
 // Groups is the resolver for the groups field.
-func (r *userResolver) Groups(ctx context.Context, obj *model.User) ([]*model.Group, error) {
-	groups, err := r.DB.GetGroupsByUserID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch groups for user %d: %w", obj.ID, err)
+func (r *userResolver) Groups(ctx context.Context, obj *model.User, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) (*model.GroupConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
-	var result []*model.Group
-	for _, group := range groups {
-		result = append(result, &model.Group{
-			ID:          group.ID,
-			Name:        group.Name,
-			Description: group.Description,
-			CreatedAt:   group.CreatedAt,
-			UpdatedAt:   group.UpdatedAt,
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+	}
+
+	// Fetch groups using the SQL query method for role ID
+	groups, err := r.DB.GetPaginatedGroupsByUserID(ctx, generated.GetPaginatedGroupsByUserIDParams{
+		UserID:            pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:             int32(first),                            // Limit based on 'first' argument
+		Offset:            int32(offset),                           // Offset based on 'after' cursor
+		NameFilter:        nameFilter,                              // Name filter (optional)
+		DescriptionFilter: descriptionFilter,                       // Email filter (optional)
+		SortField:         sortField,                               // Sorting field
+		SortOrder:         sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch groups for user %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.GroupEdge, len(groups))
+	for i, group := range groups {
+		edges[i] = &model.GroupEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Group{
+				ID:          group.ID,
+				Name:        group.Name,
+				Description: group.Description,
+				CreatedAt:   group.CreatedAt,
+				UpdatedAt:   group.UpdatedAt,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(groups) == int(first)
+
+	return &model.GroupConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // Roles is the resolver for the roles field.
-func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*model.Role, error) {
-	roles, err := r.DB.GetRolesByUserID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch roles for user %d: %w", obj.ID, err)
+func (r *userResolver) Roles(ctx context.Context, obj *model.User, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) (*model.RoleConnection, error) {
+	// Decode the cursor (if provided)
+	var offset int64
+	if after != nil { // Check if `after` is provided (non-nil)
+		offset = *after
 	}
 
-	var result []*model.Role
-	for _, role := range roles {
-		result = append(result, &model.Role{
-			ID:          role.ID,
-			Name:        role.Name,
-			Description: role.Description,
-			CreatedAt:   role.CreatedAt,
-			UpdatedAt:   role.UpdatedAt,
-		})
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	if sort != nil {
+		sortField = string(sort.Field)
 	}
-	return result, nil
+
+	sortOrder := "ASC" // Default sort order
+	if sort != nil {
+		sortOrder = string(sort.Order)
+	}
+
+	// Prepare filter values
+	var nameFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+	}
+
+	// Fetch users using the SQL query method for role ID
+	roles, err := r.DB.GetPaginatedRolesByUserID(ctx, generated.GetPaginatedRolesByUserIDParams{
+		UserID:            pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
+		Limit:             int32(first),                            // Limit based on 'first' argument
+		Offset:            int32(offset),                           // Offset based on 'after' cursor
+		NameFilter:        nameFilter,                              // Name filter (optional)
+		DescriptionFilter: descriptionFilter,                       // Email filter (optional)
+		SortField:         sortField,                               // Sorting field
+		SortOrder:         sortOrder,                               // Sorting order
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch roles for user %d: %v", obj.ID, err)
+	}
+
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.RoleEdge, len(roles))
+	for i, role := range roles {
+		edges[i] = &model.RoleEdge{
+			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Node: &model.Role{
+				ID:          role.ID,
+				Name:        role.Name,
+				Description: role.Description,
+				CreatedAt:   role.CreatedAt,
+				UpdatedAt:   role.UpdatedAt,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := len(roles) == int(first)
+
+	return &model.RoleConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // User returns graph.UserResolver implementation.

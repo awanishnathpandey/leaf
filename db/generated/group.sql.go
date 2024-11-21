@@ -451,12 +451,171 @@ func (q *Queries) GetPaginatedFoldersByGroupID(ctx context.Context, arg GetPagin
 	return items, nil
 }
 
+const getPaginatedGroupsByFolderID = `-- name: GetPaginatedGroupsByFolderID :many
+SELECT id, name, description, g.created_at, g.updated_at, group_id, folder_id, gf.created_at, gf.updated_at FROM groups g
+JOIN group_folders gf ON g.id = gf.group_id
+WHERE 
+    gf.folder_id = $3  -- Filter by user_id
+    AND (coalesce($4, '') = '' OR g.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR g.description ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN g.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'ASC' THEN g.description 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN g.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'DESC' THEN g.description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedGroupsByFolderIDParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	FolderID          pgtype.Int8 `json:"folder_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+type GetPaginatedGroupsByFolderIDRow struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+	GroupID     int64  `json:"group_id"`
+	FolderID    int64  `json:"folder_id"`
+	CreatedAt_2 int64  `json:"created_at_2"`
+	UpdatedAt_2 int64  `json:"updated_at_2"`
+}
+
+func (q *Queries) GetPaginatedGroupsByFolderID(ctx context.Context, arg GetPaginatedGroupsByFolderIDParams) ([]GetPaginatedGroupsByFolderIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedGroupsByFolderID,
+		arg.Limit,
+		arg.Offset,
+		arg.FolderID,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPaginatedGroupsByFolderIDRow
+	for rows.Next() {
+		var i GetPaginatedGroupsByFolderIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.GroupID,
+			&i.FolderID,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPaginatedGroupsByUserID = `-- name: GetPaginatedGroupsByUserID :many
+SELECT id, name, description, g.created_at, g.updated_at, group_id, user_id, gu.created_at, gu.updated_at FROM groups g
+JOIN group_users gu ON g.id = gu.group_id
+WHERE 
+    gu.user_id = $3  -- Filter by user_id
+    AND (coalesce($4, '') = '' OR g.name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR g.description ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN g.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'ASC' THEN g.description 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN g.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'DESC' THEN g.description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedGroupsByUserIDParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	UserID            pgtype.Int8 `json:"user_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+type GetPaginatedGroupsByUserIDRow struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+	GroupID     int64  `json:"group_id"`
+	UserID      int64  `json:"user_id"`
+	CreatedAt_2 int64  `json:"created_at_2"`
+	UpdatedAt_2 int64  `json:"updated_at_2"`
+}
+
+func (q *Queries) GetPaginatedGroupsByUserID(ctx context.Context, arg GetPaginatedGroupsByUserIDParams) ([]GetPaginatedGroupsByUserIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedGroupsByUserID,
+		arg.Limit,
+		arg.Offset,
+		arg.UserID,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPaginatedGroupsByUserIDRow
+	for rows.Next() {
+		var i GetPaginatedGroupsByUserIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.GroupID,
+			&i.UserID,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPaginatedUsersByGroupID = `-- name: GetPaginatedUsersByGroupID :many
 SELECT 
     u.id, 
     u.name, 
     u.email, 
-    u.password, 
     u.email_verified_at, 
     u.last_seen_at, 
     u.created_at, 
@@ -491,7 +650,18 @@ type GetPaginatedUsersByGroupIDParams struct {
 	SortOrder   interface{} `json:"sort_order"`
 }
 
-func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginatedUsersByGroupIDParams) ([]User, error) {
+type GetPaginatedUsersByGroupIDRow struct {
+	ID              int64       `json:"id"`
+	Name            string      `json:"name"`
+	Email           string      `json:"email"`
+	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
+	LastSeenAt      int64       `json:"last_seen_at"`
+	CreatedAt       int64       `json:"created_at"`
+	UpdatedAt       int64       `json:"updated_at"`
+	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+}
+
+func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginatedUsersByGroupIDParams) ([]GetPaginatedUsersByGroupIDRow, error) {
 	rows, err := q.db.Query(ctx, getPaginatedUsersByGroupID,
 		arg.Limit,
 		arg.Offset,
@@ -505,14 +675,13 @@ func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginat
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []GetPaginatedUsersByGroupIDRow
 	for rows.Next() {
-		var i User
+		var i GetPaginatedUsersByGroupIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.Email,
-			&i.Password,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
 			&i.CreatedAt,
@@ -583,6 +752,66 @@ ORDER BY name
 
 func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 	rows, err := q.db.Query(ctx, listGroups)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const paginatedGroups = `-- name: PaginatedGroups :many
+SELECT id, name, description, created_at, updated_at FROM groups
+WHERE 
+    (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
+    AND (coalesce($4, '') = '' OR description ILIKE '%' || $4 || '%')
+ORDER BY 
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'ASC' THEN name 
+        WHEN $5 = 'DESCRIPTION' AND $6 = 'ASC' THEN description 
+    END ASC,
+    CASE 
+        WHEN $5 = 'NAME' AND $6 = 'DESC' THEN name 
+        WHEN $5 = 'DESCRIPTION' AND $6 = 'DESC' THEN description 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type PaginatedGroupsParams struct {
+	Limit             int32       `json:"limit"`
+	Offset            int32       `json:"offset"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+	SortField         interface{} `json:"sort_field"`
+	SortOrder         interface{} `json:"sort_order"`
+}
+
+func (q *Queries) PaginatedGroups(ctx context.Context, arg PaginatedGroupsParams) ([]Group, error) {
+	rows, err := q.db.Query(ctx, paginatedGroups,
+		arg.Limit,
+		arg.Offset,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
 	if err != nil {
 		return nil, err
 	}

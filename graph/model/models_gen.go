@@ -14,10 +14,27 @@ type CreateFolder struct {
 	Description string `json:"description"`
 }
 
+type CreateGroup struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 type CreateUser struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type File struct {
+	ID        int64            `json:"id"`
+	Name      string           `json:"name"`
+	Slug      string           `json:"slug"`
+	URL       string           `json:"url"`
+	FolderID  int64            `json:"folderId"`
+	Folder    *Folder          `json:"folder"`
+	CreatedAt int64            `json:"createdAt"`
+	UpdatedAt int64            `json:"updatedAt"`
+	Groups    *GroupConnection `json:"groups"`
 }
 
 type FileConnection struct {
@@ -41,14 +58,14 @@ type FileSort struct {
 }
 
 type Folder struct {
-	ID          int64    `json:"id"`
-	Name        string   `json:"name"`
-	Slug        string   `json:"slug"`
-	Description string   `json:"description"`
-	CreatedAt   int64    `json:"createdAt"`
-	UpdatedAt   int64    `json:"updatedAt"`
-	Groups      []*Group `json:"groups"`
-	Files       []*File  `json:"files"`
+	ID          int64            `json:"id"`
+	Name        string           `json:"name"`
+	Slug        string           `json:"slug"`
+	Description string           `json:"description"`
+	CreatedAt   int64            `json:"createdAt"`
+	UpdatedAt   int64            `json:"updatedAt"`
+	Groups      *GroupConnection `json:"groups"`
+	Files       *FileConnection  `json:"files"`
 }
 
 type FolderConnection struct {
@@ -72,6 +89,37 @@ type FolderSort struct {
 	Order SortOrder       `json:"order"`
 }
 
+type Group struct {
+	ID          int64             `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	CreatedAt   int64             `json:"createdAt"`
+	UpdatedAt   int64             `json:"updatedAt"`
+	Users       *UserConnection   `json:"users"`
+	Folders     *FolderConnection `json:"folders"`
+	Files       *FileConnection   `json:"files"`
+}
+
+type GroupConnection struct {
+	Edges    []*GroupEdge `json:"edges"`
+	PageInfo *PageInfo    `json:"pageInfo"`
+}
+
+type GroupEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *Group `json:"node"`
+}
+
+type GroupFilter struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type GroupSort struct {
+	Field GroupSortField `json:"field"`
+	Order SortOrder      `json:"order"`
+}
+
 type Mutation struct {
 }
 
@@ -80,13 +128,78 @@ type PageInfo struct {
 	HasPreviousPage bool `json:"hasPreviousPage"`
 }
 
+type Permission struct {
+	ID          int64           `json:"id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	CreatedAt   int64           `json:"createdAt"`
+	UpdatedAt   int64           `json:"updatedAt"`
+	Roles       *RoleConnection `json:"roles"`
+}
+
+type PermissionConnection struct {
+	Edges    []*PermissionEdge `json:"edges"`
+	PageInfo *PageInfo         `json:"pageInfo"`
+}
+
+type PermissionEdge struct {
+	Cursor string      `json:"cursor"`
+	Node   *Permission `json:"node"`
+}
+
+type PermissionFilter struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type PermissionSort struct {
+	Field PermissionSortField `json:"field"`
+	Order SortOrder           `json:"order"`
+}
+
 type Query struct {
+}
+
+type Role struct {
+	ID          int64                 `json:"id"`
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	CreatedAt   int64                 `json:"createdAt"`
+	UpdatedAt   int64                 `json:"updatedAt"`
+	Permissions *PermissionConnection `json:"permissions"`
+	Users       *UserConnection       `json:"users"`
+}
+
+type RoleConnection struct {
+	Edges    []*RoleEdge `json:"edges"`
+	PageInfo *PageInfo   `json:"pageInfo"`
+}
+
+type RoleEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *Role  `json:"node"`
+}
+
+type RoleFilter struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type RoleSort struct {
+	Field RoleSortField `json:"field"`
+	Order SortOrder     `json:"order"`
 }
 
 type UpdateFolder struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
+	Description string `json:"description"`
+}
+
+type UpdateGroup struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
@@ -97,17 +210,17 @@ type UpdateUser struct {
 }
 
 type User struct {
-	ID              int64    `json:"id"`
-	Name            string   `json:"name"`
-	Email           string   `json:"email"`
-	Password        string   `json:"password"`
-	EmailVerifiedAt *int64   `json:"emailVerifiedAt,omitempty"`
-	LastSeenAt      int64    `json:"lastSeenAt"`
-	CreatedAt       int64    `json:"createdAt"`
-	UpdatedAt       int64    `json:"updatedAt"`
-	DeletedAt       *int64   `json:"deletedAt,omitempty"`
-	Groups          []*Group `json:"groups"`
-	Roles           []*Role  `json:"roles"`
+	ID              int64            `json:"id"`
+	Name            string           `json:"name"`
+	Email           string           `json:"email"`
+	Password        string           `json:"password"`
+	EmailVerifiedAt *int64           `json:"emailVerifiedAt,omitempty"`
+	LastSeenAt      int64            `json:"lastSeenAt"`
+	CreatedAt       int64            `json:"createdAt"`
+	UpdatedAt       int64            `json:"updatedAt"`
+	DeletedAt       *int64           `json:"deletedAt,omitempty"`
+	Groups          *GroupConnection `json:"groups"`
+	Roles           *RoleConnection  `json:"roles"`
 }
 
 type UserConnection struct {
@@ -211,6 +324,129 @@ func (e *FolderSortField) UnmarshalGQL(v interface{}) error {
 }
 
 func (e FolderSortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GroupSortField string
+
+const (
+	GroupSortFieldName        GroupSortField = "NAME"
+	GroupSortFieldDescription GroupSortField = "DESCRIPTION"
+)
+
+var AllGroupSortField = []GroupSortField{
+	GroupSortFieldName,
+	GroupSortFieldDescription,
+}
+
+func (e GroupSortField) IsValid() bool {
+	switch e {
+	case GroupSortFieldName, GroupSortFieldDescription:
+		return true
+	}
+	return false
+}
+
+func (e GroupSortField) String() string {
+	return string(e)
+}
+
+func (e *GroupSortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GroupSortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GroupSortField", str)
+	}
+	return nil
+}
+
+func (e GroupSortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PermissionSortField string
+
+const (
+	PermissionSortFieldName        PermissionSortField = "NAME"
+	PermissionSortFieldDescription PermissionSortField = "DESCRIPTION"
+)
+
+var AllPermissionSortField = []PermissionSortField{
+	PermissionSortFieldName,
+	PermissionSortFieldDescription,
+}
+
+func (e PermissionSortField) IsValid() bool {
+	switch e {
+	case PermissionSortFieldName, PermissionSortFieldDescription:
+		return true
+	}
+	return false
+}
+
+func (e PermissionSortField) String() string {
+	return string(e)
+}
+
+func (e *PermissionSortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PermissionSortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PermissionSortField", str)
+	}
+	return nil
+}
+
+func (e PermissionSortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type RoleSortField string
+
+const (
+	RoleSortFieldName        RoleSortField = "NAME"
+	RoleSortFieldDescription RoleSortField = "DESCRIPTION"
+)
+
+var AllRoleSortField = []RoleSortField{
+	RoleSortFieldName,
+	RoleSortFieldDescription,
+}
+
+func (e RoleSortField) IsValid() bool {
+	switch e {
+	case RoleSortFieldName, RoleSortFieldDescription:
+		return true
+	}
+	return false
+}
+
+func (e RoleSortField) String() string {
+	return string(e)
+}
+
+func (e *RoleSortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RoleSortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RoleSortField", str)
+	}
+	return nil
+}
+
+func (e RoleSortField) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
