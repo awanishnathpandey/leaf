@@ -8,8 +8,8 @@ CREATE TABLE roles (
 );
 
 -- +goose StatementBegin
-INSERT INTO roles (name, description) VALUES ('admin', 'Role for administrators.');
-INSERT INTO roles (name, description) VALUES ('user', 'Role for end users.');
+INSERT INTO roles (name, description) VALUES ('Admin', 'Role for administrators.');
+INSERT INTO roles (name, description) VALUES ('User', 'Role for end users.');
 -- +goose StatementEnd
 
 -- +goose Down

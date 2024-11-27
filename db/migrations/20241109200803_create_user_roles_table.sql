@@ -11,12 +11,12 @@ CREATE TABLE user_roles (
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM users u, roles r
-WHERE u.name = 'admin' AND r.name = 'admin';
+WHERE u.name = 'admin' AND LOWER(r.name) = 'admin';
 
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM users u, roles r
-WHERE u.name = 'user' AND r.name = 'user';
+WHERE u.name = 'user' AND LOWER(r.name) = 'user';
 -- +goose StatementEnd
 
 -- +goose Down

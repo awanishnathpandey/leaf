@@ -10,7 +10,8 @@ CREATE TABLE
     );
 
 -- +goose StatementBegin
-INSERT INTO folders (name, slug, description) VALUES ('sample', 'sample', 'sample documents folder');
+INSERT INTO folders (name, slug, description) VALUES ('Support', 'support', 'support documents folder');
+INSERT INTO folders (name, slug, description) VALUES ('Videos', 'videos', 'videos folder');
 -- +goose StatementEnd
 
 -- +goose Down

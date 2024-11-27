@@ -1,0 +1,12 @@
+type DashboardKPICount {
+  users: Int!
+  roles: Int!
+  permissions: Int!
+  groups: Int!
+  folders: Int!
+  files: Int!
+}
+
+extend type Query {
+  getDashboardKPICount: DashboardKPICount!
+}

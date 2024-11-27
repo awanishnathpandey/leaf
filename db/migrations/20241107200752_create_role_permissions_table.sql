@@ -11,12 +11,12 @@ CREATE TABLE role_permissions (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
-WHERE r.name = 'admin' AND p.name IN ('all');
+WHERE LOWER(r.name) = 'admin' AND p.name IN ('all');
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
-WHERE r.name = 'user' AND p.name IN ('admin_access', 'read', 'read_folder');
+WHERE LOWER(r.name) = 'user' AND p.name IN ('admin_access', 'read');
 -- +goose StatementEnd
 
 -- +goose Down

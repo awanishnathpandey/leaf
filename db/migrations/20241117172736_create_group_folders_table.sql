@@ -8,5 +8,27 @@ CREATE TABLE
         PRIMARY KEY (group_id, folder_id)
     );
 
+-- +goose StatementBegin
+INSERT INTO group_folders (folder_id, group_id)
+SELECT f.id, g.id
+FROM folders f, groups g
+WHERE f.slug = 'support' AND g.name = 'Default Group';
+
+INSERT INTO group_folders (folder_id, group_id)
+SELECT f.id, g.id
+FROM folders f, groups g
+WHERE f.slug = 'videos' AND g.name = 'Default Group';
+
+INSERT INTO group_folders (folder_id, group_id)
+SELECT f.id, g.id
+FROM folders f, groups g
+WHERE f.slug = 'support' AND g.name = 'Admin Group';
+
+INSERT INTO group_folders (folder_id, group_id)
+SELECT f.id, g.id
+FROM folders f, groups g
+WHERE f.slug = 'videos' AND g.name = 'Admin Group';
+-- +goose StatementEnd
+
 -- +goose Down
 DROP TABLE group_folders;
