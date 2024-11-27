@@ -18,7 +18,7 @@ import (
 // MyClaims struct that includes JWT standard claims and any custom claims
 type MyClaims struct {
 	jwt.RegisteredClaims
-	CustomField string `json:"custom_field"`
+	UserEmail string `json:"user_email"`
 }
 
 // Global variable to hold queries object
@@ -146,6 +146,12 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 		}
 
 		// Store claims (user info, etc.) in the request context
+		userEmail := claims.UserEmail // Retrieve userEmail from claims
+		if userEmail == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Email not found in token",
+			})
+		}
 		userID := claims.Subject // The subject is typically a string
 		uidInt64, err := strconv.ParseInt(userID, 10, 64)
 		if err != nil {
@@ -194,6 +200,7 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 
 		// Use Locals to store userID for easy access later in your handlers
 		c.Locals("userID", uidInt64)
+		c.Locals("userEmail", userEmail)
 
 		// Allow the request to continue to the next handler
 		return c.Next()

@@ -10,8 +10,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type MyClaims struct {
+	jwt.RegisteredClaims
+	UserEmail string `json:"user_email"` // Custom field for user email
+}
+
 // GenerateJWT generates a JWT token for a given user ID.
-func GenerateJWT(userID int64) (string, error) {
+func GenerateJWT(userID int64, userEmail string) (string, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		return "", fmt.Errorf("JWT_SECRET is not set in the environment")
@@ -27,11 +32,14 @@ func GenerateJWT(userID int64) (string, error) {
 		return "", fmt.Errorf("JWT_EXPIRY_MINUTES is invalid: %v", err)
 	}
 
-	claims := &jwt.RegisteredClaims{
-		Subject:   fmt.Sprintf("%d", userID),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(jwtExpiryMinutes) * time.Minute)), // 1-day expiry
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		Issuer:    jwtIssuer,
+	claims := &MyClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   fmt.Sprintf("%d", userID), // User ID as the subject
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(jwtExpiryMinutes) * time.Minute)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    jwtIssuer,
+		},
+		UserEmail: userEmail, // Add email as a custom claim
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

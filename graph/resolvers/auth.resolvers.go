@@ -61,7 +61,7 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (*model
 	if err := utils.CheckPassword(user.Password, input.Password); err != nil {
 		return nil, fmt.Errorf("invalid credentials")
 	}
-	token, err := utils.GenerateJWT(user.ID)
+	token, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token")
 	}
@@ -105,10 +105,11 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (bool,
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	// Retrieve userID from context
-	userID := ctx.Value("userID").(int64) // Access the user ID from the context
+	// userID := ctx.Value("userID").(int64) // Access the user ID from the context
+	userEmail := ctx.Value("userEmail").(string)
 
 	// Fetch user from DB based on the userID
-	user, err := r.DB.GetUser(ctx, userID)
+	user, err := r.DB.GetUserByEmail(ctx, userEmail)
 	if err != nil {
 		return nil, err
 	}
