@@ -129,7 +129,7 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFil
 		FolderID: input.FolderID, // Ensure the Folder ID is passed correctly
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create file: %w", err)
 	}
 
 	// Map the result from sqlc to the GraphQL model

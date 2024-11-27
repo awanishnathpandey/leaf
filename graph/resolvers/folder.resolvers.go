@@ -82,7 +82,7 @@ func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first in
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(groups) == int(first)
+	hasNextPage := offset+int64(len(groups)) < totalCount
 
 	return &model.GroupConnection{
 		TotalCount: totalCount,
@@ -120,7 +120,7 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 		slugFilter = filter.Slug
 	}
 
-	// Fetch groups using the SQL query method for folder ID
+	// Fetch files using the SQL query method for folder ID
 	files, err := r.DB.GetPaginatedFilesByFolderID(ctx, generated.GetPaginatedFilesByFolderIDParams{
 		FolderID:   pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
 		Limit:      int32(first),                            // Limit based on 'first' argument
@@ -162,7 +162,7 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(files) == int(first)
+	hasNextPage := offset+int64(len(files)) < totalCount
 
 	return &model.FileConnection{
 		TotalCount: totalCount,
@@ -189,7 +189,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, input model.CreateF
 		Description: input.Description,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create folder: %w", err)
 	}
 
 	// Return the newly created folder
@@ -330,7 +330,7 @@ func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, 
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(folders) == int(first)
+	hasNextPage := offset+int64(len(folders)) < totalCount
 
 	return &model.FolderConnection{
 		TotalCount: totalCount,

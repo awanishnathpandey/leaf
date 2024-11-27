@@ -37,7 +37,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 		Password: hashedPassword,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	// Return the newly created user
@@ -58,7 +58,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 	// Check if the user exists
 	_, err := r.DB.GetUser(ctx, input.ID)
 	if err != nil {
-		return nil, fmt.Errorf("folder not found: %w", err)
+		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	// Update the user
@@ -74,7 +74,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 	// Fetch the updated user
 	updatedUser, err := r.DB.GetUser(ctx, input.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve updated folder: %w", err)
+		return nil, fmt.Errorf("failed to retrieve updated user: %w", err)
 	}
 
 	// Map the SQLC model to the GraphQL model
@@ -117,7 +117,7 @@ func (r *mutationResolver) UpdateUserEmailVerifiedAt(ctx context.Context, id int
 	// Attempt to update the user email verified at
 	err = r.DB.UpdateUserEmailVerifiedAt(ctx, id)
 	if err != nil {
-		return false, fmt.Errorf("failed to delete user: %w", err)
+		return false, fmt.Errorf("failed to update user email verified at: %w", err)
 	}
 	return true, nil
 }
@@ -347,13 +347,13 @@ func (r *userResolver) Roles(ctx context.Context, obj *model.User, first int64, 
 		descriptionFilter = filter.Description
 	}
 
-	// Fetch users using the SQL query method for role ID
+	// Fetch roles using the SQL query method for role ID
 	roles, err := r.DB.GetPaginatedRolesByUserID(ctx, generated.GetPaginatedRolesByUserIDParams{
 		UserID:            pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
 		Limit:             int32(first),                            // Limit based on 'first' argument
 		Offset:            int32(offset),                           // Offset based on 'after' cursor
 		NameFilter:        nameFilter,                              // Name filter (optional)
-		DescriptionFilter: descriptionFilter,                       // Email filter (optional)
+		DescriptionFilter: descriptionFilter,                       // Description filter (optional)
 		SortField:         sortField,                               // Sorting field
 		SortOrder:         sortOrder,                               // Sorting order
 	})

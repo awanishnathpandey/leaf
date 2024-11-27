@@ -124,7 +124,7 @@ func (r *groupResolver) Folders(ctx context.Context, obj *model.Group, first int
 		descriptionFilter = filter.Description
 	}
 
-	// Fetch users using the SQL query method for group ID
+	// Fetch folders using the SQL query method for group ID
 	folders, err := r.DB.GetPaginatedFoldersByGroupID(ctx, generated.GetPaginatedFoldersByGroupIDParams{
 		GroupID:           pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
 		Limit:             int32(first),                            // Limit based on 'first' argument
@@ -205,7 +205,7 @@ func (r *groupResolver) Files(ctx context.Context, obj *model.Group, first int64
 		slugFilter = filter.Slug
 	}
 
-	// Fetch users using the SQL query method for group ID
+	// Fetch files using the SQL query method for group ID
 	files, err := r.DB.GetPaginatedFilesByGroupID(ctx, generated.GetPaginatedFilesByGroupIDParams{
 		GroupID:    pgtype.Int8{Int64: obj.ID, Valid: true}, // Group ID from the Group object
 		Limit:      int32(first),                            // Limit based on 'first' argument
@@ -273,7 +273,7 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, input model.CreateGr
 		Description: input.Description,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create group: %w", err)
 	}
 
 	// Return the newly created group

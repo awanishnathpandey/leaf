@@ -30,7 +30,7 @@ func (r *mutationResolver) CreateRole(ctx context.Context, input model.CreateRol
 		Description: input.Description,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create role: %w", err)
 	}
 
 	// Return the newly created role
@@ -107,7 +107,7 @@ func (r *mutationResolver) CreatePermission(ctx context.Context, input model.Cre
 		Description: input.Description,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create permission: %w", err)
 	}
 
 	// Return the newly created permission
@@ -558,7 +558,7 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first i
 		descriptionFilter = filter.Description
 	}
 
-	// Fetch roles using the SQL query method for permission ID
+	// Fetch permissions using the SQL query method for permission ID
 	permissions, err := r.DB.GetPaginatedPermissionsByRoleID(ctx, generated.GetPaginatedPermissionsByRoleIDParams{
 		RoleID:            pgtype.Int8{Int64: obj.ID, Valid: true}, // Role ID from the Group object
 		Limit:             int32(first),                            // Limit based on 'first' argument
