@@ -18,6 +18,13 @@ import (
 
 // Users is the resolver for the users field.
 func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -99,6 +106,13 @@ func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64
 
 // Folders is the resolver for the folders field.
 func (r *groupResolver) Folders(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) (*model.FolderConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -181,6 +195,13 @@ func (r *groupResolver) Folders(ctx context.Context, obj *model.Group, first int
 
 // Files is the resolver for the files field.
 func (r *groupResolver) Files(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_file"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -261,6 +282,13 @@ func (r *groupResolver) Files(ctx context.Context, obj *model.Group, first int64
 
 // CreateGroup is the resolver for the createGroup field.
 func (r *mutationResolver) CreateGroup(ctx context.Context, input model.CreateGroup) (*model.Group, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "create_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Validate input
 	if err := input.Validate(); err != nil {
 		// Call the reusable validation error formatter
@@ -288,6 +316,13 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, input model.CreateGr
 
 // UpdateGroup is the resolver for the updateGroup field.
 func (r *mutationResolver) UpdateGroup(ctx context.Context, input model.UpdateGroup) (*model.Group, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Check if the group exists
 	_, err := r.DB.GetFolder(ctx, input.ID)
 	if err != nil {
@@ -322,6 +357,13 @@ func (r *mutationResolver) UpdateGroup(ctx context.Context, input model.UpdateGr
 
 // DeleteGroup is the resolver for the deleteGroup field.
 func (r *mutationResolver) DeleteGroup(ctx context.Context, id int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the group exists (optional)
 	_, err := r.DB.GetGroup(ctx, id)
 	if err != nil {
@@ -338,6 +380,13 @@ func (r *mutationResolver) DeleteGroup(ctx context.Context, id int64) (bool, err
 
 // AddUserToGroup is the resolver for the addUserToGroup field.
 func (r *mutationResolver) AddUserToGroup(ctx context.Context, groupID int64, userID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_user", "update_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the group exists
 	_, groupErr := r.DB.GetGroup(ctx, groupID)
 	if groupErr != nil {
@@ -362,6 +411,13 @@ func (r *mutationResolver) AddUserToGroup(ctx context.Context, groupID int64, us
 
 // RemoveUserFromGroup is the resolver for the removeUserFromGroup field.
 func (r *mutationResolver) RemoveUserFromGroup(ctx context.Context, groupID int64, userID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_user", "update_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the group exists
 	_, groupErr := r.DB.GetGroup(ctx, groupID)
 	if groupErr != nil {
@@ -386,6 +442,13 @@ func (r *mutationResolver) RemoveUserFromGroup(ctx context.Context, groupID int6
 
 // AddFolderToGroup is the resolver for the addFolderToGroup field.
 func (r *mutationResolver) AddFolderToGroup(ctx context.Context, groupID int64, folderID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_folder", "update_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the group exists
 	_, groupErr := r.DB.GetGroup(ctx, groupID)
 	if groupErr != nil {
@@ -410,6 +473,13 @@ func (r *mutationResolver) AddFolderToGroup(ctx context.Context, groupID int64, 
 
 // RemoveFolderFromGroup is the resolver for the removeFolderFromGroup field.
 func (r *mutationResolver) RemoveFolderFromGroup(ctx context.Context, groupID int64, folderID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_folder", "update_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the group exists
 	_, groupErr := r.DB.GetGroup(ctx, groupID)
 	if groupErr != nil {
@@ -434,6 +504,13 @@ func (r *mutationResolver) RemoveFolderFromGroup(ctx context.Context, groupID in
 
 // AddFileToGroup is the resolver for the addFileToGroup field.
 func (r *mutationResolver) AddFileToGroup(ctx context.Context, groupID int64, fileID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_file", "update_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the group exists
 	_, groupErr := r.DB.GetGroup(ctx, groupID)
 	if groupErr != nil {
@@ -458,6 +535,13 @@ func (r *mutationResolver) AddFileToGroup(ctx context.Context, groupID int64, fi
 
 // RemoveFileFromGroup is the resolver for the removeFileFromGroup field.
 func (r *mutationResolver) RemoveFileFromGroup(ctx context.Context, groupID int64, fileID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_file", "update_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the group exists
 	_, groupErr := r.DB.GetGroup(ctx, groupID)
 	if groupErr != nil {
@@ -482,6 +566,13 @@ func (r *mutationResolver) RemoveFileFromGroup(ctx context.Context, groupID int6
 
 // Groups is the resolver for the groups field.
 func (r *queryResolver) Groups(ctx context.Context, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) (*model.GroupConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -558,6 +649,13 @@ func (r *queryResolver) Groups(ctx context.Context, first int64, after *int64, f
 
 // GetGroup is the resolver for the getGroup field.
 func (r *queryResolver) GetGroup(ctx context.Context, id int64) (*model.Group, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Call the generated GetGroup query
 	group, err := r.DB.GetGroup(ctx, id) // assuming input.ID is of type string
 	if err != nil {

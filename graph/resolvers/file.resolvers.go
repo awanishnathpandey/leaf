@@ -18,6 +18,13 @@ import (
 
 // Folder is the resolver for the folder field.
 func (r *fileResolver) Folder(ctx context.Context, obj *model.File) (*model.Folder, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_folder", "read_file"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Fetch the folder by folderID
 	folder, err := r.DB.GetFolder(ctx, obj.FolderID)
 	if err != nil {
@@ -37,6 +44,13 @@ func (r *fileResolver) Folder(ctx context.Context, obj *model.File) (*model.Fold
 
 // Groups is the resolver for the groups field.
 func (r *fileResolver) Groups(ctx context.Context, obj *model.File, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) (*model.GroupConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_group", "read_file"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -115,6 +129,13 @@ func (r *fileResolver) Groups(ctx context.Context, obj *model.File, first int64,
 
 // CreateFile is the resolver for the createFile field.
 func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFile) (*model.File, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "create_file"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Validate input
 	if err := input.Validate(); err != nil {
 		// Call the reusable validation error formatter
@@ -146,6 +167,13 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFil
 
 // UpdateFile is the resolver for the updateFile field.
 func (r *mutationResolver) UpdateFile(ctx context.Context, input model.UpdateFile) (*model.File, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_file"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Check if the file exists
 	_, err := r.DB.GetFile(ctx, input.ID)
 	if err != nil {
@@ -176,6 +204,13 @@ func (r *mutationResolver) UpdateFile(ctx context.Context, input model.UpdateFil
 
 // DeleteFile is the resolver for the deleteFile field.
 func (r *mutationResolver) DeleteFile(ctx context.Context, id int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_file"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the file exists (optional)
 	_, err := r.DB.GetFile(ctx, id)
 	if err != nil {
@@ -192,6 +227,13 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, id int64) (bool, erro
 
 // Files is the resolver for the files field.
 func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_file"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -270,6 +312,13 @@ func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, fi
 
 // GetFile is the resolver for the getFile field.
 func (r *queryResolver) GetFile(ctx context.Context, id int64) (*model.File, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_file"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Call the generated GetFile query
 	file, err := r.DB.GetFile(ctx, id) // assuming input.ID is of type string
 	if err != nil {
@@ -290,6 +339,13 @@ func (r *queryResolver) GetFile(ctx context.Context, id int64) (*model.File, err
 
 // GetFilesByFolder is the resolver for the getFilesByFolder field.
 func (r *queryResolver) GetFilesByFolder(ctx context.Context, folderID int64) ([]*model.File, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_file", "read_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	files, err := r.DB.GetFilesByFolder(ctx, folderID)
 	if err != nil {
 		return nil, err

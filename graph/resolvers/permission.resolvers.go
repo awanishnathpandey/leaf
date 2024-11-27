@@ -18,6 +18,13 @@ import (
 
 // CreateRole is the resolver for the createRole field.
 func (r *mutationResolver) CreateRole(ctx context.Context, input model.CreateRole) (*model.Role, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "create_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Validate input
 	if err := input.Validate(); err != nil {
 		// Call the reusable validation error formatter
@@ -45,6 +52,13 @@ func (r *mutationResolver) CreateRole(ctx context.Context, input model.CreateRol
 
 // UpdateRole is the resolver for the updateRole field.
 func (r *mutationResolver) UpdateRole(ctx context.Context, input model.UpdateRole) (*model.Role, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Check if the role exists
 	_, err := r.DB.GetRole(ctx, input.ID)
 	if err != nil {
@@ -79,6 +93,13 @@ func (r *mutationResolver) UpdateRole(ctx context.Context, input model.UpdateRol
 
 // DeleteRole is the resolver for the deleteRole field.
 func (r *mutationResolver) DeleteRole(ctx context.Context, id int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the role exists (optional)
 	_, err := r.DB.GetRole(ctx, id)
 	if err != nil {
@@ -95,6 +116,13 @@ func (r *mutationResolver) DeleteRole(ctx context.Context, id int64) (bool, erro
 
 // CreatePermission is the resolver for the createPermission field.
 func (r *mutationResolver) CreatePermission(ctx context.Context, input model.CreatePermission) (*model.Permission, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "create_permission"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Validate input
 	if err := input.Validate(); err != nil {
 		// Call the reusable validation error formatter
@@ -122,6 +150,13 @@ func (r *mutationResolver) CreatePermission(ctx context.Context, input model.Cre
 
 // UpdatePermission is the resolver for the updatePermission field.
 func (r *mutationResolver) UpdatePermission(ctx context.Context, input model.UpdatePermission) (*model.Permission, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_permission"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Check if the permission exists
 	_, err := r.DB.GetPermission(ctx, input.ID)
 	if err != nil {
@@ -156,6 +191,13 @@ func (r *mutationResolver) UpdatePermission(ctx context.Context, input model.Upd
 
 // DeletePermission is the resolver for the deletePermission field.
 func (r *mutationResolver) DeletePermission(ctx context.Context, id int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_permission"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the permission exists (optional)
 	_, err := r.DB.GetPermission(ctx, id)
 	if err != nil {
@@ -172,6 +214,13 @@ func (r *mutationResolver) DeletePermission(ctx context.Context, id int64) (bool
 
 // AddRoleToUser is the resolver for the addRoleToUser field.
 func (r *mutationResolver) AddRoleToUser(ctx context.Context, roleID int64, userID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the role exists
 	_, roleErr := r.DB.GetRole(ctx, roleID)
 	if roleErr != nil {
@@ -196,6 +245,13 @@ func (r *mutationResolver) AddRoleToUser(ctx context.Context, roleID int64, user
 
 // RemoveRoleFromUser is the resolver for the removeRoleFromUser field.
 func (r *mutationResolver) RemoveRoleFromUser(ctx context.Context, roleID int64, userID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the role exists
 	_, roleErr := r.DB.GetRole(ctx, roleID)
 	if roleErr != nil {
@@ -220,6 +276,13 @@ func (r *mutationResolver) RemoveRoleFromUser(ctx context.Context, roleID int64,
 
 // AddPermissionToRole is the resolver for the addPermissionToRole field.
 func (r *mutationResolver) AddPermissionToRole(ctx context.Context, roleID int64, permissionID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the role exists
 	_, roleErr := r.DB.GetRole(ctx, roleID)
 	if roleErr != nil {
@@ -244,6 +307,13 @@ func (r *mutationResolver) AddPermissionToRole(ctx context.Context, roleID int64
 
 // RemovePermissionFromRole is the resolver for the removePermissionFromRole field.
 func (r *mutationResolver) RemovePermissionFromRole(ctx context.Context, roleID int64, permissionID int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the role exists
 	_, roleErr := r.DB.GetRole(ctx, roleID)
 	if roleErr != nil {
@@ -268,6 +338,13 @@ func (r *mutationResolver) RemovePermissionFromRole(ctx context.Context, roleID 
 
 // Roles is the resolver for the roles field.
 func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) (*model.RoleConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_role", "read_permission"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -346,6 +423,13 @@ func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, f
 
 // Roles is the resolver for the roles field.
 func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) (*model.RoleConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -422,6 +506,13 @@ func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, fi
 
 // Permissions is the resolver for the permissions field.
 func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int64, filter *model.PermissionFilter, sort *model.PermissionSort) (*model.PermissionConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_permission"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -498,6 +589,13 @@ func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int
 
 // GetRole is the resolver for the getRole field.
 func (r *queryResolver) GetRole(ctx context.Context, id int64) (*model.Role, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Call the generated GetRole query
 	role, err := r.DB.GetRole(ctx, id) // assuming input.ID is of type string
 	if err != nil {
@@ -516,6 +614,13 @@ func (r *queryResolver) GetRole(ctx context.Context, id int64) (*model.Role, err
 
 // GetPermission is the resolver for the getPermission field.
 func (r *queryResolver) GetPermission(ctx context.Context, id int64) (*model.Permission, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_permission"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Call the generated GetPermission query
 	permission, err := r.DB.GetPermission(ctx, id) // assuming input.ID is of type string
 	if err != nil {
@@ -534,6 +639,13 @@ func (r *queryResolver) GetPermission(ctx context.Context, id int64) (*model.Per
 
 // Permissions is the resolver for the permissions field.
 func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first int64, after *int64, filter *model.PermissionFilter, sort *model.PermissionSort) (*model.PermissionConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_permission", "read_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -612,6 +724,13 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first i
 
 // Users is the resolver for the users field.
 func (r *roleResolver) Users(ctx context.Context, obj *model.Role, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_user", "read_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)

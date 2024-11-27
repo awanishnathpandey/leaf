@@ -18,6 +18,13 @@ import (
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUser) (*model.User, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "create_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Validate input
 	if err := input.Validate(); err != nil {
 		// Call the reusable validation error formatter
@@ -55,6 +62,13 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Check if the user exists
 	_, err := r.DB.GetUser(ctx, input.ID)
 	if err != nil {
@@ -92,6 +106,13 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 
 // DeleteUser is the resolver for the deleteUser field.
 func (r *mutationResolver) DeleteUser(ctx context.Context, id int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the user exists (optional)
 	_, err := r.DB.GetUser(ctx, id)
 	if err != nil {
@@ -124,6 +145,13 @@ func (r *mutationResolver) UpdateUserEmailVerifiedAt(ctx context.Context, id int
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -203,6 +231,13 @@ func (r *queryResolver) Users(ctx context.Context, first int64, after *int64, fi
 
 // GetUser is the resolver for the getUser field.
 func (r *queryResolver) GetUser(ctx context.Context, id int64) (*model.User, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Call the generated GetUser query
 	user, err := r.DB.GetUser(ctx, id) // assuming input.ID is of type string
 	if err != nil {
@@ -224,6 +259,13 @@ func (r *queryResolver) GetUser(ctx context.Context, id int64) (*model.User, err
 
 // GetUserByEmail is the resolver for the getUserByEmail field.
 func (r *queryResolver) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Call the generated GetUserByEmail query
 	user, err := r.DB.GetUserByEmail(ctx, email) // assuming email is of type string
 	if err != nil {
@@ -245,6 +287,13 @@ func (r *queryResolver) GetUserByEmail(ctx context.Context, email string) (*mode
 
 // Groups is the resolver for the groups field.
 func (r *userResolver) Groups(ctx context.Context, obj *model.User, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) (*model.GroupConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -323,6 +372,13 @@ func (r *userResolver) Groups(ctx context.Context, obj *model.User, first int64,
 
 // Roles is the resolver for the roles field.
 func (r *userResolver) Roles(ctx context.Context, obj *model.User, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) (*model.RoleConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)

@@ -18,6 +18,13 @@ import (
 
 // Groups is the resolver for the groups field.
 func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) (*model.GroupConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_group", "read_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -96,6 +103,13 @@ func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first in
 
 // Files is the resolver for the files field.
 func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_file", "read_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Decode the cursor (if provided)
 	var offset int64
 	if after != nil { // Check if `after` is provided (non-nil)
@@ -176,6 +190,13 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 
 // CreateFolder is the resolver for the createFolder field.
 func (r *mutationResolver) CreateFolder(ctx context.Context, input model.CreateFolder) (*model.Folder, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "create_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Validate input
 	if err := input.Validate(); err != nil {
 		// Call the reusable validation error formatter
@@ -205,6 +226,13 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, input model.CreateF
 
 // UpdateFolder is the resolver for the UpdateFolder field.
 func (r *mutationResolver) UpdateFolder(ctx context.Context, input model.UpdateFolder) (*model.Folder, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Check if the folder exists
 	_, err := r.DB.GetFolder(ctx, input.ID)
 	if err != nil {
@@ -241,6 +269,13 @@ func (r *mutationResolver) UpdateFolder(ctx context.Context, input model.UpdateF
 
 // DeleteFolder is the resolver for the deleteFolder field.
 func (r *mutationResolver) DeleteFolder(ctx context.Context, id int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
 	// Check if the folder exists (optional)
 	_, err := r.DB.GetFolder(ctx, id)
 	if err != nil {
@@ -344,6 +379,13 @@ func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, 
 
 // GetFolder is the resolver for the getFolder field.
 func (r *queryResolver) GetFolder(ctx context.Context, id int64) (*model.Folder, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Call the generated GetFolder query
 	folder, err := r.DB.GetFolder(ctx, id) // assuming input.ID is of type string
 	if err != nil {
