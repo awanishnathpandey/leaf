@@ -46,11 +46,17 @@ ORDER BY
 LIMIT $1
 OFFSET $2;
 
+-- name: PaginatedFilesCount :one
+SELECT COUNT(*) FROM files
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR slug ILIKE '%' || sqlc.narg(slug_filter) || '%');
+
 -- name: GetPaginatedFilesByFolderID :many
 SELECT * FROM files WHERE 
-    folder_id = sqlc.narg(folder_id)  -- Filter by group_id
-    AND (coalesce(sqlc.narg(name_filter), '') = '' OR f.name ILIKE '%' || sqlc.narg(name_filter) || '%')
-    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR f.slug ILIKE '%' || sqlc.narg(slug_filter) || '%')
+    folder_id = sqlc.narg(folder_id)  -- Filter by folder_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR slug ILIKE '%' || sqlc.narg(slug_filter) || '%')
 ORDER BY 
     CASE 
         WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN name 
@@ -62,3 +68,9 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: GetPaginatedFilesByFolderIDCount :one
+SELECT COUNT(*) FROM files WHERE 
+    folder_id = sqlc.narg(folder_id)  -- Filter by folder_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR slug ILIKE '%' || sqlc.narg(slug_filter) || '%');

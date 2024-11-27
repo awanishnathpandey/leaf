@@ -48,6 +48,7 @@ enum FolderSortField {
 
 
 type FolderConnection {
+  totalCount: Int!
   edges: [FolderEdge!]!
   pageInfo: PageInfo!
 }

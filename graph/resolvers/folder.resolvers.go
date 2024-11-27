@@ -56,6 +56,16 @@ func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first in
 		return nil, fmt.Errorf("failed to fetch groups for folder %d: %v", obj.ID, err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedGroupsByFolderIDCount(ctx, generated.GetPaginatedGroupsByFolderIDCountParams{
+		FolderID:          pgtype.Int8{Int64: obj.ID, Valid: true},
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query groups count for folder %d: %v", obj.ID, err)
+	}
+
 	// Prepare edges and PageInfo for the connection
 	edges := make([]*model.GroupEdge, len(groups))
 	for i, group := range groups {
@@ -75,7 +85,8 @@ func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first in
 	hasNextPage := len(groups) == int(first)
 
 	return &model.GroupConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -123,6 +134,16 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 		return nil, fmt.Errorf("failed to fetch files for folder %d: %v", obj.ID, err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedFilesByFolderIDCount(ctx, generated.GetPaginatedFilesByFolderIDCountParams{
+		FolderID:   pgtype.Int8{Int64: obj.ID, Valid: true},
+		NameFilter: nameFilter,
+		SlugFilter: slugFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query files count for folder %d: %v", obj.ID, err)
+	}
+
 	// Prepare edges and PageInfo for the connection
 	edges := make([]*model.FileEdge, len(files))
 	for i, file := range files {
@@ -133,6 +154,7 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 				Name:      file.Name,
 				Slug:      file.Slug,
 				URL:       file.Url,
+				FolderID:  file.FolderID,
 				CreatedAt: file.CreatedAt,
 				UpdatedAt: file.UpdatedAt,
 			},
@@ -143,7 +165,8 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 	hasNextPage := len(files) == int(first)
 
 	return &model.FileConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -280,6 +303,16 @@ func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, 
 		return nil, fmt.Errorf("failed to query files: %v", err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.PaginatedFoldersCount(ctx, generated.PaginatedFoldersCountParams{
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+		SlugFilter:        slugFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query folders count: %v", err)
+	}
+
 	// Prepare edges and PageInfo
 	edges := make([]*model.FolderEdge, len(folders))
 	for i, folder := range folders {
@@ -300,7 +333,8 @@ func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, 
 	hasNextPage := len(folders) == int(first)
 
 	return &model.FolderConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,

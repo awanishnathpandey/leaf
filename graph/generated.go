@@ -75,8 +75,9 @@ type ComplexityRoot struct {
 	}
 
 	FileConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	FileEdge struct {
@@ -96,8 +97,9 @@ type ComplexityRoot struct {
 	}
 
 	FolderConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	FolderEdge struct {
@@ -117,8 +119,9 @@ type ComplexityRoot struct {
 	}
 
 	GroupConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	GroupEdge struct {
@@ -184,8 +187,9 @@ type ComplexityRoot struct {
 	}
 
 	PermissionConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	PermissionEdge struct {
@@ -222,8 +226,9 @@ type ComplexityRoot struct {
 	}
 
 	RoleConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	RoleEdge struct {
@@ -246,8 +251,9 @@ type ComplexityRoot struct {
 	}
 
 	UserConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	UserEdge struct {
@@ -479,6 +485,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.FileConnection.PageInfo(childComplexity), true
 
+	case "FileConnection.totalCount":
+		if e.complexity.FileConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.FileConnection.TotalCount(childComplexity), true
+
 	case "FileEdge.cursor":
 		if e.complexity.FileEdge.Cursor == nil {
 			break
@@ -572,6 +585,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.FolderConnection.PageInfo(childComplexity), true
+
+	case "FolderConnection.totalCount":
+		if e.complexity.FolderConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.FolderConnection.TotalCount(childComplexity), true
 
 	case "FolderEdge.cursor":
 		if e.complexity.FolderEdge.Cursor == nil {
@@ -671,6 +691,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GroupConnection.PageInfo(childComplexity), true
+
+	case "GroupConnection.totalCount":
+		if e.complexity.GroupConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.GroupConnection.TotalCount(childComplexity), true
 
 	case "GroupEdge.cursor":
 		if e.complexity.GroupEdge.Cursor == nil {
@@ -1195,6 +1222,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PermissionConnection.PageInfo(childComplexity), true
 
+	case "PermissionConnection.totalCount":
+		if e.complexity.PermissionConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.PermissionConnection.TotalCount(childComplexity), true
+
 	case "PermissionEdge.cursor":
 		if e.complexity.PermissionEdge.Cursor == nil {
 			break
@@ -1457,6 +1491,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RoleConnection.PageInfo(childComplexity), true
 
+	case "RoleConnection.totalCount":
+		if e.complexity.RoleConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.RoleConnection.TotalCount(childComplexity), true
+
 	case "RoleEdge.cursor":
 		if e.complexity.RoleEdge.Cursor == nil {
 			break
@@ -1571,6 +1612,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UserConnection.PageInfo(childComplexity), true
+
+	case "UserConnection.totalCount":
+		if e.complexity.UserConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.UserConnection.TotalCount(childComplexity), true
 
 	case "UserEdge.cursor":
 		if e.complexity.UserEdge.Cursor == nil {
@@ -4972,6 +5020,8 @@ func (ec *executionContext) fieldContext_File_groups(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_GroupConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_GroupConnection_edges(ctx, field)
 			case "pageInfo":
@@ -4990,6 +5040,50 @@ func (ec *executionContext) fieldContext_File_groups(ctx context.Context, field 
 	if fc.Args, err = ec.field_File_groups_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.FileConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -5505,6 +5599,8 @@ func (ec *executionContext) fieldContext_Folder_groups(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_GroupConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_GroupConnection_edges(ctx, field)
 			case "pageInfo":
@@ -5566,6 +5662,8 @@ func (ec *executionContext) fieldContext_Folder_files(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_FileConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_FileConnection_edges(ctx, field)
 			case "pageInfo":
@@ -5584,6 +5682,50 @@ func (ec *executionContext) fieldContext_Folder_files(ctx context.Context, field
 	if fc.Args, err = ec.field_Folder_files_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FolderConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.FolderConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FolderConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FolderConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FolderConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -6053,6 +6195,8 @@ func (ec *executionContext) fieldContext_Group_users(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_UserConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_UserConnection_edges(ctx, field)
 			case "pageInfo":
@@ -6114,6 +6258,8 @@ func (ec *executionContext) fieldContext_Group_folders(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_FolderConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_FolderConnection_edges(ctx, field)
 			case "pageInfo":
@@ -6175,6 +6321,8 @@ func (ec *executionContext) fieldContext_Group_files(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_FileConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_FileConnection_edges(ctx, field)
 			case "pageInfo":
@@ -6193,6 +6341,50 @@ func (ec *executionContext) fieldContext_Group_files(ctx context.Context, field 
 	if fc.Args, err = ec.field_Group_files_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.GroupConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GroupConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GroupConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -9027,6 +9219,8 @@ func (ec *executionContext) fieldContext_Permission_roles(ctx context.Context, f
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_RoleConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_RoleConnection_edges(ctx, field)
 			case "pageInfo":
@@ -9045,6 +9239,50 @@ func (ec *executionContext) fieldContext_Permission_roles(ctx context.Context, f
 	if fc.Args, err = ec.field_Permission_roles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PermissionConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.PermissionConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PermissionConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PermissionConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PermissionConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -9358,6 +9596,8 @@ func (ec *executionContext) fieldContext_Query_files(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_FileConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_FileConnection_edges(ctx, field)
 			case "pageInfo":
@@ -9569,6 +9809,8 @@ func (ec *executionContext) fieldContext_Query_folders(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_FolderConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_FolderConnection_edges(ctx, field)
 			case "pageInfo":
@@ -9703,6 +9945,8 @@ func (ec *executionContext) fieldContext_Query_groups(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_GroupConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_GroupConnection_edges(ctx, field)
 			case "pageInfo":
@@ -9837,6 +10081,8 @@ func (ec *executionContext) fieldContext_Query_roles(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_RoleConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_RoleConnection_edges(ctx, field)
 			case "pageInfo":
@@ -9898,6 +10144,8 @@ func (ec *executionContext) fieldContext_Query_permissions(ctx context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_PermissionConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_PermissionConnection_edges(ctx, field)
 			case "pageInfo":
@@ -10099,6 +10347,8 @@ func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_UserConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_UserConnection_edges(ctx, field)
 			case "pageInfo":
@@ -10667,6 +10917,8 @@ func (ec *executionContext) fieldContext_Role_permissions(ctx context.Context, f
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_PermissionConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_PermissionConnection_edges(ctx, field)
 			case "pageInfo":
@@ -10728,6 +10980,8 @@ func (ec *executionContext) fieldContext_Role_users(ctx context.Context, field g
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_UserConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_UserConnection_edges(ctx, field)
 			case "pageInfo":
@@ -10746,6 +11000,50 @@ func (ec *executionContext) fieldContext_Role_users(ctx context.Context, field g
 	if fc.Args, err = ec.field_Role_users_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoleConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.RoleConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RoleConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RoleConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoleConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -11383,6 +11681,8 @@ func (ec *executionContext) fieldContext_User_groups(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_GroupConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_GroupConnection_edges(ctx, field)
 			case "pageInfo":
@@ -11444,6 +11744,8 @@ func (ec *executionContext) fieldContext_User_roles(ctx context.Context, field g
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_RoleConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_RoleConnection_edges(ctx, field)
 			case "pageInfo":
@@ -11462,6 +11764,50 @@ func (ec *executionContext) fieldContext_User_roles(ctx context.Context, field g
 	if fc.Args, err = ec.field_User_roles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.UserConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -14752,6 +15098,11 @@ func (ec *executionContext) _FileConnection(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("FileConnection")
+		case "totalCount":
+			out.Values[i] = ec._FileConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "edges":
 			out.Values[i] = ec._FileConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -14976,6 +15327,11 @@ func (ec *executionContext) _FolderConnection(ctx context.Context, sel ast.Selec
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("FolderConnection")
+		case "totalCount":
+			out.Values[i] = ec._FolderConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "edges":
 			out.Values[i] = ec._FolderConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -15231,6 +15587,11 @@ func (ec *executionContext) _GroupConnection(ctx context.Context, sel ast.Select
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("GroupConnection")
+		case "totalCount":
+			out.Values[i] = ec._GroupConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "edges":
 			out.Values[i] = ec._GroupConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -15789,6 +16150,11 @@ func (ec *executionContext) _PermissionConnection(ctx context.Context, sel ast.S
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PermissionConnection")
+		case "totalCount":
+			out.Values[i] = ec._PermissionConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "edges":
 			out.Values[i] = ec._PermissionConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -16388,6 +16754,11 @@ func (ec *executionContext) _RoleConnection(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("RoleConnection")
+		case "totalCount":
+			out.Values[i] = ec._RoleConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "edges":
 			out.Values[i] = ec._RoleConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -16621,6 +16992,11 @@ func (ec *executionContext) _UserConnection(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UserConnection")
+		case "totalCount":
+			out.Values[i] = ec._UserConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "edges":
 			out.Values[i] = ec._UserConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

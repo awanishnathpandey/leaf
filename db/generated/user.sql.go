@@ -215,6 +215,26 @@ func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) 
 	return items, nil
 }
 
+const paginatedUsersCount = `-- name: PaginatedUsersCount :one
+SELECT COUNT(*)
+FROM users
+WHERE 
+    (coalesce($1, '') = '' OR name ILIKE '%' || $1 || '%')
+    AND (coalesce($2, '') = '' OR email ILIKE '%' || $2 || '%')
+`
+
+type PaginatedUsersCountParams struct {
+	NameFilter  interface{} `json:"name_filter"`
+	EmailFilter interface{} `json:"email_filter"`
+}
+
+func (q *Queries) PaginatedUsersCount(ctx context.Context, arg PaginatedUsersCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, paginatedUsersCount, arg.NameFilter, arg.EmailFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
   set name = $2, email = $3, updated_at = EXTRACT(EPOCH FROM NOW())

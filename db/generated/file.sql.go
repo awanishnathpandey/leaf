@@ -142,9 +142,9 @@ func (q *Queries) GetFilesByFolderID(ctx context.Context, folderID int64) ([]Fil
 
 const getPaginatedFilesByFolderID = `-- name: GetPaginatedFilesByFolderID :many
 SELECT id, name, slug, url, folder_id, created_at, updated_at FROM files WHERE 
-    folder_id = $3  -- Filter by group_id
-    AND (coalesce($4, '') = '' OR f.name ILIKE '%' || $4 || '%')
-    AND (coalesce($5, '') = '' OR f.slug ILIKE '%' || $5 || '%')
+    folder_id = $3  -- Filter by folder_id
+    AND (coalesce($4, '') = '' OR name ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR slug ILIKE '%' || $5 || '%')
 ORDER BY 
     CASE 
         WHEN $6 = 'NAME' AND $7 = 'ASC' THEN name 
@@ -202,6 +202,26 @@ func (q *Queries) GetPaginatedFilesByFolderID(ctx context.Context, arg GetPagina
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPaginatedFilesByFolderIDCount = `-- name: GetPaginatedFilesByFolderIDCount :one
+SELECT COUNT(*) FROM files WHERE 
+    folder_id = $1  -- Filter by folder_id
+    AND (coalesce($2, '') = '' OR name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR slug ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedFilesByFolderIDCountParams struct {
+	FolderID   pgtype.Int8 `json:"folder_id"`
+	NameFilter interface{} `json:"name_filter"`
+	SlugFilter interface{} `json:"slug_filter"`
+}
+
+func (q *Queries) GetPaginatedFilesByFolderIDCount(ctx context.Context, arg GetPaginatedFilesByFolderIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedFilesByFolderIDCount, arg.FolderID, arg.NameFilter, arg.SlugFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const listFiles = `-- name: ListFiles :many
@@ -297,6 +317,25 @@ func (q *Queries) PaginatedFiles(ctx context.Context, arg PaginatedFilesParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const paginatedFilesCount = `-- name: PaginatedFilesCount :one
+SELECT COUNT(*) FROM files
+WHERE 
+    (coalesce($1, '') = '' OR name ILIKE '%' || $1 || '%')
+    AND (coalesce($2, '') = '' OR slug ILIKE '%' || $2 || '%')
+`
+
+type PaginatedFilesCountParams struct {
+	NameFilter interface{} `json:"name_filter"`
+	SlugFilter interface{} `json:"slug_filter"`
+}
+
+func (q *Queries) PaginatedFilesCount(ctx context.Context, arg PaginatedFilesCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, paginatedFilesCount, arg.NameFilter, arg.SlugFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const updateFile = `-- name: UpdateFile :one

@@ -38,8 +38,9 @@ type File struct {
 }
 
 type FileConnection struct {
-	Edges    []*FileEdge `json:"edges"`
-	PageInfo *PageInfo   `json:"pageInfo"`
+	TotalCount int64       `json:"totalCount"`
+	Edges      []*FileEdge `json:"edges"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
 }
 
 type FileEdge struct {
@@ -69,8 +70,9 @@ type Folder struct {
 }
 
 type FolderConnection struct {
-	Edges    []*FolderEdge `json:"edges"`
-	PageInfo *PageInfo     `json:"pageInfo"`
+	TotalCount int64         `json:"totalCount"`
+	Edges      []*FolderEdge `json:"edges"`
+	PageInfo   *PageInfo     `json:"pageInfo"`
 }
 
 type FolderEdge struct {
@@ -101,8 +103,9 @@ type Group struct {
 }
 
 type GroupConnection struct {
-	Edges    []*GroupEdge `json:"edges"`
-	PageInfo *PageInfo    `json:"pageInfo"`
+	TotalCount int64        `json:"totalCount"`
+	Edges      []*GroupEdge `json:"edges"`
+	PageInfo   *PageInfo    `json:"pageInfo"`
 }
 
 type GroupEdge struct {
@@ -138,8 +141,9 @@ type Permission struct {
 }
 
 type PermissionConnection struct {
-	Edges    []*PermissionEdge `json:"edges"`
-	PageInfo *PageInfo         `json:"pageInfo"`
+	TotalCount int64             `json:"totalCount"`
+	Edges      []*PermissionEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
 }
 
 type PermissionEdge struct {
@@ -171,8 +175,9 @@ type Role struct {
 }
 
 type RoleConnection struct {
-	Edges    []*RoleEdge `json:"edges"`
-	PageInfo *PageInfo   `json:"pageInfo"`
+	TotalCount int64       `json:"totalCount"`
+	Edges      []*RoleEdge `json:"edges"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
 }
 
 type RoleEdge struct {
@@ -224,8 +229,9 @@ type User struct {
 }
 
 type UserConnection struct {
-	Edges    []*UserEdge `json:"edges"`
-	PageInfo *PageInfo   `json:"pageInfo"`
+	TotalCount int64       `json:"totalCount"`
+	Edges      []*UserEdge `json:"edges"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
 }
 
 type UserEdge struct {

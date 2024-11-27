@@ -306,6 +306,16 @@ func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, f
 		return nil, fmt.Errorf("failed to fetch roles for permission %d: %v", obj.ID, err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedRolesByPermissionIDCount(ctx, generated.GetPaginatedRolesByPermissionIDCountParams{
+		PermissionID:      pgtype.Int8{Int64: obj.ID, Valid: true},
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query roles count for permission %d: %v", obj.ID, err)
+	}
+
 	// Prepare edges and PageInfo for the connection
 	edges := make([]*model.RoleEdge, len(roles))
 	for i, role := range roles {
@@ -322,10 +332,11 @@ func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, f
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(roles) == int(first)
+	hasNextPage := offset+int64(len(roles)) < totalCount
 
 	return &model.RoleConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -372,6 +383,15 @@ func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, fi
 		return nil, fmt.Errorf("failed to query roles: %v", err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.PaginatedRolesCount(ctx, generated.PaginatedRolesCountParams{
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query roles count: %v", err)
+	}
+
 	// Prepare edges and PageInfo
 	edges := make([]*model.RoleEdge, len(roles))
 	for i, role := range roles {
@@ -388,10 +408,11 @@ func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, fi
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(roles) == int(first)
+	hasNextPage := offset+int64(len(roles)) < totalCount
 
 	return &model.RoleConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -435,7 +456,16 @@ func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int
 		SortOrder:         sortOrder,
 	}) // Assuming ListGroups is the sqlc query method
 	if err != nil {
-		return nil, fmt.Errorf("failed to query groups: %v", err)
+		return nil, fmt.Errorf("failed to query permissions: %v", err)
+	}
+
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.PaginatedPermissionsCount(ctx, generated.PaginatedPermissionsCountParams{
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query permissions count: %v", err)
 	}
 
 	// Prepare edges and PageInfo
@@ -454,10 +484,11 @@ func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(permissions) == int(first)
+	hasNextPage := offset+int64(len(permissions)) < totalCount
 
 	return &model.PermissionConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -541,6 +572,16 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first i
 		return nil, fmt.Errorf("failed to fetch permissions for role %d: %v", obj.ID, err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedPermissionsByRoleIDCount(ctx, generated.GetPaginatedPermissionsByRoleIDCountParams{
+		RoleID:            pgtype.Int8{Int64: obj.ID, Valid: true},
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query permissions count for role %d: %v", obj.ID, err)
+	}
+
 	// Prepare edges and PageInfo for the connection
 	edges := make([]*model.PermissionEdge, len(permissions))
 	for i, permission := range permissions {
@@ -557,10 +598,11 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first i
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(permissions) == int(first)
+	hasNextPage := offset+int64(len(permissions)) < totalCount
 
 	return &model.PermissionConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -608,6 +650,16 @@ func (r *roleResolver) Users(ctx context.Context, obj *model.Role, first int64, 
 		return nil, fmt.Errorf("failed to fetch users for role %d: %v", obj.ID, err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedUsersByRoleIDCount(ctx, generated.GetPaginatedUsersByRoleIDCountParams{
+		RoleID:      pgtype.Int8{Int64: obj.ID, Valid: true},
+		NameFilter:  nameFilter,
+		EmailFilter: emailFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users count for role %d: %v", obj.ID, err)
+	}
+
 	// Prepare edges and PageInfo for the connection
 	edges := make([]*model.UserEdge, len(users))
 	for i, user := range users {
@@ -627,10 +679,11 @@ func (r *roleResolver) Users(ctx context.Context, obj *model.Role, first int64, 
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(users) == int(first)
+	hasNextPage := offset+int64(len(users)) < totalCount
 
 	return &model.UserConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,

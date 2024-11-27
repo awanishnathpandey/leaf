@@ -56,6 +56,16 @@ func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64
 		return nil, fmt.Errorf("failed to fetch users for group %d: %v", obj.ID, err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedUsersByGroupIDCount(ctx, generated.GetPaginatedUsersByGroupIDCountParams{
+		GroupID:     pgtype.Int8{Int64: obj.ID, Valid: true},
+		NameFilter:  nameFilter,
+		EmailFilter: emailFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users count for group %d: %v", obj.ID, err)
+	}
+
 	// Prepare edges and PageInfo for the connection
 	edges := make([]*model.UserEdge, len(users))
 	for i, user := range users {
@@ -75,10 +85,11 @@ func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(users) == int(first)
+	hasNextPage := offset+int64(len(users)) < totalCount
 
 	return &model.UserConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -128,6 +139,17 @@ func (r *groupResolver) Folders(ctx context.Context, obj *model.Group, first int
 		return nil, fmt.Errorf("failed to fetch folders for group %d: %v", obj.ID, err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedFoldersByGroupIDCount(ctx, generated.GetPaginatedFoldersByGroupIDCountParams{
+		GroupID:           pgtype.Int8{Int64: obj.ID, Valid: true},
+		NameFilter:        nameFilter,
+		SlugFilter:        slugFilter,
+		DescriptionFilter: descriptionFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query folders count for group %d: %v", obj.ID, err)
+	}
+
 	// Prepare edges and PageInfo for the connection
 	edges := make([]*model.FolderEdge, len(folders))
 	for i, folder := range folders {
@@ -145,10 +167,11 @@ func (r *groupResolver) Folders(ctx context.Context, obj *model.Group, first int
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(folders) == int(first)
+	hasNextPage := offset+int64(len(folders)) < totalCount
 
 	return &model.FolderConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -196,6 +219,16 @@ func (r *groupResolver) Files(ctx context.Context, obj *model.Group, first int64
 		return nil, fmt.Errorf("failed to fetch files for group %d: %v", obj.ID, err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedFilesByGroupIDCount(ctx, generated.GetPaginatedFilesByGroupIDCountParams{
+		GroupID:    pgtype.Int8{Int64: obj.ID, Valid: true},
+		NameFilter: nameFilter,
+		SlugFilter: slugFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query files count for group %d: %v", obj.ID, err)
+	}
+
 	// Prepare edges and PageInfo for the connection
 	edges := make([]*model.FileEdge, len(files))
 	for i, file := range files {
@@ -214,10 +247,11 @@ func (r *groupResolver) Files(ctx context.Context, obj *model.Group, first int64
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(files) == int(first)
+	hasNextPage := offset+int64(len(files)) < totalCount
 
 	return &model.FileConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -485,6 +519,15 @@ func (r *queryResolver) Groups(ctx context.Context, first int64, after *int64, f
 		return nil, fmt.Errorf("failed to query groups: %v", err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.PaginatedGroupsCount(ctx, generated.PaginatedGroupsCountParams{
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query groups count: %v", err)
+	}
+
 	// Prepare edges and PageInfo
 	edges := make([]*model.GroupEdge, len(groups))
 	for i, group := range groups {
@@ -501,10 +544,11 @@ func (r *queryResolver) Groups(ctx context.Context, first int64, after *int64, f
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(groups) == int(first)
+	hasNextPage := offset+int64(len(groups)) < totalCount
 
 	return &model.GroupConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,

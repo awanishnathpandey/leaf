@@ -47,6 +47,7 @@ enum FileSortField {
 
 
 type FileConnection {
+  totalCount: Int!
   edges: [FileEdge!]!
   pageInfo: PageInfo!
 }

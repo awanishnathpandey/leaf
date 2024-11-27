@@ -44,3 +44,10 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: PaginatedFoldersCount :one
+SELECT COUNT(*) FROM folders
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR slug ILIKE '%' || sqlc.narg(slug_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR description ILIKE '%' || sqlc.narg(description_filter) || '%');

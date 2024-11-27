@@ -191,6 +191,28 @@ func (q *Queries) GetPaginatedPermissionsByRoleID(ctx context.Context, arg GetPa
 	return items, nil
 }
 
+const getPaginatedPermissionsByRoleIDCount = `-- name: GetPaginatedPermissionsByRoleIDCount :one
+SELECT COUNT(*) FROM permissions p
+JOIN role_permissions rp ON p.id = rp.permission_id
+WHERE 
+    rp.role_id = $1  -- Filter by permission_id
+    AND (coalesce($2, '') = '' OR p.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR p.description ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedPermissionsByRoleIDCountParams struct {
+	RoleID            pgtype.Int8 `json:"role_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) GetPaginatedPermissionsByRoleIDCount(ctx context.Context, arg GetPaginatedPermissionsByRoleIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedPermissionsByRoleIDCount, arg.RoleID, arg.NameFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getPaginatedRolesByPermissionID = `-- name: GetPaginatedRolesByPermissionID :many
 SELECT id, name, description, r.created_at, r.updated_at, role_id, permission_id, rp.created_at, rp.updated_at FROM roles r
 JOIN role_permissions rp ON r.id = rp.role_id
@@ -269,6 +291,28 @@ func (q *Queries) GetPaginatedRolesByPermissionID(ctx context.Context, arg GetPa
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPaginatedRolesByPermissionIDCount = `-- name: GetPaginatedRolesByPermissionIDCount :one
+SELECT COUNT(*) FROM roles r
+JOIN role_permissions rp ON r.id = rp.role_id
+WHERE 
+    rp.permission_id = $1  -- Filter by permission_id
+    AND (coalesce($2, '') = '' OR r.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR r.description ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedRolesByPermissionIDCountParams struct {
+	PermissionID      pgtype.Int8 `json:"permission_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) GetPaginatedRolesByPermissionIDCount(ctx context.Context, arg GetPaginatedRolesByPermissionIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedRolesByPermissionIDCount, arg.PermissionID, arg.NameFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getPaginatedRolesByUserID = `-- name: GetPaginatedRolesByUserID :many
@@ -351,6 +395,28 @@ func (q *Queries) GetPaginatedRolesByUserID(ctx context.Context, arg GetPaginate
 	return items, nil
 }
 
+const getPaginatedRolesByUserIDCount = `-- name: GetPaginatedRolesByUserIDCount :one
+SELECT COUNT(*) FROM roles r
+JOIN user_roles ur ON r.id = ur.role_id
+WHERE 
+    ur.user_id = $1  -- Filter by user_id
+    AND (coalesce($2, '') = '' OR r.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR r.description ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedRolesByUserIDCountParams struct {
+	UserID            pgtype.Int8 `json:"user_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) GetPaginatedRolesByUserIDCount(ctx context.Context, arg GetPaginatedRolesByUserIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedRolesByUserIDCount, arg.UserID, arg.NameFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getPaginatedUsersByRoleID = `-- name: GetPaginatedUsersByRoleID :many
 SELECT 
     u.id, 
@@ -364,7 +430,7 @@ SELECT
 FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE 
-    ur.role_id = $3  -- Filter by group_id
+    ur.role_id = $3  -- Filter by role_id
     AND (coalesce($4, '') = '' OR u.name ILIKE '%' || $4 || '%')
     AND (coalesce($5, '') = '' OR u.email ILIKE '%' || $5 || '%')
 ORDER BY 
@@ -436,6 +502,29 @@ func (q *Queries) GetPaginatedUsersByRoleID(ctx context.Context, arg GetPaginate
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPaginatedUsersByRoleIDCount = `-- name: GetPaginatedUsersByRoleIDCount :one
+SELECT COUNT(*)
+FROM users u
+JOIN user_roles ur ON u.id = ur.user_id
+WHERE 
+    ur.role_id = $1  -- Filter by role_id
+    AND (coalesce($2, '') = '' OR u.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR u.email ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedUsersByRoleIDCountParams struct {
+	RoleID      pgtype.Int8 `json:"role_id"`
+	NameFilter  interface{} `json:"name_filter"`
+	EmailFilter interface{} `json:"email_filter"`
+}
+
+func (q *Queries) GetPaginatedUsersByRoleIDCount(ctx context.Context, arg GetPaginatedUsersByRoleIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedUsersByRoleIDCount, arg.RoleID, arg.NameFilter, arg.EmailFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getPermission = `-- name: GetPermission :one
@@ -772,6 +861,25 @@ func (q *Queries) PaginatedPermissions(ctx context.Context, arg PaginatedPermiss
 	return items, nil
 }
 
+const paginatedPermissionsCount = `-- name: PaginatedPermissionsCount :one
+SELECT COUNT(*) FROM permissions
+WHERE 
+    (coalesce($1, '') = '' OR name ILIKE '%' || $1 || '%')
+    AND (coalesce($2, '') = '' OR description ILIKE '%' || $2 || '%')
+`
+
+type PaginatedPermissionsCountParams struct {
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) PaginatedPermissionsCount(ctx context.Context, arg PaginatedPermissionsCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, paginatedPermissionsCount, arg.NameFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const paginatedRoles = `-- name: PaginatedRoles :many
 SELECT id, name, description, created_at, updated_at FROM roles
 WHERE 
@@ -830,6 +938,25 @@ func (q *Queries) PaginatedRoles(ctx context.Context, arg PaginatedRolesParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const paginatedRolesCount = `-- name: PaginatedRolesCount :one
+SELECT COUNT(*) FROM roles
+WHERE 
+    (coalesce($1, '') = '' OR name ILIKE '%' || $1 || '%')
+    AND (coalesce($2, '') = '' OR description ILIKE '%' || $2 || '%')
+`
+
+type PaginatedRolesCountParams struct {
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) PaginatedRolesCount(ctx context.Context, arg PaginatedRolesCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, paginatedRolesCount, arg.NameFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const removePermissionFromRole = `-- name: RemovePermissionFromRole :exec

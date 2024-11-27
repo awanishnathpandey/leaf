@@ -364,6 +364,28 @@ func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginat
 	return items, nil
 }
 
+const getPaginatedFilesByGroupIDCount = `-- name: GetPaginatedFilesByGroupIDCount :one
+SELECT COUNT(*) FROM files f
+JOIN group_files gf ON f.id = gf.file_id
+WHERE 
+    gf.group_id = $1  -- Filter by group_id
+    AND (coalesce($2, '') = '' OR f.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR f.slug ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedFilesByGroupIDCountParams struct {
+	GroupID    pgtype.Int8 `json:"group_id"`
+	NameFilter interface{} `json:"name_filter"`
+	SlugFilter interface{} `json:"slug_filter"`
+}
+
+func (q *Queries) GetPaginatedFilesByGroupIDCount(ctx context.Context, arg GetPaginatedFilesByGroupIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedFilesByGroupIDCount, arg.GroupID, arg.NameFilter, arg.SlugFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getPaginatedFoldersByGroupID = `-- name: GetPaginatedFoldersByGroupID :many
 SELECT id, name, slug, description, f.created_at, f.updated_at, group_id, folder_id, gf.created_at, gf.updated_at FROM folders f
 JOIN group_folders gf ON f.id = gf.folder_id
@@ -451,6 +473,35 @@ func (q *Queries) GetPaginatedFoldersByGroupID(ctx context.Context, arg GetPagin
 	return items, nil
 }
 
+const getPaginatedFoldersByGroupIDCount = `-- name: GetPaginatedFoldersByGroupIDCount :one
+SELECT COUNT(*) FROM folders f
+JOIN group_folders gf ON f.id = gf.folder_id
+WHERE 
+    gf.group_id = $1  -- Filter by group_id
+    AND (coalesce($2, '') = '' OR f.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR f.slug ILIKE '%' || $3 || '%')
+    AND (coalesce($4, '') = '' OR f.description ILIKE '%' || $4 || '%')
+`
+
+type GetPaginatedFoldersByGroupIDCountParams struct {
+	GroupID           pgtype.Int8 `json:"group_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	SlugFilter        interface{} `json:"slug_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) GetPaginatedFoldersByGroupIDCount(ctx context.Context, arg GetPaginatedFoldersByGroupIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedFoldersByGroupIDCount,
+		arg.GroupID,
+		arg.NameFilter,
+		arg.SlugFilter,
+		arg.DescriptionFilter,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getPaginatedGroupsByFileID = `-- name: GetPaginatedGroupsByFileID :many
 SELECT id, name, description, g.created_at, g.updated_at, group_id, file_id, gf.created_at, gf.updated_at FROM groups g
 JOIN group_files gf ON g.id = gf.group_id
@@ -531,11 +582,33 @@ func (q *Queries) GetPaginatedGroupsByFileID(ctx context.Context, arg GetPaginat
 	return items, nil
 }
 
+const getPaginatedGroupsByFileIDCount = `-- name: GetPaginatedGroupsByFileIDCount :one
+SELECT COUNT(*) FROM groups g
+JOIN group_files gf ON g.id = gf.group_id
+WHERE 
+    gf.file_id = $1  -- Filter by user_id
+    AND (coalesce($2, '') = '' OR g.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR g.description ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedGroupsByFileIDCountParams struct {
+	FileID            pgtype.Int8 `json:"file_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) GetPaginatedGroupsByFileIDCount(ctx context.Context, arg GetPaginatedGroupsByFileIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedGroupsByFileIDCount, arg.FileID, arg.NameFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getPaginatedGroupsByFolderID = `-- name: GetPaginatedGroupsByFolderID :many
 SELECT id, name, description, g.created_at, g.updated_at, group_id, folder_id, gf.created_at, gf.updated_at FROM groups g
 JOIN group_folders gf ON g.id = gf.group_id
 WHERE 
-    gf.folder_id = $3  -- Filter by user_id
+    gf.folder_id = $3  -- Filter by folder_id
     AND (coalesce($4, '') = '' OR g.name ILIKE '%' || $4 || '%')
     AND (coalesce($5, '') = '' OR g.description ILIKE '%' || $5 || '%')
 ORDER BY 
@@ -609,6 +682,28 @@ func (q *Queries) GetPaginatedGroupsByFolderID(ctx context.Context, arg GetPagin
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPaginatedGroupsByFolderIDCount = `-- name: GetPaginatedGroupsByFolderIDCount :one
+SELECT COUNT(*) FROM groups g
+JOIN group_folders gf ON g.id = gf.group_id
+WHERE 
+    gf.folder_id = $1  -- Filter by folder_id
+    AND (coalesce($2, '') = '' OR g.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR g.description ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedGroupsByFolderIDCountParams struct {
+	FolderID          pgtype.Int8 `json:"folder_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) GetPaginatedGroupsByFolderIDCount(ctx context.Context, arg GetPaginatedGroupsByFolderIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedGroupsByFolderIDCount, arg.FolderID, arg.NameFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getPaginatedGroupsByUserID = `-- name: GetPaginatedGroupsByUserID :many
@@ -689,6 +784,28 @@ func (q *Queries) GetPaginatedGroupsByUserID(ctx context.Context, arg GetPaginat
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPaginatedGroupsByUserIDCount = `-- name: GetPaginatedGroupsByUserIDCount :one
+SELECT COUNT(*) FROM groups g
+JOIN group_users gu ON g.id = gu.group_id
+WHERE 
+    gu.user_id = $1  -- Filter by user_id
+    AND (coalesce($2, '') = '' OR g.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR g.description ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedGroupsByUserIDCountParams struct {
+	UserID            pgtype.Int8 `json:"user_id"`
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) GetPaginatedGroupsByUserIDCount(ctx context.Context, arg GetPaginatedGroupsByUserIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedGroupsByUserIDCount, arg.UserID, arg.NameFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getPaginatedUsersByGroupID = `-- name: GetPaginatedUsersByGroupID :many
@@ -776,6 +893,28 @@ func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginat
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPaginatedUsersByGroupIDCount = `-- name: GetPaginatedUsersByGroupIDCount :one
+SELECT COUNT(*) FROM users u
+JOIN group_users gu ON u.id = gu.user_id
+WHERE 
+    gu.group_id = $1  -- Filter by group_id
+    AND (coalesce($2, '') = '' OR u.name ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR u.email ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedUsersByGroupIDCountParams struct {
+	GroupID     pgtype.Int8 `json:"group_id"`
+	NameFilter  interface{} `json:"name_filter"`
+	EmailFilter interface{} `json:"email_filter"`
+}
+
+func (q *Queries) GetPaginatedUsersByGroupIDCount(ctx context.Context, arg GetPaginatedUsersByGroupIDCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getPaginatedUsersByGroupIDCount, arg.GroupID, arg.NameFilter, arg.EmailFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getUsersByGroupID = `-- name: GetUsersByGroupID :many
@@ -914,6 +1053,25 @@ func (q *Queries) PaginatedGroups(ctx context.Context, arg PaginatedGroupsParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const paginatedGroupsCount = `-- name: PaginatedGroupsCount :one
+SELECT COUNT(*) FROM groups
+WHERE 
+    (coalesce($1, '') = '' OR name ILIKE '%' || $1 || '%')
+    AND (coalesce($2, '') = '' OR description ILIKE '%' || $2 || '%')
+`
+
+type PaginatedGroupsCountParams struct {
+	NameFilter        interface{} `json:"name_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) PaginatedGroupsCount(ctx context.Context, arg PaginatedGroupsCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, paginatedGroupsCount, arg.NameFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const removeFileFromGroup = `-- name: RemoveFileFromGroup :exec

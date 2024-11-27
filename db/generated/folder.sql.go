@@ -167,6 +167,27 @@ func (q *Queries) PaginatedFolders(ctx context.Context, arg PaginatedFoldersPara
 	return items, nil
 }
 
+const paginatedFoldersCount = `-- name: PaginatedFoldersCount :one
+SELECT COUNT(*) FROM folders
+WHERE 
+    (coalesce($1, '') = '' OR name ILIKE '%' || $1 || '%')
+    AND (coalesce($2, '') = '' OR slug ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR description ILIKE '%' || $3 || '%')
+`
+
+type PaginatedFoldersCountParams struct {
+	NameFilter        interface{} `json:"name_filter"`
+	SlugFilter        interface{} `json:"slug_filter"`
+	DescriptionFilter interface{} `json:"description_filter"`
+}
+
+func (q *Queries) PaginatedFoldersCount(ctx context.Context, arg PaginatedFoldersCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, paginatedFoldersCount, arg.NameFilter, arg.SlugFilter, arg.DescriptionFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const updateFolder = `-- name: UpdateFolder :exec
 UPDATE folders
   set name = $2, slug = $3, description = $4, updated_at = EXTRACT(EPOCH FROM NOW())

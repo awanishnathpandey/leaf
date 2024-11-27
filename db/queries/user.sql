@@ -69,3 +69,9 @@ LIMIT $1
 OFFSET $2;
 
 
+-- name: PaginatedUsersCount :one
+SELECT COUNT(*)
+FROM users
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(email_filter), '') = '' OR email ILIKE '%' || sqlc.narg(email_filter) || '%');

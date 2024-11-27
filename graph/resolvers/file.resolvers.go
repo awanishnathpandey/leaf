@@ -75,6 +75,16 @@ func (r *fileResolver) Groups(ctx context.Context, obj *model.File, first int64,
 		return nil, fmt.Errorf("failed to fetch groups for file %d: %v", obj.ID, err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedGroupsByFileIDCount(ctx, generated.GetPaginatedGroupsByFileIDCountParams{
+		FileID:            pgtype.Int8{Int64: obj.ID, Valid: true},
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query groups count for file %d: %v", obj.ID, err)
+	}
+
 	// Prepare edges and PageInfo for the connection
 	edges := make([]*model.GroupEdge, len(groups))
 	for i, group := range groups {
@@ -91,10 +101,11 @@ func (r *fileResolver) Groups(ctx context.Context, obj *model.File, first int64,
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(groups) == int(first)
+	hasNextPage := offset+int64(len(groups)) < totalCount
 
 	return &model.GroupConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,
@@ -218,6 +229,15 @@ func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, fi
 		return nil, fmt.Errorf("failed to query files: %v", err)
 	}
 
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.PaginatedFilesCount(ctx, generated.PaginatedFilesCountParams{
+		NameFilter: nameFilter,
+		SlugFilter: slugFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query files count: %v", err)
+	}
+
 	// Prepare edges and PageInfo
 	edges := make([]*model.FileEdge, len(files))
 	for i, file := range files {
@@ -236,10 +256,11 @@ func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, fi
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := len(files) == int(first)
+	hasNextPage := offset+int64(len(files)) < totalCount
 
 	return &model.FileConnection{
-		Edges: edges,
+		TotalCount: totalCount,
+		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: offset > 0,

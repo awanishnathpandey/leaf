@@ -43,6 +43,7 @@ enum GroupSortField {
 }
 
 type GroupConnection {
+  totalCount: Int!
   edges: [GroupEdge!]!
   pageInfo: PageInfo!
 }

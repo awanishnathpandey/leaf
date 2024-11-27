@@ -111,6 +111,12 @@ ORDER BY
 LIMIT $1
 OFFSET $2;
 
+-- name: PaginatedRolesCount :one
+SELECT COUNT(*) FROM roles
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR description ILIKE '%' || sqlc.narg(description_filter) || '%');
+
 -- name: PaginatedPermissions :many
 SELECT * FROM permissions
 WHERE 
@@ -127,6 +133,12 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: PaginatedPermissionsCount :one
+SELECT COUNT(*) FROM permissions
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR description ILIKE '%' || sqlc.narg(description_filter) || '%');
 
 
 -- name: GetPaginatedRolesByPermissionID :many
@@ -148,6 +160,14 @@ ORDER BY
 LIMIT $1
 OFFSET $2;
 
+-- name: GetPaginatedRolesByPermissionIDCount :one
+SELECT COUNT(*) FROM roles r
+JOIN role_permissions rp ON r.id = rp.role_id
+WHERE 
+    rp.permission_id = sqlc.narg(permission_id)  -- Filter by permission_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR r.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR r.description ILIKE '%' || sqlc.narg(description_filter) || '%');
+
 -- name: GetPaginatedPermissionsByRoleID :many
 SELECT * FROM permissions p
 JOIN role_permissions rp ON p.id = rp.permission_id
@@ -167,6 +187,14 @@ ORDER BY
 LIMIT $1
 OFFSET $2;
 
+-- name: GetPaginatedPermissionsByRoleIDCount :one
+SELECT COUNT(*) FROM permissions p
+JOIN role_permissions rp ON p.id = rp.permission_id
+WHERE 
+    rp.role_id = sqlc.narg(role_id)  -- Filter by permission_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR p.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR p.description ILIKE '%' || sqlc.narg(description_filter) || '%');
+
 -- name: GetPaginatedUsersByRoleID :many
 SELECT 
     u.id, 
@@ -180,7 +208,7 @@ SELECT
 FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE 
-    ur.role_id = sqlc.narg(role_id)  -- Filter by group_id
+    ur.role_id = sqlc.narg(role_id)  -- Filter by role_id
     AND (coalesce(sqlc.narg(name_filter), '') = '' OR u.name ILIKE '%' || sqlc.narg(name_filter) || '%')
     AND (coalesce(sqlc.narg(email_filter), '') = '' OR u.email ILIKE '%' || sqlc.narg(email_filter) || '%')
 ORDER BY 
@@ -194,6 +222,15 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: GetPaginatedUsersByRoleIDCount :one
+SELECT COUNT(*)
+FROM users u
+JOIN user_roles ur ON u.id = ur.user_id
+WHERE 
+    ur.role_id = sqlc.narg(role_id)  -- Filter by role_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR u.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(email_filter), '') = '' OR u.email ILIKE '%' || sqlc.narg(email_filter) || '%');
 
 -- name: GetPaginatedRolesByUserID :many
 SELECT * FROM roles r
@@ -213,3 +250,11 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: GetPaginatedRolesByUserIDCount :one
+SELECT COUNT(*) FROM roles r
+JOIN user_roles ur ON r.id = ur.role_id
+WHERE 
+    ur.user_id = sqlc.narg(user_id)  -- Filter by user_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR r.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR r.description ILIKE '%' || sqlc.narg(description_filter) || '%');

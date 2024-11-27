@@ -101,6 +101,12 @@ ORDER BY
 LIMIT $1
 OFFSET $2;
 
+-- name: PaginatedGroupsCount :one
+SELECT COUNT(*) FROM groups
+WHERE 
+    (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR description ILIKE '%' || sqlc.narg(description_filter) || '%');
+
 -- name: GetPaginatedUsersByGroupID :many
 SELECT 
     u.id, 
@@ -129,6 +135,14 @@ ORDER BY
 LIMIT $1
 OFFSET $2;
 
+-- name: GetPaginatedUsersByGroupIDCount :one
+SELECT COUNT(*) FROM users u
+JOIN group_users gu ON u.id = gu.user_id
+WHERE 
+    gu.group_id = sqlc.narg(group_id)  -- Filter by group_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR u.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(email_filter), '') = '' OR u.email ILIKE '%' || sqlc.narg(email_filter) || '%');
+
 
 -- name: GetPaginatedFilesByGroupID :many
 SELECT * FROM files f
@@ -148,6 +162,14 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: GetPaginatedFilesByGroupIDCount :one
+SELECT COUNT(*) FROM files f
+JOIN group_files gf ON f.id = gf.file_id
+WHERE 
+    gf.group_id = sqlc.narg(group_id)  -- Filter by group_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR f.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR f.slug ILIKE '%' || sqlc.narg(slug_filter) || '%');
 
 -- name: GetPaginatedFoldersByGroupID :many
 SELECT * FROM folders f
@@ -171,6 +193,15 @@ ORDER BY
 LIMIT $1
 OFFSET $2;
 
+-- name: GetPaginatedFoldersByGroupIDCount :one
+SELECT COUNT(*) FROM folders f
+JOIN group_folders gf ON f.id = gf.folder_id
+WHERE 
+    gf.group_id = sqlc.narg(group_id)  -- Filter by group_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR f.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(slug_filter), '') = '' OR f.slug ILIKE '%' || sqlc.narg(slug_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR f.description ILIKE '%' || sqlc.narg(description_filter) || '%');
+
 -- name: GetPaginatedGroupsByUserID :many
 SELECT * FROM groups g
 JOIN group_users gu ON g.id = gu.group_id
@@ -190,11 +221,19 @@ ORDER BY
 LIMIT $1
 OFFSET $2;
 
+-- name: GetPaginatedGroupsByUserIDCount :one
+SELECT COUNT(*) FROM groups g
+JOIN group_users gu ON g.id = gu.group_id
+WHERE 
+    gu.user_id = sqlc.narg(user_id)  -- Filter by user_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR g.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR g.description ILIKE '%' || sqlc.narg(description_filter) || '%');
+
 -- name: GetPaginatedGroupsByFolderID :many
 SELECT * FROM groups g
 JOIN group_folders gf ON g.id = gf.group_id
 WHERE 
-    gf.folder_id = sqlc.narg(folder_id)  -- Filter by user_id
+    gf.folder_id = sqlc.narg(folder_id)  -- Filter by folder_id
     AND (coalesce(sqlc.narg(name_filter), '') = '' OR g.name ILIKE '%' || sqlc.narg(name_filter) || '%')
     AND (coalesce(sqlc.narg(description_filter), '') = '' OR g.description ILIKE '%' || sqlc.narg(description_filter) || '%')
 ORDER BY 
@@ -208,6 +247,14 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: GetPaginatedGroupsByFolderIDCount :one
+SELECT COUNT(*) FROM groups g
+JOIN group_folders gf ON g.id = gf.group_id
+WHERE 
+    gf.folder_id = sqlc.narg(folder_id)  -- Filter by folder_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR g.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR g.description ILIKE '%' || sqlc.narg(description_filter) || '%');
 
 -- name: GetPaginatedGroupsByFileID :many
 SELECT * FROM groups g
@@ -227,3 +274,11 @@ ORDER BY
     END DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: GetPaginatedGroupsByFileIDCount :one
+SELECT COUNT(*) FROM groups g
+JOIN group_files gf ON g.id = gf.group_id
+WHERE 
+    gf.file_id = sqlc.narg(file_id)  -- Filter by user_id
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR g.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(description_filter), '') = '' OR g.description ILIKE '%' || sqlc.narg(description_filter) || '%');
