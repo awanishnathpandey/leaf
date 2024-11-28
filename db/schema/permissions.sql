@@ -3,7 +3,9 @@ CREATE TABLE roles (
     name VARCHAR(255) UNIQUE NOT NULL,
     description VARCHAR(255) NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
-    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())
+    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+    created_by VARCHAR(255) NOT NULL DEFAULT 'system',
+    updated_by VARCHAR(255) NOT NULL DEFAULT 'system'
 );
 
 CREATE TABLE permissions (
@@ -11,7 +13,9 @@ CREATE TABLE permissions (
     name VARCHAR(255) UNIQUE NOT NULL,
     description VARCHAR(255) NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
-    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())
+    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+    created_by VARCHAR(255) NOT NULL DEFAULT 'system',
+    updated_by VARCHAR(255) NOT NULL DEFAULT 'system'
 );
 
 CREATE TABLE role_permissions (
@@ -19,6 +23,8 @@ CREATE TABLE role_permissions (
     permission_id BIGINT REFERENCES permissions(id) ON DELETE CASCADE,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+    created_by VARCHAR(255) NOT NULL DEFAULT 'system',
+    updated_by VARCHAR(255) NOT NULL DEFAULT 'system',
     PRIMARY KEY (role_id, permission_id)
 );
 
@@ -27,5 +33,7 @@ CREATE TABLE user_roles (
     role_id BIGINT REFERENCES roles(id) ON DELETE CASCADE,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+    created_by VARCHAR(255) NOT NULL DEFAULT 'system',
+    updated_by VARCHAR(255) NOT NULL DEFAULT 'system',
     PRIMARY KEY (user_id, role_id)
 );

@@ -1,12 +1,13 @@
 -- name: CreateGroup :one
-INSERT INTO groups (name, description) 
-VALUES ($1, $2) 
-RETURNING id, name, description, created_at, updated_at;
+INSERT INTO groups (name, description, created_by, updated_by) 
+VALUES ($1, $2, $3, $3) 
+RETURNING *;
 
--- name: UpdateGroup :exec
+-- name: UpdateGroup :one
 UPDATE groups 
-SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW())
-WHERE id = $3;
+SET name = $2, description = $3, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
+WHERE id = $1
+RETURNING *;
 
 -- name: DeleteGroup :exec
 DELETE FROM groups 
@@ -124,7 +125,9 @@ SELECT
     u.last_seen_at, 
     u.created_at, 
     u.updated_at, 
-    u.deleted_at
+    u.deleted_at,
+    u.created_by,
+    u.updated_by
 FROM users u
 JOIN group_users gu ON u.id = gu.user_id
 WHERE 

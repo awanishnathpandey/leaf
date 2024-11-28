@@ -87,6 +87,8 @@ func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64
 				CreatedAt:       user.CreatedAt,
 				UpdatedAt:       user.UpdatedAt,
 				DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+				CreatedBy:       user.CreatedBy,
+				UpdatedBy:       user.UpdatedBy,
 			},
 		}
 	}
@@ -176,6 +178,8 @@ func (r *groupResolver) Folders(ctx context.Context, obj *model.Group, first int
 				Description: folder.Description,
 				CreatedAt:   folder.CreatedAt,
 				UpdatedAt:   folder.UpdatedAt,
+				CreatedBy:   folder.CreatedBy,
+				UpdatedBy:   folder.UpdatedBy,
 			},
 		}
 	}
@@ -263,6 +267,8 @@ func (r *groupResolver) Files(ctx context.Context, obj *model.Group, first int64
 				FolderID:  file.FolderID,
 				CreatedAt: file.CreatedAt,
 				UpdatedAt: file.UpdatedAt,
+				CreatedBy: file.CreatedBy,
+				UpdatedBy: file.UpdatedBy,
 			},
 		}
 	}
@@ -299,6 +305,7 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, input model.CreateGr
 	group, err := r.DB.CreateGroup(ctx, generated.CreateGroupParams{
 		Name:        input.Name,
 		Description: input.Description,
+		CreatedBy:   ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create group: %w", err)
@@ -311,6 +318,8 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, input model.CreateGr
 		Description: group.Description,
 		CreatedAt:   group.CreatedAt,
 		UpdatedAt:   group.UpdatedAt,
+		CreatedBy:   group.CreatedBy,
+		UpdatedBy:   group.UpdatedBy,
 	}, nil
 }
 
@@ -329,29 +338,26 @@ func (r *mutationResolver) UpdateGroup(ctx context.Context, input model.UpdateGr
 		return nil, fmt.Errorf("group not found: %w", err)
 	}
 
-	// Update the group
-	err = r.DB.UpdateGroup(ctx, generated.UpdateGroupParams{
+	// Call the sqlc generated query to update the group in the database
+	group, err := r.DB.UpdateGroup(ctx, generated.UpdateGroupParams{
 		ID:          input.ID,
 		Name:        input.Name,
 		Description: input.Description,
+		UpdatedBy:   ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update group: %w", err)
 	}
 
-	// Fetch the updated group
-	updatedGroup, err := r.DB.GetGroup(ctx, input.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve updated group: %w", err)
-	}
-
 	// Map the SQLC model to the GraphQL model
 	return &model.Group{
-		ID:          updatedGroup.ID,
-		Name:        updatedGroup.Name,
-		Description: updatedGroup.Description,
-		CreatedAt:   updatedGroup.CreatedAt,
-		UpdatedAt:   updatedGroup.UpdatedAt,
+		ID:          group.ID,
+		Name:        group.Name,
+		Description: group.Description,
+		CreatedAt:   group.CreatedAt,
+		UpdatedAt:   group.UpdatedAt,
+		CreatedBy:   group.CreatedBy,
+		UpdatedBy:   group.UpdatedBy,
 	}, nil
 }
 
@@ -658,6 +664,8 @@ func (r *queryResolver) Groups(ctx context.Context, first int64, after *int64, f
 				Description: group.Description,
 				CreatedAt:   group.CreatedAt,
 				UpdatedAt:   group.UpdatedAt,
+				CreatedBy:   group.CreatedBy,
+				UpdatedBy:   group.UpdatedBy,
 			},
 		}
 	}

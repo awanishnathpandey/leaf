@@ -10,16 +10,19 @@ ORDER BY name;
 INSERT INTO folders (
   name,
   slug,
-  description
+  description,
+  created_by,
+  updated_by
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4, $4
 )
 RETURNING *;
 
--- name: UpdateFolder :exec
+-- name: UpdateFolder :one
 UPDATE folders
-  set name = $2, slug = $3, description = $4, updated_at = EXTRACT(EPOCH FROM NOW())
-WHERE id = $1;
+SET name = $2, slug = $3, description = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
+WHERE id = $1
+RETURNING *;
 
 -- name: DeleteFolder :exec
 DELETE FROM folders

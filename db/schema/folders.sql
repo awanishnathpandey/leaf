@@ -6,5 +6,7 @@ CREATE TABLE
         slug VARCHAR(255) NOT NULL UNIQUE,
         description VARCHAR(255) NOT NULL,
         created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
-        updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())
+        updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+        created_by VARCHAR(255) NOT NULL DEFAULT 'system',
+        updated_by VARCHAR(255) NOT NULL DEFAULT 'system'
     );

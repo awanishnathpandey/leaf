@@ -4,6 +4,8 @@ CREATE TABLE role_permissions (
     permission_id BIGINT REFERENCES permissions(id) ON DELETE CASCADE,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+    created_by VARCHAR(255) NOT NULL DEFAULT 'system',
+    updated_by VARCHAR(255) NOT NULL DEFAULT 'system',
     PRIMARY KEY (role_id, permission_id)
 );
 

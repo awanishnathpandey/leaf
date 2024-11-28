@@ -15,7 +15,7 @@ INSERT INTO users (
 ) VALUES (
   $1, $2, $3
 )
-RETURNING id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at
+RETURNING id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type RegisterUserParams struct {
@@ -37,6 +37,8 @@ func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (Use
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }

@@ -6,24 +6,26 @@ SELECT p.name
         WHERE ur.user_id = $1;
 
 -- name: CreateRole :one
-INSERT INTO roles (name, description) 
-VALUES ($1, $2) 
-RETURNING id, name, description, created_at, updated_at;
+INSERT INTO roles (name, description, created_by, updated_by) 
+VALUES ($1, $2, $3, $3) 
+RETURNING *;
 
 -- name: CreatePermission :one
-INSERT INTO roles (name, description) 
-VALUES ($1, $2) 
-RETURNING id, name, description, created_at, updated_at;
+INSERT INTO roles (name, description, created_by, updated_by) 
+VALUES ($1, $2, $3, $3) 
+RETURNING *;
 
--- name: UpdateRole :exec
+-- name: UpdateRole :one
 UPDATE roles 
-SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW())
-WHERE id = $3;
+SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
+WHERE id = $3
+RETURNING *;
 
--- name: UpdatePermission :exec
+-- name: UpdatePermission :one
 UPDATE permissions 
-SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW())
-WHERE id = $3;
+SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
+WHERE id = $3
+RETURNING *;
 
 -- name: DeleteRole :exec
 DELETE FROM roles 
@@ -220,7 +222,9 @@ SELECT
     u.last_seen_at, 
     u.created_at, 
     u.updated_at, 
-    u.deleted_at
+    u.deleted_at,
+    u.created_by,
+    u.updated_by
 FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE 

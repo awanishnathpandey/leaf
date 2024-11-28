@@ -16,6 +16,8 @@ type File struct {
 	FolderID  int64  `json:"folder_id"`
 	CreatedAt int64  `json:"created_at"`
 	UpdatedAt int64  `json:"updated_at"`
+	CreatedBy string `json:"created_by"`
+	UpdatedBy string `json:"updated_by"`
 }
 
 type Folder struct {
@@ -25,6 +27,8 @@ type Folder struct {
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 }
 
 type Group struct {
@@ -33,27 +37,35 @@ type Group struct {
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 }
 
 type GroupFile struct {
-	GroupID   int64 `json:"group_id"`
-	FileID    int64 `json:"file_id"`
-	CreatedAt int64 `json:"created_at"`
-	UpdatedAt int64 `json:"updated_at"`
+	GroupID   int64  `json:"group_id"`
+	FileID    int64  `json:"file_id"`
+	CreatedAt int64  `json:"created_at"`
+	UpdatedAt int64  `json:"updated_at"`
+	CreatedBy string `json:"created_by"`
+	UpdatedBy string `json:"updated_by"`
 }
 
 type GroupFolder struct {
-	GroupID   int64 `json:"group_id"`
-	FolderID  int64 `json:"folder_id"`
-	CreatedAt int64 `json:"created_at"`
-	UpdatedAt int64 `json:"updated_at"`
+	GroupID   int64  `json:"group_id"`
+	FolderID  int64  `json:"folder_id"`
+	CreatedAt int64  `json:"created_at"`
+	UpdatedAt int64  `json:"updated_at"`
+	CreatedBy string `json:"created_by"`
+	UpdatedBy string `json:"updated_by"`
 }
 
 type GroupUser struct {
-	GroupID   int64 `json:"group_id"`
-	UserID    int64 `json:"user_id"`
-	CreatedAt int64 `json:"created_at"`
-	UpdatedAt int64 `json:"updated_at"`
+	GroupID   int64  `json:"group_id"`
+	UserID    int64  `json:"user_id"`
+	CreatedAt int64  `json:"created_at"`
+	UpdatedAt int64  `json:"updated_at"`
+	CreatedBy string `json:"created_by"`
+	UpdatedBy string `json:"updated_by"`
 }
 
 type Permission struct {
@@ -62,6 +74,8 @@ type Permission struct {
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 }
 
 type Role struct {
@@ -70,13 +84,17 @@ type Role struct {
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 }
 
 type RolePermission struct {
-	RoleID       int64 `json:"role_id"`
-	PermissionID int64 `json:"permission_id"`
-	CreatedAt    int64 `json:"created_at"`
-	UpdatedAt    int64 `json:"updated_at"`
+	RoleID       int64  `json:"role_id"`
+	PermissionID int64  `json:"permission_id"`
+	CreatedAt    int64  `json:"created_at"`
+	UpdatedAt    int64  `json:"updated_at"`
+	CreatedBy    string `json:"created_by"`
+	UpdatedBy    string `json:"updated_by"`
 }
 
 type User struct {
@@ -89,11 +107,15 @@ type User struct {
 	CreatedAt       int64       `json:"created_at"`
 	UpdatedAt       int64       `json:"updated_at"`
 	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+	CreatedBy       string      `json:"created_by"`
+	UpdatedBy       string      `json:"updated_by"`
 }
 
 type UserRole struct {
-	UserID    int64 `json:"user_id"`
-	RoleID    int64 `json:"role_id"`
-	CreatedAt int64 `json:"created_at"`
-	UpdatedAt int64 `json:"updated_at"`
+	UserID    int64  `json:"user_id"`
+	RoleID    int64  `json:"role_id"`
+	CreatedAt int64  `json:"created_at"`
+	UpdatedAt int64  `json:"updated_at"`
+	CreatedBy string `json:"created_by"`
+	UpdatedBy string `json:"updated_by"`
 }

@@ -44,18 +44,19 @@ func (q *Queries) AddRoleToUser(ctx context.Context, arg AddRoleToUserParams) er
 }
 
 const createPermission = `-- name: CreatePermission :one
-INSERT INTO roles (name, description) 
-VALUES ($1, $2) 
-RETURNING id, name, description, created_at, updated_at
+INSERT INTO roles (name, description, created_by, updated_by) 
+VALUES ($1, $2, $3, $3) 
+RETURNING id, name, description, created_at, updated_at, created_by, updated_by
 `
 
 type CreatePermissionParams struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	CreatedBy   string `json:"created_by"`
 }
 
 func (q *Queries) CreatePermission(ctx context.Context, arg CreatePermissionParams) (Role, error) {
-	row := q.db.QueryRow(ctx, createPermission, arg.Name, arg.Description)
+	row := q.db.QueryRow(ctx, createPermission, arg.Name, arg.Description, arg.CreatedBy)
 	var i Role
 	err := row.Scan(
 		&i.ID,
@@ -63,23 +64,26 @@ func (q *Queries) CreatePermission(ctx context.Context, arg CreatePermissionPara
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
 
 const createRole = `-- name: CreateRole :one
-INSERT INTO roles (name, description) 
-VALUES ($1, $2) 
-RETURNING id, name, description, created_at, updated_at
+INSERT INTO roles (name, description, created_by, updated_by) 
+VALUES ($1, $2, $3, $3) 
+RETURNING id, name, description, created_at, updated_at, created_by, updated_by
 `
 
 type CreateRoleParams struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	CreatedBy   string `json:"created_by"`
 }
 
 func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error) {
-	row := q.db.QueryRow(ctx, createRole, arg.Name, arg.Description)
+	row := q.db.QueryRow(ctx, createRole, arg.Name, arg.Description, arg.CreatedBy)
 	var i Role
 	err := row.Scan(
 		&i.ID,
@@ -87,6 +91,8 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, e
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -132,7 +138,7 @@ func (q *Queries) DeleteRolesByIDs(ctx context.Context, dollar_1 []int64) error 
 }
 
 const getPaginatedPermissionsByRoleID = `-- name: GetPaginatedPermissionsByRoleID :many
-SELECT id, name, description, p.created_at, p.updated_at, role_id, permission_id, rp.created_at, rp.updated_at FROM permissions p
+SELECT id, name, description, p.created_at, p.updated_at, p.created_by, p.updated_by, role_id, permission_id, rp.created_at, rp.updated_at, rp.created_by, rp.updated_by FROM permissions p
 JOIN role_permissions rp ON p.id = rp.permission_id
 WHERE 
     rp.role_id = $3  -- Filter by permission_id
@@ -167,10 +173,14 @@ type GetPaginatedPermissionsByRoleIDRow struct {
 	Description  string `json:"description"`
 	CreatedAt    int64  `json:"created_at"`
 	UpdatedAt    int64  `json:"updated_at"`
+	CreatedBy    string `json:"created_by"`
+	UpdatedBy    string `json:"updated_by"`
 	RoleID       int64  `json:"role_id"`
 	PermissionID int64  `json:"permission_id"`
 	CreatedAt_2  int64  `json:"created_at_2"`
 	UpdatedAt_2  int64  `json:"updated_at_2"`
+	CreatedBy_2  string `json:"created_by_2"`
+	UpdatedBy_2  string `json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedPermissionsByRoleID(ctx context.Context, arg GetPaginatedPermissionsByRoleIDParams) ([]GetPaginatedPermissionsByRoleIDRow, error) {
@@ -196,10 +206,14 @@ func (q *Queries) GetPaginatedPermissionsByRoleID(ctx context.Context, arg GetPa
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 			&i.RoleID,
 			&i.PermissionID,
 			&i.CreatedAt_2,
 			&i.UpdatedAt_2,
+			&i.CreatedBy_2,
+			&i.UpdatedBy_2,
 		); err != nil {
 			return nil, err
 		}
@@ -234,7 +248,7 @@ func (q *Queries) GetPaginatedPermissionsByRoleIDCount(ctx context.Context, arg 
 }
 
 const getPaginatedRolesByPermissionID = `-- name: GetPaginatedRolesByPermissionID :many
-SELECT id, name, description, r.created_at, r.updated_at, role_id, permission_id, rp.created_at, rp.updated_at FROM roles r
+SELECT id, name, description, r.created_at, r.updated_at, r.created_by, r.updated_by, role_id, permission_id, rp.created_at, rp.updated_at, rp.created_by, rp.updated_by FROM roles r
 JOIN role_permissions rp ON r.id = rp.role_id
 WHERE 
     rp.permission_id = $3  -- Filter by permission_id
@@ -269,10 +283,14 @@ type GetPaginatedRolesByPermissionIDRow struct {
 	Description  string `json:"description"`
 	CreatedAt    int64  `json:"created_at"`
 	UpdatedAt    int64  `json:"updated_at"`
+	CreatedBy    string `json:"created_by"`
+	UpdatedBy    string `json:"updated_by"`
 	RoleID       int64  `json:"role_id"`
 	PermissionID int64  `json:"permission_id"`
 	CreatedAt_2  int64  `json:"created_at_2"`
 	UpdatedAt_2  int64  `json:"updated_at_2"`
+	CreatedBy_2  string `json:"created_by_2"`
+	UpdatedBy_2  string `json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedRolesByPermissionID(ctx context.Context, arg GetPaginatedRolesByPermissionIDParams) ([]GetPaginatedRolesByPermissionIDRow, error) {
@@ -298,10 +316,14 @@ func (q *Queries) GetPaginatedRolesByPermissionID(ctx context.Context, arg GetPa
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 			&i.RoleID,
 			&i.PermissionID,
 			&i.CreatedAt_2,
 			&i.UpdatedAt_2,
+			&i.CreatedBy_2,
+			&i.UpdatedBy_2,
 		); err != nil {
 			return nil, err
 		}
@@ -336,7 +358,7 @@ func (q *Queries) GetPaginatedRolesByPermissionIDCount(ctx context.Context, arg 
 }
 
 const getPaginatedRolesByUserID = `-- name: GetPaginatedRolesByUserID :many
-SELECT id, name, description, r.created_at, r.updated_at, user_id, role_id, ur.created_at, ur.updated_at FROM roles r
+SELECT id, name, description, r.created_at, r.updated_at, r.created_by, r.updated_by, user_id, role_id, ur.created_at, ur.updated_at, ur.created_by, ur.updated_by FROM roles r
 JOIN user_roles ur ON r.id = ur.role_id
 WHERE 
     ur.user_id = $3  -- Filter by user_id
@@ -371,10 +393,14 @@ type GetPaginatedRolesByUserIDRow struct {
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 	UserID      int64  `json:"user_id"`
 	RoleID      int64  `json:"role_id"`
 	CreatedAt_2 int64  `json:"created_at_2"`
 	UpdatedAt_2 int64  `json:"updated_at_2"`
+	CreatedBy_2 string `json:"created_by_2"`
+	UpdatedBy_2 string `json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedRolesByUserID(ctx context.Context, arg GetPaginatedRolesByUserIDParams) ([]GetPaginatedRolesByUserIDRow, error) {
@@ -400,10 +426,14 @@ func (q *Queries) GetPaginatedRolesByUserID(ctx context.Context, arg GetPaginate
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 			&i.UserID,
 			&i.RoleID,
 			&i.CreatedAt_2,
 			&i.UpdatedAt_2,
+			&i.CreatedBy_2,
+			&i.UpdatedBy_2,
 		); err != nil {
 			return nil, err
 		}
@@ -446,7 +476,9 @@ SELECT
     u.last_seen_at, 
     u.created_at, 
     u.updated_at, 
-    u.deleted_at
+    u.deleted_at,
+    u.created_by,
+    u.updated_by
 FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE 
@@ -485,6 +517,8 @@ type GetPaginatedUsersByRoleIDRow struct {
 	CreatedAt       int64       `json:"created_at"`
 	UpdatedAt       int64       `json:"updated_at"`
 	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+	CreatedBy       string      `json:"created_by"`
+	UpdatedBy       string      `json:"updated_by"`
 }
 
 func (q *Queries) GetPaginatedUsersByRoleID(ctx context.Context, arg GetPaginatedUsersByRoleIDParams) ([]GetPaginatedUsersByRoleIDRow, error) {
@@ -513,6 +547,8 @@ func (q *Queries) GetPaginatedUsersByRoleID(ctx context.Context, arg GetPaginate
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -553,9 +589,17 @@ FROM permissions
 WHERE id = $1
 `
 
-func (q *Queries) GetPermission(ctx context.Context, id int64) (Permission, error) {
+type GetPermissionRow struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+}
+
+func (q *Queries) GetPermission(ctx context.Context, id int64) (GetPermissionRow, error) {
 	row := q.db.QueryRow(ctx, getPermission, id)
-	var i Permission
+	var i GetPermissionRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -592,7 +636,7 @@ func (q *Queries) GetPermissionsByIDs(ctx context.Context, dollar_1 []int64) ([]
 }
 
 const getPermissionsByRoleID = `-- name: GetPermissionsByRoleID :many
-SELECT p.id, p.name, p.description, p.created_at, p.updated_at
+SELECT p.id, p.name, p.description, p.created_at, p.updated_at, p.created_by, p.updated_by
 FROM permissions p
 JOIN role_permissions rp ON p.id = rp.permission_id
 WHERE rp.role_id = $1
@@ -613,6 +657,8 @@ func (q *Queries) GetPermissionsByRoleID(ctx context.Context, roleID int64) ([]P
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -630,9 +676,17 @@ FROM roles
 WHERE id = $1
 `
 
-func (q *Queries) GetRole(ctx context.Context, id int64) (Role, error) {
+type GetRoleRow struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+}
+
+func (q *Queries) GetRole(ctx context.Context, id int64) (GetRoleRow, error) {
 	row := q.db.QueryRow(ctx, getRole, id)
-	var i Role
+	var i GetRoleRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -669,7 +723,7 @@ func (q *Queries) GetRolesByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 }
 
 const getRolesByPermissionID = `-- name: GetRolesByPermissionID :many
-SELECT r.id, r.name, r.description, r.created_at, r.updated_at
+SELECT r.id, r.name, r.description, r.created_at, r.updated_at, r.created_by, r.updated_by
 FROM roles r
 JOIN role_permissions rp ON r.id = rp.role_id
 WHERE rp.permission_id = $1
@@ -690,6 +744,8 @@ func (q *Queries) GetRolesByPermissionID(ctx context.Context, permissionID int64
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -702,7 +758,7 @@ func (q *Queries) GetRolesByPermissionID(ctx context.Context, permissionID int64
 }
 
 const getRolesByUserID = `-- name: GetRolesByUserID :many
-SELECT r.id, r.name, r.description, r.created_at, r.updated_at
+SELECT r.id, r.name, r.description, r.created_at, r.updated_at, r.created_by, r.updated_by
 FROM roles r
 JOIN user_roles ur ON r.id = ur.role_id
 WHERE ur.user_id = $1
@@ -723,6 +779,8 @@ func (q *Queries) GetRolesByUserID(ctx context.Context, userID int64) ([]Role, e
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -810,7 +868,7 @@ func (q *Queries) GetUsersByRoleID(ctx context.Context, roleID int64) ([]GetUser
 }
 
 const listPermissions = `-- name: ListPermissions :many
-SELECT id, name, description, created_at, updated_at FROM permissions
+SELECT id, name, description, created_at, updated_at, created_by, updated_by FROM permissions
 ORDER BY name
 `
 
@@ -829,6 +887,8 @@ func (q *Queries) ListPermissions(ctx context.Context) ([]Permission, error) {
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -841,7 +901,7 @@ func (q *Queries) ListPermissions(ctx context.Context) ([]Permission, error) {
 }
 
 const listRoles = `-- name: ListRoles :many
-SELECT id, name, description, created_at, updated_at FROM roles
+SELECT id, name, description, created_at, updated_at, created_by, updated_by FROM roles
 ORDER BY name
 `
 
@@ -860,6 +920,8 @@ func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -872,7 +934,7 @@ func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
 }
 
 const paginatedPermissions = `-- name: PaginatedPermissions :many
-SELECT id, name, description, created_at, updated_at FROM permissions
+SELECT id, name, description, created_at, updated_at, created_by, updated_by FROM permissions
 WHERE 
     (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
     AND (coalesce($4, '') = '' OR description ILIKE '%' || $4 || '%')
@@ -920,6 +982,8 @@ func (q *Queries) PaginatedPermissions(ctx context.Context, arg PaginatedPermiss
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -951,7 +1015,7 @@ func (q *Queries) PaginatedPermissionsCount(ctx context.Context, arg PaginatedPe
 }
 
 const paginatedRoles = `-- name: PaginatedRoles :many
-SELECT id, name, description, created_at, updated_at FROM roles
+SELECT id, name, description, created_at, updated_at, created_by, updated_by FROM roles
 WHERE 
     (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
     AND (coalesce($4, '') = '' OR description ILIKE '%' || $4 || '%')
@@ -999,6 +1063,8 @@ func (q *Queries) PaginatedRoles(ctx context.Context, arg PaginatedRolesParams) 
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1059,36 +1125,70 @@ func (q *Queries) RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUser
 	return err
 }
 
-const updatePermission = `-- name: UpdatePermission :exec
+const updatePermission = `-- name: UpdatePermission :one
 UPDATE permissions 
-SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW())
+SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
 WHERE id = $3
+RETURNING id, name, description, created_at, updated_at, created_by, updated_by
 `
 
 type UpdatePermissionParams struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	ID          int64  `json:"id"`
+	UpdatedBy   string `json:"updated_by"`
 }
 
-func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
-	_, err := q.db.Exec(ctx, updatePermission, arg.Name, arg.Description, arg.ID)
-	return err
+func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) (Permission, error) {
+	row := q.db.QueryRow(ctx, updatePermission,
+		arg.Name,
+		arg.Description,
+		arg.ID,
+		arg.UpdatedBy,
+	)
+	var i Permission
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
 }
 
-const updateRole = `-- name: UpdateRole :exec
+const updateRole = `-- name: UpdateRole :one
 UPDATE roles 
-SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW())
+SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
 WHERE id = $3
+RETURNING id, name, description, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateRoleParams struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	ID          int64  `json:"id"`
+	UpdatedBy   string `json:"updated_by"`
 }
 
-func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) error {
-	_, err := q.db.Exec(ctx, updateRole, arg.Name, arg.Description, arg.ID)
-	return err
+func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
+	row := q.db.QueryRow(ctx, updateRole,
+		arg.Name,
+		arg.Description,
+		arg.ID,
+		arg.UpdatedBy,
+	)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
 }

@@ -13,21 +13,29 @@ const createFolder = `-- name: CreateFolder :one
 INSERT INTO folders (
   name,
   slug,
-  description
+  description,
+  created_by,
+  updated_by
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4, $4
 )
-RETURNING id, name, slug, description, created_at, updated_at
+RETURNING id, name, slug, description, created_at, updated_at, created_by, updated_by
 `
 
 type CreateFolderParams struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
+	CreatedBy   string `json:"created_by"`
 }
 
 func (q *Queries) CreateFolder(ctx context.Context, arg CreateFolderParams) (Folder, error) {
-	row := q.db.QueryRow(ctx, createFolder, arg.Name, arg.Slug, arg.Description)
+	row := q.db.QueryRow(ctx, createFolder,
+		arg.Name,
+		arg.Slug,
+		arg.Description,
+		arg.CreatedBy,
+	)
 	var i Folder
 	err := row.Scan(
 		&i.ID,
@@ -36,6 +44,8 @@ func (q *Queries) CreateFolder(ctx context.Context, arg CreateFolderParams) (Fol
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -61,7 +71,7 @@ func (q *Queries) DeleteFoldersByIDs(ctx context.Context, dollar_1 []int64) erro
 }
 
 const getFolder = `-- name: GetFolder :one
-SELECT id, name, slug, description, created_at, updated_at FROM folders
+SELECT id, name, slug, description, created_at, updated_at, created_by, updated_by FROM folders
 WHERE id = $1 LIMIT 1
 `
 
@@ -75,6 +85,8 @@ func (q *Queries) GetFolder(ctx context.Context, id int64) (Folder, error) {
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -105,7 +117,7 @@ func (q *Queries) GetFoldersByIDs(ctx context.Context, dollar_1 []int64) ([]int6
 }
 
 const listFolders = `-- name: ListFolders :many
-SELECT id, name, slug, description, created_at, updated_at FROM folders
+SELECT id, name, slug, description, created_at, updated_at, created_by, updated_by FROM folders
 ORDER BY name
 `
 
@@ -125,6 +137,8 @@ func (q *Queries) ListFolders(ctx context.Context) ([]Folder, error) {
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -137,7 +151,7 @@ func (q *Queries) ListFolders(ctx context.Context) ([]Folder, error) {
 }
 
 const paginatedFolders = `-- name: PaginatedFolders :many
-SELECT id, name, slug, description, created_at, updated_at FROM folders
+SELECT id, name, slug, description, created_at, updated_at, created_by, updated_by FROM folders
 WHERE 
     (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
     AND (coalesce($4, '') = '' OR slug ILIKE '%' || $4 || '%')
@@ -191,6 +205,8 @@ func (q *Queries) PaginatedFolders(ctx context.Context, arg PaginatedFoldersPara
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -223,10 +239,11 @@ func (q *Queries) PaginatedFoldersCount(ctx context.Context, arg PaginatedFolder
 	return count, err
 }
 
-const updateFolder = `-- name: UpdateFolder :exec
+const updateFolder = `-- name: UpdateFolder :one
 UPDATE folders
-  set name = $2, slug = $3, description = $4, updated_at = EXTRACT(EPOCH FROM NOW())
+SET name = $2, slug = $3, description = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
+RETURNING id, name, slug, description, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateFolderParams struct {
@@ -234,14 +251,27 @@ type UpdateFolderParams struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
+	UpdatedBy   string `json:"updated_by"`
 }
 
-func (q *Queries) UpdateFolder(ctx context.Context, arg UpdateFolderParams) error {
-	_, err := q.db.Exec(ctx, updateFolder,
+func (q *Queries) UpdateFolder(ctx context.Context, arg UpdateFolderParams) (Folder, error) {
+	row := q.db.QueryRow(ctx, updateFolder,
 		arg.ID,
 		arg.Name,
 		arg.Slug,
 		arg.Description,
+		arg.UpdatedBy,
 	)
-	return err
+	var i Folder
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
 }

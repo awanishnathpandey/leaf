@@ -7,36 +7,58 @@ package generated
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-  name, email, password
+  name, email, password, created_by, updated_by
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4, $4
 )
-RETURNING id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at
+RETURNING id, name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type CreateUserParams struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	CreatedBy string `json:"created_by"`
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Email, arg.Password)
-	var i User
+type CreateUserRow struct {
+	ID              int64       `json:"id"`
+	Name            string      `json:"name"`
+	Email           string      `json:"email"`
+	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
+	LastSeenAt      int64       `json:"last_seen_at"`
+	CreatedAt       int64       `json:"created_at"`
+	UpdatedAt       int64       `json:"updated_at"`
+	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+	CreatedBy       string      `json:"created_by"`
+	UpdatedBy       string      `json:"updated_by"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Name,
+		arg.Email,
+		arg.Password,
+		arg.CreatedBy,
+	)
+	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Email,
-		&i.Password,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -62,7 +84,7 @@ func (q *Queries) DeleteUsersByIDs(ctx context.Context, dollar_1 []int64) error 
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at FROM users
+SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -79,12 +101,14 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at FROM users
+SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -101,6 +125,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -142,7 +168,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at FROM users
+SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 ORDER BY email
 `
 
@@ -165,6 +191,8 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -186,7 +214,9 @@ SELECT
     last_seen_at, 
     created_at, 
     updated_at, 
-    deleted_at
+    deleted_at,
+    created_by,
+    updated_by
 FROM users
 WHERE 
     (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
@@ -239,6 +269,8 @@ func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) 
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -270,21 +302,54 @@ func (q *Queries) PaginatedUsersCount(ctx context.Context, arg PaginatedUsersCou
 	return count, err
 }
 
-const updateUser = `-- name: UpdateUser :exec
+const updateUser = `-- name: UpdateUser :one
 UPDATE users
-  set name = $2, email = $3, updated_at = EXTRACT(EPOCH FROM NOW())
+  set name = $2, email = $3, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
 WHERE id = $1
+RETURNING id, name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type UpdateUserParams struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	UpdatedBy string `json:"updated_by"`
 }
 
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.Exec(ctx, updateUser, arg.ID, arg.Name, arg.Email)
-	return err
+type UpdateUserRow struct {
+	ID              int64       `json:"id"`
+	Name            string      `json:"name"`
+	Email           string      `json:"email"`
+	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
+	LastSeenAt      int64       `json:"last_seen_at"`
+	CreatedAt       int64       `json:"created_at"`
+	UpdatedAt       int64       `json:"updated_at"`
+	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+	CreatedBy       string      `json:"created_by"`
+	UpdatedBy       string      `json:"updated_by"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.ID,
+		arg.Name,
+		arg.Email,
+		arg.UpdatedBy,
+	)
+	var i UpdateUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.EmailVerifiedAt,
+		&i.LastSeenAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
 }
 
 const updateUserEmailVerifiedAt = `-- name: UpdateUserEmailVerifiedAt :exec

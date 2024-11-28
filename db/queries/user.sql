@@ -16,16 +16,17 @@ ORDER BY email;
 
 -- name: CreateUser :one
 INSERT INTO users (
-  name, email, password
+  name, email, password, created_by, updated_by
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4, $4
 )
-RETURNING *;
+RETURNING id, name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by;
 
--- name: UpdateUser :exec
+-- name: UpdateUser :one
 UPDATE users
-  set name = $2, email = $3, updated_at = EXTRACT(EPOCH FROM NOW())
-WHERE id = $1;
+  set name = $2, email = $3, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
+WHERE id = $1
+RETURNING id, name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by;
 
 -- name: UpdateUserEmailVerifiedAt :exec
 UPDATE users
@@ -59,7 +60,9 @@ SELECT
     last_seen_at, 
     created_at, 
     updated_at, 
-    deleted_at
+    deleted_at,
+    created_by,
+    updated_by
 FROM users
 WHERE 
     (coalesce(sqlc.narg(name_filter), '') = '' OR name ILIKE '%' || sqlc.narg(name_filter) || '%')

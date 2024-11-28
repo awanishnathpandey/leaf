@@ -43,6 +43,8 @@ type File struct {
 	Folder    *Folder          `json:"folder"`
 	CreatedAt int64            `json:"createdAt"`
 	UpdatedAt int64            `json:"updatedAt"`
+	CreatedBy string           `json:"createdBy"`
+	UpdatedBy string           `json:"updatedBy"`
 	Groups    *GroupConnection `json:"groups"`
 }
 
@@ -74,6 +76,8 @@ type Folder struct {
 	Description string           `json:"description"`
 	CreatedAt   int64            `json:"createdAt"`
 	UpdatedAt   int64            `json:"updatedAt"`
+	CreatedBy   string           `json:"createdBy"`
+	UpdatedBy   string           `json:"updatedBy"`
 	Groups      *GroupConnection `json:"groups"`
 	Files       *FileConnection  `json:"files"`
 }
@@ -106,6 +110,8 @@ type Group struct {
 	Description string            `json:"description"`
 	CreatedAt   int64             `json:"createdAt"`
 	UpdatedAt   int64             `json:"updatedAt"`
+	CreatedBy   string            `json:"createdBy"`
+	UpdatedBy   string            `json:"updatedBy"`
 	Users       *UserConnection   `json:"users"`
 	Folders     *FolderConnection `json:"folders"`
 	Files       *FileConnection   `json:"files"`
@@ -146,6 +152,8 @@ type Permission struct {
 	Description string          `json:"description"`
 	CreatedAt   int64           `json:"createdAt"`
 	UpdatedAt   int64           `json:"updatedAt"`
+	CreatedBy   string          `json:"createdBy"`
+	UpdatedBy   string          `json:"updatedBy"`
 	Roles       *RoleConnection `json:"roles"`
 }
 
@@ -179,6 +187,8 @@ type Role struct {
 	Description string                `json:"description"`
 	CreatedAt   int64                 `json:"createdAt"`
 	UpdatedAt   int64                 `json:"updatedAt"`
+	CreatedBy   string                `json:"createdBy"`
+	UpdatedBy   string                `json:"updatedBy"`
 	Permissions *PermissionConnection `json:"permissions"`
 	Users       *UserConnection       `json:"users"`
 }
@@ -233,6 +243,8 @@ type User struct {
 	CreatedAt       int64            `json:"createdAt"`
 	UpdatedAt       int64            `json:"updatedAt"`
 	DeletedAt       *int64           `json:"deletedAt,omitempty"`
+	CreatedBy       string           `json:"createdBy"`
+	UpdatedBy       string           `json:"updatedBy"`
 	Groups          *GroupConnection `json:"groups"`
 	Roles           *RoleConnection  `json:"roles"`
 }

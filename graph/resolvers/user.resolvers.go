@@ -39,9 +39,10 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 
 	// Call the generated CreateUser function with the params
 	user, err := r.DB.CreateUser(ctx, generated.CreateUserParams{
-		Name:     input.Name,
-		Email:    input.Email,
-		Password: hashedPassword,
+		Name:      input.Name,
+		Email:     input.Email,
+		Password:  hashedPassword,
+		CreatedBy: ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
@@ -57,6 +58,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 		CreatedAt:       user.CreatedAt,
 		UpdatedAt:       user.UpdatedAt,
 		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+		CreatedBy:       user.CreatedBy,
+		UpdatedBy:       user.UpdatedBy,
 	}, nil
 }
 
@@ -75,32 +78,29 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	// Update the user
-	err = r.DB.UpdateUser(ctx, generated.UpdateUserParams{
-		ID:    input.ID,
-		Name:  input.Name,
-		Email: input.Email,
+	// Call the sqlc generated query to update the user in the database
+	user, err := r.DB.UpdateUser(ctx, generated.UpdateUserParams{
+		ID:        input.ID,
+		Name:      input.Name,
+		Email:     input.Email,
+		UpdatedBy: ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
 
-	// Fetch the updated user
-	updatedUser, err := r.DB.GetUser(ctx, input.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve updated user: %w", err)
-	}
-
 	// Map the SQLC model to the GraphQL model
 	return &model.User{
-		ID:              updatedUser.ID,
-		Name:            updatedUser.Name,
-		Email:           updatedUser.Email,
-		EmailVerifiedAt: (*int64)(&updatedUser.EmailVerifiedAt.Int64),
-		LastSeenAt:      updatedUser.LastSeenAt,
-		CreatedAt:       updatedUser.CreatedAt,
-		UpdatedAt:       updatedUser.UpdatedAt,
-		DeletedAt:       (*int64)(&updatedUser.DeletedAt.Int64),
+		ID:              user.ID,
+		Name:            user.Name,
+		Email:           user.Email,
+		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
+		LastSeenAt:      user.LastSeenAt,
+		CreatedAt:       user.CreatedAt,
+		UpdatedAt:       user.UpdatedAt,
+		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+		CreatedBy:       user.CreatedBy,
+		UpdatedBy:       user.UpdatedBy,
 	}, nil
 }
 
@@ -240,6 +240,8 @@ func (r *queryResolver) Users(ctx context.Context, first int64, after *int64, fi
 				CreatedAt:       user.CreatedAt,
 				UpdatedAt:       user.UpdatedAt,
 				DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+				CreatedBy:       user.CreatedBy,
+				UpdatedBy:       user.UpdatedBy,
 			},
 		}
 	}
@@ -381,6 +383,8 @@ func (r *userResolver) Groups(ctx context.Context, obj *model.User, first int64,
 				Description: group.Description,
 				CreatedAt:   group.CreatedAt,
 				UpdatedAt:   group.UpdatedAt,
+				CreatedBy:   group.CreatedBy,
+				UpdatedBy:   group.UpdatedBy,
 			},
 		}
 	}
@@ -466,6 +470,8 @@ func (r *userResolver) Roles(ctx context.Context, obj *model.User, first int64, 
 				Description: role.Description,
 				CreatedAt:   role.CreatedAt,
 				UpdatedAt:   role.UpdatedAt,
+				CreatedBy:   role.CreatedBy,
+				UpdatedBy:   role.UpdatedBy,
 			},
 		}
 	}

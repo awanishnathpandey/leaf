@@ -35,6 +35,7 @@ func (r *mutationResolver) CreateRole(ctx context.Context, input model.CreateRol
 	role, err := r.DB.CreateRole(ctx, generated.CreateRoleParams{
 		Name:        input.Name,
 		Description: input.Description,
+		CreatedBy:   ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create role: %w", err)
@@ -47,6 +48,8 @@ func (r *mutationResolver) CreateRole(ctx context.Context, input model.CreateRol
 		Description: role.Description,
 		CreatedAt:   role.CreatedAt,
 		UpdatedAt:   role.UpdatedAt,
+		CreatedBy:   role.CreatedBy,
+		UpdatedBy:   role.UpdatedBy,
 	}, nil
 }
 
@@ -65,29 +68,24 @@ func (r *mutationResolver) UpdateRole(ctx context.Context, input model.UpdateRol
 		return nil, fmt.Errorf("role not found: %w", err)
 	}
 
-	// Update the group
-	err = r.DB.UpdateRole(ctx, generated.UpdateRoleParams{
+	// Call the sqlc generated query to update the role in the database
+	role, err := r.DB.UpdateRole(ctx, generated.UpdateRoleParams{
 		ID:          input.ID,
 		Name:        input.Name,
 		Description: input.Description,
+		UpdatedBy:   ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update role: %w", err)
 	}
 
-	// Fetch the updated role
-	updatedRole, err := r.DB.GetRole(ctx, input.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve updated role: %w", err)
-	}
-
 	// Map the SQLC model to the GraphQL model
 	return &model.Role{
-		ID:          updatedRole.ID,
-		Name:        updatedRole.Name,
-		Description: updatedRole.Description,
-		CreatedAt:   updatedRole.CreatedAt,
-		UpdatedAt:   updatedRole.UpdatedAt,
+		ID:          role.ID,
+		Name:        role.Name,
+		Description: role.Description,
+		CreatedAt:   role.CreatedAt,
+		UpdatedAt:   role.UpdatedAt,
 	}, nil
 }
 
@@ -161,6 +159,7 @@ func (r *mutationResolver) CreatePermission(ctx context.Context, input model.Cre
 	permission, err := r.DB.CreatePermission(ctx, generated.CreatePermissionParams{
 		Name:        input.Name,
 		Description: input.Description,
+		CreatedBy:   ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create permission: %w", err)
@@ -173,6 +172,8 @@ func (r *mutationResolver) CreatePermission(ctx context.Context, input model.Cre
 		Description: permission.Description,
 		CreatedAt:   permission.CreatedAt,
 		UpdatedAt:   permission.UpdatedAt,
+		CreatedBy:   permission.CreatedBy,
+		UpdatedBy:   permission.UpdatedBy,
 	}, nil
 }
 
@@ -191,29 +192,26 @@ func (r *mutationResolver) UpdatePermission(ctx context.Context, input model.Upd
 		return nil, fmt.Errorf("permission not found: %w", err)
 	}
 
-	// Update the permission
-	err = r.DB.UpdatePermission(ctx, generated.UpdatePermissionParams{
+	// Call the sqlc generated query to update the permission in the database
+	permission, err := r.DB.UpdatePermission(ctx, generated.UpdatePermissionParams{
 		ID:          input.ID,
 		Name:        input.Name,
 		Description: input.Description,
+		UpdatedBy:   ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update permission: %w", err)
 	}
 
-	// Fetch the updated permission
-	updatedPermission, err := r.DB.GetPermission(ctx, input.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve updated permission: %w", err)
-	}
-
 	// Map the SQLC model to the GraphQL model
 	return &model.Permission{
-		ID:          updatedPermission.ID,
-		Name:        updatedPermission.Name,
-		Description: updatedPermission.Description,
-		CreatedAt:   updatedPermission.CreatedAt,
-		UpdatedAt:   updatedPermission.UpdatedAt,
+		ID:          permission.ID,
+		Name:        permission.Name,
+		Description: permission.Description,
+		CreatedAt:   permission.CreatedAt,
+		UpdatedAt:   permission.UpdatedAt,
+		CreatedBy:   permission.CreatedBy,
+		UpdatedBy:   permission.UpdatedBy,
 	}, nil
 }
 
@@ -460,6 +458,8 @@ func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, f
 				Description: role.Description,
 				CreatedAt:   role.CreatedAt,
 				UpdatedAt:   role.UpdatedAt,
+				CreatedBy:   role.CreatedBy,
+				UpdatedBy:   role.UpdatedBy,
 			},
 		}
 	}
@@ -543,6 +543,8 @@ func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, fi
 				Description: role.Description,
 				CreatedAt:   role.CreatedAt,
 				UpdatedAt:   role.UpdatedAt,
+				CreatedBy:   role.CreatedBy,
+				UpdatedBy:   role.UpdatedBy,
 			},
 		}
 	}
@@ -626,6 +628,8 @@ func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int
 				Description: permission.Description,
 				CreatedAt:   permission.CreatedAt,
 				UpdatedAt:   permission.UpdatedAt,
+				CreatedBy:   permission.CreatedBy,
+				UpdatedBy:   permission.UpdatedBy,
 			},
 		}
 	}
@@ -761,6 +765,8 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first i
 				Description: permission.Description,
 				CreatedAt:   permission.CreatedAt,
 				UpdatedAt:   permission.UpdatedAt,
+				CreatedBy:   permission.CreatedBy,
+				UpdatedBy:   permission.UpdatedBy,
 			},
 		}
 	}
@@ -849,6 +855,8 @@ func (r *roleResolver) Users(ctx context.Context, obj *model.Role, first int64, 
 				CreatedAt:       user.CreatedAt,
 				UpdatedAt:       user.UpdatedAt,
 				DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+				CreatedBy:       user.CreatedBy,
+				UpdatedBy:       user.UpdatedBy,
 			},
 		}
 	}

@@ -84,6 +84,8 @@ func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first in
 				Description: group.Description,
 				CreatedAt:   group.CreatedAt,
 				UpdatedAt:   group.UpdatedAt,
+				CreatedBy:   group.CreatedBy,
+				UpdatedBy:   group.UpdatedBy,
 			},
 		}
 	}
@@ -171,6 +173,8 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 				FolderID:  file.FolderID,
 				CreatedAt: file.CreatedAt,
 				UpdatedAt: file.UpdatedAt,
+				CreatedBy: file.CreatedBy,
+				UpdatedBy: file.UpdatedBy,
 			},
 		}
 	}
@@ -208,6 +212,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, input model.CreateF
 		Name:        input.Name,
 		Slug:        input.Slug,
 		Description: input.Description,
+		CreatedBy:   ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create folder: %w", err)
@@ -221,6 +226,8 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, input model.CreateF
 		Description: folder.Description,
 		CreatedAt:   folder.CreatedAt,
 		UpdatedAt:   folder.UpdatedAt,
+		CreatedBy:   folder.CreatedBy,
+		UpdatedBy:   folder.UpdatedBy,
 	}, nil
 }
 
@@ -239,31 +246,28 @@ func (r *mutationResolver) UpdateFolder(ctx context.Context, input model.UpdateF
 		return nil, fmt.Errorf("folder not found: %w", err)
 	}
 
-	// Update the folder
-	err = r.DB.UpdateFolder(ctx, generated.UpdateFolderParams{
+	// Call the sqlc generated query to update the folder in the database
+	folder, err := r.DB.UpdateFolder(ctx, generated.UpdateFolderParams{
 		ID:          input.ID,
 		Name:        input.Name,
 		Slug:        input.Slug,
 		Description: input.Description,
+		UpdatedBy:   ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update folder: %w", err)
 	}
 
-	// Fetch the updated folder
-	updatedFolder, err := r.DB.GetFolder(ctx, input.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve updated folder: %w", err)
-	}
-
 	// Map the SQLC model to the GraphQL model
 	return &model.Folder{
-		ID:          updatedFolder.ID,
-		Name:        updatedFolder.Name,
-		Slug:        updatedFolder.Slug,
-		Description: updatedFolder.Description,
-		CreatedAt:   updatedFolder.CreatedAt,
-		UpdatedAt:   updatedFolder.UpdatedAt,
+		ID:          folder.ID,
+		Name:        folder.Name,
+		Slug:        folder.Slug,
+		Description: folder.Description,
+		CreatedAt:   folder.CreatedAt,
+		UpdatedAt:   folder.UpdatedAt,
+		CreatedBy:   folder.CreatedBy,
+		UpdatedBy:   folder.UpdatedBy,
 	}, nil
 }
 
@@ -388,6 +392,8 @@ func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, 
 				Description: folder.Description,
 				CreatedAt:   folder.CreatedAt,
 				UpdatedAt:   folder.UpdatedAt,
+				CreatedBy:   folder.CreatedBy,
+				UpdatedBy:   folder.UpdatedBy,
 			},
 		}
 	}

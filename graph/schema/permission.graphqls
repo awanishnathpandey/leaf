@@ -8,6 +8,8 @@ type Role {
     description: String!
     createdAt: Int!
     updatedAt: Int!
+    createdBy: String!
+    updatedBy: String!
     permissions(first: Int!, after: Int, filter: PermissionFilter, sort: PermissionSort): PermissionConnection!
     users(first: Int!, after: Int, filter: UserFilter, sort: UserSort): UserConnection!
 }
@@ -18,6 +20,8 @@ type Permission {
     description: String!
     createdAt: Int!
     updatedAt: Int!
+    createdBy: String!
+    updatedBy: String!
     roles(first: Int!, after: Int, filter: RoleFilter, sort: RoleSort): RoleConnection!
 }
 

@@ -4,7 +4,9 @@ CREATE TABLE roles (
     name VARCHAR(255) UNIQUE NOT NULL, -- Prevent deletion of default roles
     description VARCHAR(255) NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
-    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())
+    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+    created_by VARCHAR(255) NOT NULL DEFAULT 'system',
+    updated_by VARCHAR(255) NOT NULL DEFAULT 'system'
 );
 
 -- +goose StatementBegin

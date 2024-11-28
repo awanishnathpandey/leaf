@@ -60,18 +60,19 @@ func (q *Queries) AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) 
 }
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (name, description) 
-VALUES ($1, $2) 
-RETURNING id, name, description, created_at, updated_at
+INSERT INTO groups (name, description, created_by, updated_by) 
+VALUES ($1, $2, $3, $3) 
+RETURNING id, name, description, created_at, updated_at, created_by, updated_by
 `
 
 type CreateGroupParams struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	CreatedBy   string `json:"created_by"`
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
-	row := q.db.QueryRow(ctx, createGroup, arg.Name, arg.Description)
+	row := q.db.QueryRow(ctx, createGroup, arg.Name, arg.Description, arg.CreatedBy)
 	var i Group
 	err := row.Scan(
 		&i.ID,
@@ -79,6 +80,8 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -104,7 +107,7 @@ func (q *Queries) DeleteGroupsByIDs(ctx context.Context, dollar_1 []int64) error
 }
 
 const getFilesByGroupID = `-- name: GetFilesByGroupID :many
-SELECT f.id, f.name, f.slug, f.url, f.folder_id, f.created_at, f.updated_at
+SELECT f.id, f.name, f.slug, f.url, f.folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by
 FROM files f
 JOIN group_files gf ON f.id = gf.file_id
 WHERE gf.group_id = $1
@@ -127,6 +130,8 @@ func (q *Queries) GetFilesByGroupID(ctx context.Context, groupID int64) ([]File,
 			&i.FolderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -139,7 +144,7 @@ func (q *Queries) GetFilesByGroupID(ctx context.Context, groupID int64) ([]File,
 }
 
 const getFoldersByGroupID = `-- name: GetFoldersByGroupID :many
-SELECT f.id, f.name, f.slug, f.description, f.created_at, f.updated_at
+SELECT f.id, f.name, f.slug, f.description, f.created_at, f.updated_at, f.created_by, f.updated_by
 FROM folders f
 JOIN group_folders gf ON f.id = gf.folder_id
 WHERE gf.group_id = $1
@@ -161,6 +166,8 @@ func (q *Queries) GetFoldersByGroupID(ctx context.Context, groupID int64) ([]Fol
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -178,9 +185,17 @@ FROM groups
 WHERE id = $1
 `
 
-func (q *Queries) GetGroup(ctx context.Context, id int64) (Group, error) {
+type GetGroupRow struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+}
+
+func (q *Queries) GetGroup(ctx context.Context, id int64) (GetGroupRow, error) {
 	row := q.db.QueryRow(ctx, getGroup, id)
-	var i Group
+	var i GetGroupRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -192,7 +207,7 @@ func (q *Queries) GetGroup(ctx context.Context, id int64) (Group, error) {
 }
 
 const getGroupsByFileID = `-- name: GetGroupsByFileID :many
-SELECT g.id, g.name, g.description, g.created_at, g.updated_at
+SELECT g.id, g.name, g.description, g.created_at, g.updated_at, g.created_by, g.updated_by
 FROM groups g
 JOIN group_files gf ON g.id = gf.group_id
 WHERE gf.file_id = $1
@@ -213,6 +228,8 @@ func (q *Queries) GetGroupsByFileID(ctx context.Context, fileID int64) ([]Group,
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -225,7 +242,7 @@ func (q *Queries) GetGroupsByFileID(ctx context.Context, fileID int64) ([]Group,
 }
 
 const getGroupsByFolderID = `-- name: GetGroupsByFolderID :many
-SELECT g.id, g.name, g.description, g.created_at, g.updated_at
+SELECT g.id, g.name, g.description, g.created_at, g.updated_at, g.created_by, g.updated_by
 FROM groups g
 JOIN group_folders gf ON g.id = gf.group_id
 WHERE gf.folder_id = $1
@@ -246,6 +263,8 @@ func (q *Queries) GetGroupsByFolderID(ctx context.Context, folderID int64) ([]Gr
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -283,7 +302,7 @@ func (q *Queries) GetGroupsByIDs(ctx context.Context, dollar_1 []int64) ([]int64
 }
 
 const getGroupsByUserID = `-- name: GetGroupsByUserID :many
-SELECT g.id, g.name, g.description, g.created_at, g.updated_at
+SELECT g.id, g.name, g.description, g.created_at, g.updated_at, g.created_by, g.updated_by
 FROM groups g
 JOIN group_users gu ON g.id = gu.group_id
 WHERE gu.user_id = $1
@@ -304,6 +323,8 @@ func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group,
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -316,7 +337,7 @@ func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group,
 }
 
 const getPaginatedFilesByGroupID = `-- name: GetPaginatedFilesByGroupID :many
-SELECT id, name, slug, url, folder_id, f.created_at, f.updated_at, group_id, file_id, gf.created_at, gf.updated_at FROM files f
+SELECT id, name, slug, url, folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by, group_id, file_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM files f
 JOIN group_files gf ON f.id = gf.file_id
 WHERE 
     gf.group_id = $3  -- Filter by group_id
@@ -353,10 +374,14 @@ type GetPaginatedFilesByGroupIDRow struct {
 	FolderID    int64  `json:"folder_id"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 	GroupID     int64  `json:"group_id"`
 	FileID      int64  `json:"file_id"`
 	CreatedAt_2 int64  `json:"created_at_2"`
 	UpdatedAt_2 int64  `json:"updated_at_2"`
+	CreatedBy_2 string `json:"created_by_2"`
+	UpdatedBy_2 string `json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginatedFilesByGroupIDParams) ([]GetPaginatedFilesByGroupIDRow, error) {
@@ -384,10 +409,14 @@ func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginat
 			&i.FolderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 			&i.GroupID,
 			&i.FileID,
 			&i.CreatedAt_2,
 			&i.UpdatedAt_2,
+			&i.CreatedBy_2,
+			&i.UpdatedBy_2,
 		); err != nil {
 			return nil, err
 		}
@@ -422,7 +451,7 @@ func (q *Queries) GetPaginatedFilesByGroupIDCount(ctx context.Context, arg GetPa
 }
 
 const getPaginatedFoldersByGroupID = `-- name: GetPaginatedFoldersByGroupID :many
-SELECT id, name, slug, description, f.created_at, f.updated_at, group_id, folder_id, gf.created_at, gf.updated_at FROM folders f
+SELECT id, name, slug, description, f.created_at, f.updated_at, f.created_by, f.updated_by, group_id, folder_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM folders f
 JOIN group_folders gf ON f.id = gf.folder_id
 WHERE 
     gf.group_id = $3  -- Filter by group_id
@@ -462,10 +491,14 @@ type GetPaginatedFoldersByGroupIDRow struct {
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 	GroupID     int64  `json:"group_id"`
 	FolderID    int64  `json:"folder_id"`
 	CreatedAt_2 int64  `json:"created_at_2"`
 	UpdatedAt_2 int64  `json:"updated_at_2"`
+	CreatedBy_2 string `json:"created_by_2"`
+	UpdatedBy_2 string `json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedFoldersByGroupID(ctx context.Context, arg GetPaginatedFoldersByGroupIDParams) ([]GetPaginatedFoldersByGroupIDRow, error) {
@@ -493,10 +526,14 @@ func (q *Queries) GetPaginatedFoldersByGroupID(ctx context.Context, arg GetPagin
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 			&i.GroupID,
 			&i.FolderID,
 			&i.CreatedAt_2,
 			&i.UpdatedAt_2,
+			&i.CreatedBy_2,
+			&i.UpdatedBy_2,
 		); err != nil {
 			return nil, err
 		}
@@ -538,7 +575,7 @@ func (q *Queries) GetPaginatedFoldersByGroupIDCount(ctx context.Context, arg Get
 }
 
 const getPaginatedGroupsByFileID = `-- name: GetPaginatedGroupsByFileID :many
-SELECT id, name, description, g.created_at, g.updated_at, group_id, file_id, gf.created_at, gf.updated_at FROM groups g
+SELECT id, name, description, g.created_at, g.updated_at, g.created_by, g.updated_by, group_id, file_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM groups g
 JOIN group_files gf ON g.id = gf.group_id
 WHERE 
     gf.file_id = $3  -- Filter by user_id
@@ -573,10 +610,14 @@ type GetPaginatedGroupsByFileIDRow struct {
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 	GroupID     int64  `json:"group_id"`
 	FileID      int64  `json:"file_id"`
 	CreatedAt_2 int64  `json:"created_at_2"`
 	UpdatedAt_2 int64  `json:"updated_at_2"`
+	CreatedBy_2 string `json:"created_by_2"`
+	UpdatedBy_2 string `json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedGroupsByFileID(ctx context.Context, arg GetPaginatedGroupsByFileIDParams) ([]GetPaginatedGroupsByFileIDRow, error) {
@@ -602,10 +643,14 @@ func (q *Queries) GetPaginatedGroupsByFileID(ctx context.Context, arg GetPaginat
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 			&i.GroupID,
 			&i.FileID,
 			&i.CreatedAt_2,
 			&i.UpdatedAt_2,
+			&i.CreatedBy_2,
+			&i.UpdatedBy_2,
 		); err != nil {
 			return nil, err
 		}
@@ -640,7 +685,7 @@ func (q *Queries) GetPaginatedGroupsByFileIDCount(ctx context.Context, arg GetPa
 }
 
 const getPaginatedGroupsByFolderID = `-- name: GetPaginatedGroupsByFolderID :many
-SELECT id, name, description, g.created_at, g.updated_at, group_id, folder_id, gf.created_at, gf.updated_at FROM groups g
+SELECT id, name, description, g.created_at, g.updated_at, g.created_by, g.updated_by, group_id, folder_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM groups g
 JOIN group_folders gf ON g.id = gf.group_id
 WHERE 
     gf.folder_id = $3  -- Filter by folder_id
@@ -675,10 +720,14 @@ type GetPaginatedGroupsByFolderIDRow struct {
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 	GroupID     int64  `json:"group_id"`
 	FolderID    int64  `json:"folder_id"`
 	CreatedAt_2 int64  `json:"created_at_2"`
 	UpdatedAt_2 int64  `json:"updated_at_2"`
+	CreatedBy_2 string `json:"created_by_2"`
+	UpdatedBy_2 string `json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedGroupsByFolderID(ctx context.Context, arg GetPaginatedGroupsByFolderIDParams) ([]GetPaginatedGroupsByFolderIDRow, error) {
@@ -704,10 +753,14 @@ func (q *Queries) GetPaginatedGroupsByFolderID(ctx context.Context, arg GetPagin
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 			&i.GroupID,
 			&i.FolderID,
 			&i.CreatedAt_2,
 			&i.UpdatedAt_2,
+			&i.CreatedBy_2,
+			&i.UpdatedBy_2,
 		); err != nil {
 			return nil, err
 		}
@@ -742,7 +795,7 @@ func (q *Queries) GetPaginatedGroupsByFolderIDCount(ctx context.Context, arg Get
 }
 
 const getPaginatedGroupsByUserID = `-- name: GetPaginatedGroupsByUserID :many
-SELECT id, name, description, g.created_at, g.updated_at, group_id, user_id, gu.created_at, gu.updated_at FROM groups g
+SELECT id, name, description, g.created_at, g.updated_at, g.created_by, g.updated_by, group_id, user_id, gu.created_at, gu.updated_at, gu.created_by, gu.updated_by FROM groups g
 JOIN group_users gu ON g.id = gu.group_id
 WHERE 
     gu.user_id = $3  -- Filter by user_id
@@ -777,10 +830,14 @@ type GetPaginatedGroupsByUserIDRow struct {
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
+	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 	GroupID     int64  `json:"group_id"`
 	UserID      int64  `json:"user_id"`
 	CreatedAt_2 int64  `json:"created_at_2"`
 	UpdatedAt_2 int64  `json:"updated_at_2"`
+	CreatedBy_2 string `json:"created_by_2"`
+	UpdatedBy_2 string `json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedGroupsByUserID(ctx context.Context, arg GetPaginatedGroupsByUserIDParams) ([]GetPaginatedGroupsByUserIDRow, error) {
@@ -806,10 +863,14 @@ func (q *Queries) GetPaginatedGroupsByUserID(ctx context.Context, arg GetPaginat
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 			&i.GroupID,
 			&i.UserID,
 			&i.CreatedAt_2,
 			&i.UpdatedAt_2,
+			&i.CreatedBy_2,
+			&i.UpdatedBy_2,
 		); err != nil {
 			return nil, err
 		}
@@ -852,7 +913,9 @@ SELECT
     u.last_seen_at, 
     u.created_at, 
     u.updated_at, 
-    u.deleted_at
+    u.deleted_at,
+    u.created_by,
+    u.updated_by
 FROM users u
 JOIN group_users gu ON u.id = gu.user_id
 WHERE 
@@ -891,6 +954,8 @@ type GetPaginatedUsersByGroupIDRow struct {
 	CreatedAt       int64       `json:"created_at"`
 	UpdatedAt       int64       `json:"updated_at"`
 	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+	CreatedBy       string      `json:"created_by"`
+	UpdatedBy       string      `json:"updated_by"`
 }
 
 func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginatedUsersByGroupIDParams) ([]GetPaginatedUsersByGroupIDRow, error) {
@@ -919,6 +984,8 @@ func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginat
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1000,7 +1067,7 @@ func (q *Queries) GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUs
 }
 
 const listGroups = `-- name: ListGroups :many
-SELECT id, name, description, created_at, updated_at FROM groups
+SELECT id, name, description, created_at, updated_at, created_by, updated_by FROM groups
 ORDER BY name
 `
 
@@ -1019,6 +1086,8 @@ func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1031,7 +1100,7 @@ func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 }
 
 const paginatedGroups = `-- name: PaginatedGroups :many
-SELECT id, name, description, created_at, updated_at FROM groups
+SELECT id, name, description, created_at, updated_at, created_by, updated_by FROM groups
 WHERE 
     (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
     AND (coalesce($4, '') = '' OR description ILIKE '%' || $4 || '%')
@@ -1079,6 +1148,8 @@ func (q *Queries) PaginatedGroups(ctx context.Context, arg PaginatedGroupsParams
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1154,19 +1225,36 @@ func (q *Queries) RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGro
 	return err
 }
 
-const updateGroup = `-- name: UpdateGroup :exec
+const updateGroup = `-- name: UpdateGroup :one
 UPDATE groups 
-SET name = $1, description = $2, updated_at = EXTRACT(EPOCH FROM NOW())
-WHERE id = $3
+SET name = $2, description = $3, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
+WHERE id = $1
+RETURNING id, name, description, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateGroupParams struct {
+	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	ID          int64  `json:"id"`
+	UpdatedBy   string `json:"updated_by"`
 }
 
-func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) error {
-	_, err := q.db.Exec(ctx, updateGroup, arg.Name, arg.Description, arg.ID)
-	return err
+func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error) {
+	row := q.db.QueryRow(ctx, updateGroup,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.UpdatedBy,
+	)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
 }

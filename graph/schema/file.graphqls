@@ -11,6 +11,8 @@ type File {
   folder: Folder!
   createdAt: Int!
   updatedAt: Int!
+  createdBy: String!
+  updatedBy: String!
   groups(first: Int!, after: Int, filter: GroupFilter, sort: GroupSort): GroupConnection!
 }
 

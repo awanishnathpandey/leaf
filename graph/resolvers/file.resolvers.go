@@ -39,6 +39,8 @@ func (r *fileResolver) Folder(ctx context.Context, obj *model.File) (*model.Fold
 		Description: folder.Description,
 		CreatedAt:   folder.CreatedAt,
 		UpdatedAt:   folder.UpdatedAt,
+		CreatedBy:   folder.CreatedBy,
+		UpdatedBy:   folder.UpdatedBy,
 	}, nil
 }
 
@@ -110,6 +112,7 @@ func (r *fileResolver) Groups(ctx context.Context, obj *model.File, first int64,
 				Description: group.Description,
 				CreatedAt:   group.CreatedAt,
 				UpdatedAt:   group.UpdatedAt,
+				CreatedBy:   group.CreatedBy,
 			},
 		}
 	}
@@ -144,10 +147,11 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFil
 
 	// Call the sqlc generated query to insert the file into the database
 	file, err := r.DB.CreateFile(ctx, generated.CreateFileParams{
-		Name:     input.Name,
-		Slug:     input.Slug,
-		Url:      input.URL,
-		FolderID: input.FolderID, // Ensure the Folder ID is passed correctly
+		Name:      input.Name,
+		Slug:      input.Slug,
+		Url:       input.URL,
+		FolderID:  input.FolderID, // Ensure the Folder ID is passed correctly
+		CreatedBy: ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file: %w", err)
@@ -162,6 +166,8 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFil
 		FolderID:  file.FolderID,
 		CreatedAt: file.CreatedAt,
 		UpdatedAt: file.UpdatedAt,
+		CreatedBy: file.CreatedBy,
+		UpdatedBy: file.UpdatedBy,
 	}, nil
 }
 
@@ -181,13 +187,14 @@ func (r *mutationResolver) UpdateFile(ctx context.Context, input model.UpdateFil
 	}
 	// Call the sqlc generated query to update the file in the database
 	file, err := r.DB.UpdateFile(ctx, generated.UpdateFileParams{
-		ID:   input.ID,
-		Name: input.Name,
-		Slug: input.Slug,
-		Url:  input.URL,
+		ID:        input.ID,
+		Name:      input.Name,
+		Slug:      input.Slug,
+		Url:       input.URL,
+		UpdatedBy: ctx.Value("userEmail").(string),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update file: %w", err)
 	}
 
 	// Map the result from sqlc to the GraphQL model
@@ -199,6 +206,8 @@ func (r *mutationResolver) UpdateFile(ctx context.Context, input model.UpdateFil
 		FolderID:  file.FolderID,
 		CreatedAt: file.CreatedAt,
 		UpdatedAt: file.UpdatedAt,
+		CreatedBy: file.CreatedBy,
+		UpdatedBy: file.UpdatedBy,
 	}, nil
 }
 
@@ -322,6 +331,8 @@ func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, fi
 				FolderID:  file.FolderID,
 				CreatedAt: file.CreatedAt,
 				UpdatedAt: file.UpdatedAt,
+				CreatedBy: file.CreatedBy,
+				UpdatedBy: file.UpdatedBy,
 			},
 		}
 	}
