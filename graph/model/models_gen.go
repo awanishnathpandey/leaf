@@ -25,6 +25,15 @@ type CreateUser struct {
 	Password string `json:"password"`
 }
 
+type DashboardKPICount struct {
+	Users       int64 `json:"users"`
+	Roles       int64 `json:"roles"`
+	Permissions int64 `json:"permissions"`
+	Groups      int64 `json:"groups"`
+	Folders     int64 `json:"folders"`
+	Files       int64 `json:"files"`
+}
+
 type File struct {
 	ID        int64            `json:"id"`
 	Name      string           `json:"name"`

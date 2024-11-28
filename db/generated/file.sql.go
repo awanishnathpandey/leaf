@@ -54,6 +54,16 @@ func (q *Queries) DeleteFile(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteFilesByIDs = `-- name: DeleteFilesByIDs :exec
+DELETE FROM files
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) DeleteFilesByIDs(ctx context.Context, dollar_1 []int64) error {
+	_, err := q.db.Exec(ctx, deleteFilesByIDs, dollar_1)
+	return err
+}
+
 const getFile = `-- name: GetFile :one
 SELECT id, name, slug, url, folder_id, created_at, updated_at FROM files
 WHERE id = $1
@@ -133,6 +143,31 @@ func (q *Queries) GetFilesByFolderID(ctx context.Context, folderID int64) ([]Fil
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFilesByIDs = `-- name: GetFilesByIDs :many
+SELECT id FROM files
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) GetFilesByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
+	rows, err := q.db.Query(ctx, getFilesByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

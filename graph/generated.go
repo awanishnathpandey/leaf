@@ -62,6 +62,15 @@ type ComplexityRoot struct {
 		UpdatedAt  func(childComplexity int) int
 	}
 
+	DashboardKPICount struct {
+		Files       func(childComplexity int) int
+		Folders     func(childComplexity int) int
+		Groups      func(childComplexity int) int
+		Permissions func(childComplexity int) int
+		Roles       func(childComplexity int) int
+		Users       func(childComplexity int) int
+	}
+
 	File struct {
 		CreatedAt func(childComplexity int) int
 		Folder    func(childComplexity int) int
@@ -148,6 +157,7 @@ type ComplexityRoot struct {
 		CreateRole                func(childComplexity int, input model.CreateRole) int
 		CreateUser                func(childComplexity int, input model.CreateUser) int
 		DeleteFile                func(childComplexity int, id int64) int
+		DeleteFiles               func(childComplexity int, ids []int64) int
 		DeleteFolder              func(childComplexity int, id int64) int
 		DeleteGroup               func(childComplexity int, id int64) int
 		DeletePermission          func(childComplexity int, id int64) int
@@ -198,21 +208,22 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Files            func(childComplexity int, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) int
-		Folders          func(childComplexity int, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) int
-		GetFile          func(childComplexity int, id int64) int
-		GetFilesByFolder func(childComplexity int, folderID int64) int
-		GetFolder        func(childComplexity int, id int64) int
-		GetGroup         func(childComplexity int, id int64) int
-		GetPermission    func(childComplexity int, id int64) int
-		GetRole          func(childComplexity int, id int64) int
-		GetUser          func(childComplexity int, id int64) int
-		GetUserByEmail   func(childComplexity int, email string) int
-		Groups           func(childComplexity int, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) int
-		Me               func(childComplexity int) int
-		Permissions      func(childComplexity int, first int64, after *int64, filter *model.PermissionFilter, sort *model.PermissionSort) int
-		Roles            func(childComplexity int, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) int
-		Users            func(childComplexity int, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) int
+		Files                func(childComplexity int, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) int
+		Folders              func(childComplexity int, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) int
+		GetDashboardKPICount func(childComplexity int) int
+		GetFile              func(childComplexity int, id int64) int
+		GetFilesByFolder     func(childComplexity int, folderID int64) int
+		GetFolder            func(childComplexity int, id int64) int
+		GetGroup             func(childComplexity int, id int64) int
+		GetPermission        func(childComplexity int, id int64) int
+		GetRole              func(childComplexity int, id int64) int
+		GetUser              func(childComplexity int, id int64) int
+		GetUserByEmail       func(childComplexity int, email string) int
+		Groups               func(childComplexity int, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) int
+		Me                   func(childComplexity int) int
+		Permissions          func(childComplexity int, first int64, after *int64, filter *model.PermissionFilter, sort *model.PermissionSort) int
+		Roles                func(childComplexity int, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) int
+		Users                func(childComplexity int, first int64, after *int64, filter *model.UserFilter, sort *model.UserSort) int
 	}
 
 	Role struct {
@@ -286,6 +297,7 @@ type MutationResolver interface {
 	CreateFile(ctx context.Context, input model.CreateFile) (*model.File, error)
 	UpdateFile(ctx context.Context, input model.UpdateFile) (*model.File, error)
 	DeleteFile(ctx context.Context, id int64) (bool, error)
+	DeleteFiles(ctx context.Context, ids []int64) (bool, error)
 	CreateFolder(ctx context.Context, input model.CreateFolder) (*model.Folder, error)
 	UpdateFolder(ctx context.Context, input model.UpdateFolder) (*model.Folder, error)
 	DeleteFolder(ctx context.Context, id int64) (bool, error)
@@ -325,6 +337,7 @@ type QueryResolver interface {
 	GetFolder(ctx context.Context, id int64) (*model.Folder, error)
 	Groups(ctx context.Context, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) (*model.GroupConnection, error)
 	GetGroup(ctx context.Context, id int64) (*model.Group, error)
+	GetDashboardKPICount(ctx context.Context) (*model.DashboardKPICount, error)
 	Roles(ctx context.Context, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) (*model.RoleConnection, error)
 	Permissions(ctx context.Context, first int64, after *int64, filter *model.PermissionFilter, sort *model.PermissionSort) (*model.PermissionConnection, error)
 	GetRole(ctx context.Context, id int64) (*model.Role, error)
@@ -402,6 +415,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AuthUser.UpdatedAt(childComplexity), true
+
+	case "DashboardKPICount.files":
+		if e.complexity.DashboardKPICount.Files == nil {
+			break
+		}
+
+		return e.complexity.DashboardKPICount.Files(childComplexity), true
+
+	case "DashboardKPICount.folders":
+		if e.complexity.DashboardKPICount.Folders == nil {
+			break
+		}
+
+		return e.complexity.DashboardKPICount.Folders(childComplexity), true
+
+	case "DashboardKPICount.groups":
+		if e.complexity.DashboardKPICount.Groups == nil {
+			break
+		}
+
+		return e.complexity.DashboardKPICount.Groups(childComplexity), true
+
+	case "DashboardKPICount.permissions":
+		if e.complexity.DashboardKPICount.Permissions == nil {
+			break
+		}
+
+		return e.complexity.DashboardKPICount.Permissions(childComplexity), true
+
+	case "DashboardKPICount.roles":
+		if e.complexity.DashboardKPICount.Roles == nil {
+			break
+		}
+
+		return e.complexity.DashboardKPICount.Roles(childComplexity), true
+
+	case "DashboardKPICount.users":
+		if e.complexity.DashboardKPICount.Users == nil {
+			break
+		}
+
+		return e.complexity.DashboardKPICount.Users(childComplexity), true
 
 	case "File.createdAt":
 		if e.complexity.File.CreatedAt == nil {
@@ -883,6 +938,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteFile(childComplexity, args["id"].(int64)), true
 
+	case "Mutation.deleteFiles":
+		if e.complexity.Mutation.DeleteFiles == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteFiles_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteFiles(childComplexity, args["ids"].([]int64)), true
+
 	case "Mutation.deleteFolder":
 		if e.complexity.Mutation.DeleteFolder == nil {
 			break
@@ -1266,6 +1333,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Folders(childComplexity, args["first"].(int64), args["after"].(*int64), args["filter"].(*model.FolderFilter), args["sort"].(*model.FolderSort)), true
+
+	case "Query.getDashboardKPICount":
+		if e.complexity.Query.GetDashboardKPICount == nil {
+			break
+		}
+
+		return e.complexity.Query.GetDashboardKPICount(childComplexity), true
 
 	case "Query.getFile":
 		if e.complexity.Query.GetFile == nil {
@@ -1767,7 +1841,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema/auth.graphqls" "schema/file.graphqls" "schema/folder.graphqls" "schema/group.graphqls" "schema/permission.graphqls" "schema/user.graphqls"
+//go:embed "schema/auth.graphqls" "schema/file.graphqls" "schema/folder.graphqls" "schema/group.graphqls" "schema/kpi.graphqls" "schema/permission.graphqls" "schema/user.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1783,6 +1857,7 @@ var sources = []*ast.Source{
 	{Name: "schema/file.graphqls", Input: sourceData("schema/file.graphqls"), BuiltIn: false},
 	{Name: "schema/folder.graphqls", Input: sourceData("schema/folder.graphqls"), BuiltIn: false},
 	{Name: "schema/group.graphqls", Input: sourceData("schema/group.graphqls"), BuiltIn: false},
+	{Name: "schema/kpi.graphqls", Input: sourceData("schema/kpi.graphqls"), BuiltIn: false},
 	{Name: "schema/permission.graphqls", Input: sourceData("schema/permission.graphqls"), BuiltIn: false},
 	{Name: "schema/user.graphqls", Input: sourceData("schema/user.graphqls"), BuiltIn: false},
 }
@@ -2663,6 +2738,29 @@ func (ec *executionContext) field_Mutation_deleteFile_argsID(
 	}
 
 	var zeroVal int64
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteFiles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_deleteFiles_argsIds(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["ids"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteFiles_argsIds(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]int64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
+	if tmp, ok := rawArgs["ids"]; ok {
+		return ec.unmarshalNID2ᚕint64ᚄ(ctx, tmp)
+	}
+
+	var zeroVal []int64
 	return zeroVal, nil
 }
 
@@ -4601,6 +4699,270 @@ func (ec *executionContext) _AuthUser_updatedAt(ctx context.Context, field graph
 func (ec *executionContext) fieldContext_AuthUser_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AuthUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DashboardKPICount_users(ctx context.Context, field graphql.CollectedField, obj *model.DashboardKPICount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DashboardKPICount_users(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Users, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DashboardKPICount_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DashboardKPICount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DashboardKPICount_roles(ctx context.Context, field graphql.CollectedField, obj *model.DashboardKPICount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DashboardKPICount_roles(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Roles, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DashboardKPICount_roles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DashboardKPICount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DashboardKPICount_permissions(ctx context.Context, field graphql.CollectedField, obj *model.DashboardKPICount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DashboardKPICount_permissions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Permissions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DashboardKPICount_permissions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DashboardKPICount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DashboardKPICount_groups(ctx context.Context, field graphql.CollectedField, obj *model.DashboardKPICount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DashboardKPICount_groups(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Groups, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DashboardKPICount_groups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DashboardKPICount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DashboardKPICount_folders(ctx context.Context, field graphql.CollectedField, obj *model.DashboardKPICount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DashboardKPICount_folders(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Folders, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DashboardKPICount_folders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DashboardKPICount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DashboardKPICount_files(ctx context.Context, field graphql.CollectedField, obj *model.DashboardKPICount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DashboardKPICount_files(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Files, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DashboardKPICount_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DashboardKPICount",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -7256,6 +7618,61 @@ func (ec *executionContext) fieldContext_Mutation_deleteFile(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteFiles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteFiles(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteFiles(rctx, fc.Args["ids"].([]int64))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteFiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteFiles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10038,6 +10455,64 @@ func (ec *executionContext) fieldContext_Query_getGroup(ctx context.Context, fie
 	if fc.Args, err = ec.field_Query_getGroup_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getDashboardKPICount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getDashboardKPICount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetDashboardKPICount(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DashboardKPICount)
+	fc.Result = res
+	return ec.marshalNDashboardKPICount2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐDashboardKPICount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getDashboardKPICount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "users":
+				return ec.fieldContext_DashboardKPICount_users(ctx, field)
+			case "roles":
+				return ec.fieldContext_DashboardKPICount_roles(ctx, field)
+			case "permissions":
+				return ec.fieldContext_DashboardKPICount_permissions(ctx, field)
+			case "groups":
+				return ec.fieldContext_DashboardKPICount_groups(ctx, field)
+			case "folders":
+				return ec.fieldContext_DashboardKPICount_folders(ctx, field)
+			case "files":
+				return ec.fieldContext_DashboardKPICount_files(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DashboardKPICount", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -14946,6 +15421,70 @@ func (ec *executionContext) _AuthUser(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var dashboardKPICountImplementors = []string{"DashboardKPICount"}
+
+func (ec *executionContext) _DashboardKPICount(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardKPICount) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardKPICountImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardKPICount")
+		case "users":
+			out.Values[i] = ec._DashboardKPICount_users(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roles":
+			out.Values[i] = ec._DashboardKPICount_roles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "permissions":
+			out.Values[i] = ec._DashboardKPICount_permissions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "groups":
+			out.Values[i] = ec._DashboardKPICount_groups(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "folders":
+			out.Values[i] = ec._DashboardKPICount_folders(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "files":
+			out.Values[i] = ec._DashboardKPICount_files(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var fileImplementors = []string{"File"}
 
 func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *model.File) graphql.Marshaler {
@@ -15795,6 +16334,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "deleteFiles":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteFiles(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createFolder":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createFolder(ctx, field)
@@ -16415,6 +16961,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getGroup(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getDashboardKPICount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getDashboardKPICount(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -17455,6 +18023,20 @@ func (ec *executionContext) unmarshalNCreateUser2githubᚗcomᚋawanishnathpande
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNDashboardKPICount2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐDashboardKPICount(ctx context.Context, sel ast.SelectionSet, v model.DashboardKPICount) graphql.Marshaler {
+	return ec._DashboardKPICount(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDashboardKPICount2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐDashboardKPICount(ctx context.Context, sel ast.SelectionSet, v *model.DashboardKPICount) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardKPICount(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNFile2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v model.File) graphql.Marshaler {
 	return ec._File(ctx, sel, &v)
 }
@@ -17788,6 +18370,38 @@ func (ec *executionContext) marshalNID2int64(ctx context.Context, sel ast.Select
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNID2ᚕint64ᚄ(ctx context.Context, v interface{}) ([]int64, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]int64, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2int64(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNID2ᚕint64ᚄ(ctx context.Context, sel ast.SelectionSet, v []int64) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2int64(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNInt2int64(ctx context.Context, v interface{}) (int64, error) {

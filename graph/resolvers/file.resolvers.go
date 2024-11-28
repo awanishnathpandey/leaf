@@ -225,6 +225,35 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, id int64) (bool, erro
 	return true, nil
 }
 
+// DeleteFiles is the resolver for the deleteFiles field.
+func (r *mutationResolver) DeleteFiles(ctx context.Context, ids []int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_file"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
+
+	// Validate that all IDs exist
+	existingFiles, err := r.DB.GetFilesByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch files: %w", err)
+	}
+	if len(existingFiles) != len(ids) {
+		return false, fmt.Errorf("validation failed: some files do not exist")
+	}
+
+	// Proceed to delete the files
+	err = r.DB.DeleteFilesByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete files: %w", err)
+	}
+
+	// All files successfully deleted
+	return true, nil
+}
+
 // Files is the resolver for the files field.
 func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error) {
 	// Define the required permissions for this action

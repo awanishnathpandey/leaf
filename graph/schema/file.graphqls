@@ -72,4 +72,5 @@ extend type Mutation {
   createFile(input: CreateFile!): File!
   updateFile(input: UpdateFile!): File!
   deleteFile(id: ID!): Boolean!
+  deleteFiles(ids: [ID!]!): Boolean!
 }

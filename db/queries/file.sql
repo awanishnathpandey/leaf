@@ -25,6 +25,14 @@ RETURNING id, name, slug, url, folder_id, created_at, updated_at;
 DELETE FROM files
 WHERE id = $1;
 
+-- name: GetFilesByIDs :many
+SELECT id FROM files
+WHERE id = ANY($1::bigint[]);
+
+-- name: DeleteFilesByIDs :exec
+DELETE FROM files
+WHERE id = ANY($1::bigint[]);
+
 -- name: GetFilesByFolderID :many
 SELECT * FROM files
 WHERE folder_id = $1;
