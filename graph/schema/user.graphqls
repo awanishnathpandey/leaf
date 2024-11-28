@@ -81,5 +81,6 @@ extend type Mutation {
   createUser(input: CreateUser!): User!
   updateUser(input: UpdateUser!): User!
   deleteUser(id: ID!): Boolean!
+  deleteUsers(ids: [ID!]!): Boolean!
   UpdateUserEmailVerifiedAt(id: ID!): Boolean!
 }

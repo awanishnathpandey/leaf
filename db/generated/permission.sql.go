@@ -101,6 +101,16 @@ func (q *Queries) DeletePermission(ctx context.Context, id int64) error {
 	return err
 }
 
+const deletePermissionsByIDs = `-- name: DeletePermissionsByIDs :exec
+DELETE FROM permissions
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) DeletePermissionsByIDs(ctx context.Context, dollar_1 []int64) error {
+	_, err := q.db.Exec(ctx, deletePermissionsByIDs, dollar_1)
+	return err
+}
+
 const deleteRole = `-- name: DeleteRole :exec
 DELETE FROM roles 
 WHERE id = $1
@@ -108,6 +118,16 @@ WHERE id = $1
 
 func (q *Queries) DeleteRole(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteRole, id)
+	return err
+}
+
+const deleteRolesByIDs = `-- name: DeleteRolesByIDs :exec
+DELETE FROM roles
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) DeleteRolesByIDs(ctx context.Context, dollar_1 []int64) error {
+	_, err := q.db.Exec(ctx, deleteRolesByIDs, dollar_1)
 	return err
 }
 
@@ -546,6 +566,31 @@ func (q *Queries) GetPermission(ctx context.Context, id int64) (Permission, erro
 	return i, err
 }
 
+const getPermissionsByIDs = `-- name: GetPermissionsByIDs :many
+SELECT id FROM permissions
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) GetPermissionsByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
+	rows, err := q.db.Query(ctx, getPermissionsByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPermissionsByRoleID = `-- name: GetPermissionsByRoleID :many
 SELECT p.id, p.name, p.description, p.created_at, p.updated_at
 FROM permissions p
@@ -596,6 +641,31 @@ func (q *Queries) GetRole(ctx context.Context, id int64) (Role, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getRolesByIDs = `-- name: GetRolesByIDs :many
+SELECT id FROM roles
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) GetRolesByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
+	rows, err := q.db.Query(ctx, getRolesByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getRolesByPermissionID = `-- name: GetRolesByPermissionID :many

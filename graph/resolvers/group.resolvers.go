@@ -378,6 +378,34 @@ func (r *mutationResolver) DeleteGroup(ctx context.Context, id int64) (bool, err
 	return true, nil
 }
 
+// DeleteGroups is the resolver for the deleteGroups field.
+func (r *mutationResolver) DeleteGroups(ctx context.Context, ids []int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_group"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
+	// Validate that all IDs exist
+	existingFiles, err := r.DB.GetGroupsByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch groups: %w", err)
+	}
+	if len(existingFiles) != len(ids) {
+		return false, fmt.Errorf("validation failed: some groups do not exist")
+	}
+
+	// Proceed to delete the files
+	err = r.DB.DeleteGroupsByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete groups: %w", err)
+	}
+
+	// All files successfully deleted
+	return true, nil
+}
+
 // AddUserToGroup is the resolver for the addUserToGroup field.
 func (r *mutationResolver) AddUserToGroup(ctx context.Context, groupID int64, userID int64) (bool, error) {
 	// Define the required permissions for this action

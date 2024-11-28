@@ -290,6 +290,34 @@ func (r *mutationResolver) DeleteFolder(ctx context.Context, id int64) (bool, er
 	return true, nil
 }
 
+// DeleteFolders is the resolver for the deleteFolders field.
+func (r *mutationResolver) DeleteFolders(ctx context.Context, ids []int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_folder"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
+	// Validate that all IDs exist
+	existingFiles, err := r.DB.GetFoldersByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch folders: %w", err)
+	}
+	if len(existingFiles) != len(ids) {
+		return false, fmt.Errorf("validation failed: some folders do not exist")
+	}
+
+	// Proceed to delete the files
+	err = r.DB.DeleteFoldersByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete folders: %w", err)
+	}
+
+	// All files successfully deleted
+	return true, nil
+}
+
 // Folders is the resolver for the folders field.
 func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, filter *model.FolderFilter, sort *model.FolderSort) (*model.FolderConnection, error) {
 	// Define the required permissions for this action

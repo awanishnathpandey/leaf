@@ -25,6 +25,14 @@ WHERE id = $1;
 DELETE FROM folders
 WHERE id = $1;
 
+-- name: GetFoldersByIDs :many
+SELECT id FROM folders
+WHERE id = ANY($1::bigint[]);
+
+-- name: DeleteFoldersByIDs :exec
+DELETE FROM folders
+WHERE id = ANY($1::bigint[]);
+
 -- name: PaginatedFolders :many
 SELECT * FROM folders
 WHERE 

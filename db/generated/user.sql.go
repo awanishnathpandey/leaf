@@ -51,6 +51,16 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteUsersByIDs = `-- name: DeleteUsersByIDs :exec
+DELETE FROM users
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) DeleteUsersByIDs(ctx context.Context, dollar_1 []int64) error {
+	_, err := q.db.Exec(ctx, deleteUsersByIDs, dollar_1)
+	return err
+}
+
 const getUser = `-- name: GetUser :one
 SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at FROM users
 WHERE id = $1 LIMIT 1
@@ -104,6 +114,31 @@ func (q *Queries) GetUserID(ctx context.Context, id int64) (int64, error) {
 	row := q.db.QueryRow(ctx, getUserID, id)
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getUsersByIDs = `-- name: GetUsersByIDs :many
+SELECT id FROM users
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
+	rows, err := q.db.Query(ctx, getUsersByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listUsers = `-- name: ListUsers :many

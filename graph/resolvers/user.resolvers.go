@@ -127,6 +127,34 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int64) (bool, erro
 	return true, nil
 }
 
+// DeleteUsers is the resolver for the deleteUsers field.
+func (r *mutationResolver) DeleteUsers(ctx context.Context, ids []int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_user"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
+	// Validate that all IDs exist
+	existingFiles, err := r.DB.GetUsersByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch users: %w", err)
+	}
+	if len(existingFiles) != len(ids) {
+		return false, fmt.Errorf("validation failed: some users do not exist")
+	}
+
+	// Proceed to delete the files
+	err = r.DB.DeleteUsersByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete users: %w", err)
+	}
+
+	// All files successfully deleted
+	return true, nil
+}
+
 // UpdateUserEmailVerifiedAt is the resolver for the UpdateUserEmailVerifiedAt field.
 func (r *mutationResolver) UpdateUserEmailVerifiedAt(ctx context.Context, id int64) (bool, error) {
 	// Check if the user exists (optional)

@@ -73,4 +73,5 @@ extend type Mutation {
   createFolder(input: CreateFolder!): Folder!
   updateFolder(input: UpdateFolder!): Folder!
   deleteFolder(id: ID!): Boolean!
+  deleteFolders(ids: [ID!]!): Boolean!
 }

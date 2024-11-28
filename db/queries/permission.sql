@@ -33,6 +33,22 @@ WHERE id = $1;
 DELETE FROM permissions 
 WHERE id = $1;
 
+-- name: GetRolesByIDs :many
+SELECT id FROM roles
+WHERE id = ANY($1::bigint[]);
+
+-- name: DeleteRolesByIDs :exec
+DELETE FROM roles
+WHERE id = ANY($1::bigint[]);
+
+-- name: GetPermissionsByIDs :many
+SELECT id FROM permissions
+WHERE id = ANY($1::bigint[]);
+
+-- name: DeletePermissionsByIDs :exec
+DELETE FROM permissions
+WHERE id = ANY($1::bigint[]);
+
 -- name: AddRoleToUser :exec
 INSERT INTO user_roles (role_id, user_id, created_at, updated_at) 
 VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 

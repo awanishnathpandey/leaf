@@ -93,6 +93,16 @@ func (q *Queries) DeleteGroup(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteGroupsByIDs = `-- name: DeleteGroupsByIDs :exec
+DELETE FROM groups
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) DeleteGroupsByIDs(ctx context.Context, dollar_1 []int64) error {
+	_, err := q.db.Exec(ctx, deleteGroupsByIDs, dollar_1)
+	return err
+}
+
 const getFilesByGroupID = `-- name: GetFilesByGroupID :many
 SELECT f.id, f.name, f.slug, f.url, f.folder_id, f.created_at, f.updated_at
 FROM files f
@@ -240,6 +250,31 @@ func (q *Queries) GetGroupsByFolderID(ctx context.Context, folderID int64) ([]Gr
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getGroupsByIDs = `-- name: GetGroupsByIDs :many
+SELECT id FROM groups
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) GetGroupsByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
+	rows, err := q.db.Query(ctx, getGroupsByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

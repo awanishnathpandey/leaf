@@ -67,6 +67,7 @@ extend type Mutation {
   createGroup(input: CreateGroup!): Group!
   updateGroup(input: UpdateGroup!): Group!
   deleteGroup(id: ID!): Boolean!
+  deleteGroups(ids: [ID!]!): Boolean!
   addUserToGroup(groupId: ID!, userId: ID!): Boolean!
   removeUserFromGroup(groupId: ID!, userId: ID!): Boolean!
   addFolderToGroup(groupId: ID!, folderId: ID!): Boolean!

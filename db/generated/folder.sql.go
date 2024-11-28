@@ -50,6 +50,16 @@ func (q *Queries) DeleteFolder(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteFoldersByIDs = `-- name: DeleteFoldersByIDs :exec
+DELETE FROM folders
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) DeleteFoldersByIDs(ctx context.Context, dollar_1 []int64) error {
+	_, err := q.db.Exec(ctx, deleteFoldersByIDs, dollar_1)
+	return err
+}
+
 const getFolder = `-- name: GetFolder :one
 SELECT id, name, slug, description, created_at, updated_at FROM folders
 WHERE id = $1 LIMIT 1
@@ -67,6 +77,31 @@ func (q *Queries) GetFolder(ctx context.Context, id int64) (Folder, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getFoldersByIDs = `-- name: GetFoldersByIDs :many
+SELECT id FROM folders
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) GetFoldersByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
+	rows, err := q.db.Query(ctx, getFoldersByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listFolders = `-- name: ListFolders :many

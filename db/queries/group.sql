@@ -12,6 +12,14 @@ WHERE id = $3;
 DELETE FROM groups 
 WHERE id = $1;
 
+-- name: GetGroupsByIDs :many
+SELECT id FROM groups
+WHERE id = ANY($1::bigint[]);
+
+-- name: DeleteGroupsByIDs :exec
+DELETE FROM groups
+WHERE id = ANY($1::bigint[]);
+
 -- name: AddUserToGroup :exec
 INSERT INTO group_users (group_id, user_id, created_at, updated_at) 
 VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 

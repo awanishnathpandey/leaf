@@ -41,6 +41,14 @@ WHERE id = $1;
 DELETE FROM users
 WHERE id = $1;
 
+-- name: GetUsersByIDs :many
+SELECT id FROM users
+WHERE id = ANY($1::bigint[]);
+
+-- name: DeleteUsersByIDs :exec
+DELETE FROM users
+WHERE id = ANY($1::bigint[]);
+
 -- name: PaginatedUsers :many
 SELECT 
     id, 

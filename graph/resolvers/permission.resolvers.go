@@ -114,6 +114,34 @@ func (r *mutationResolver) DeleteRole(ctx context.Context, id int64) (bool, erro
 	return true, nil
 }
 
+// DeleteRoles is the resolver for the deleteRoles field.
+func (r *mutationResolver) DeleteRoles(ctx context.Context, ids []int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_role"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
+	// Validate that all IDs exist
+	existingFiles, err := r.DB.GetRolesByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch roles: %w", err)
+	}
+	if len(existingFiles) != len(ids) {
+		return false, fmt.Errorf("validation failed: some roles do not exist")
+	}
+
+	// Proceed to delete the files
+	err = r.DB.DeleteRolesByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete roles: %w", err)
+	}
+
+	// All files successfully deleted
+	return true, nil
+}
+
 // CreatePermission is the resolver for the createPermission field.
 func (r *mutationResolver) CreatePermission(ctx context.Context, input model.CreatePermission) (*model.Permission, error) {
 	// Define the required permissions for this action
@@ -209,6 +237,34 @@ func (r *mutationResolver) DeletePermission(ctx context.Context, id int64) (bool
 	if err != nil {
 		return false, fmt.Errorf("failed to delete permission: %w", err)
 	}
+	return true, nil
+}
+
+// DeletePermissions is the resolver for the deletePermissions field.
+func (r *mutationResolver) DeletePermissions(ctx context.Context, ids []int64) (bool, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_permission"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
+	// Validate that all IDs exist
+	existingFiles, err := r.DB.GetPermissionsByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch permissions: %w", err)
+	}
+	if len(existingFiles) != len(ids) {
+		return false, fmt.Errorf("validation failed: some permissions do not exist")
+	}
+
+	// Proceed to delete the files
+	err = r.DB.DeletePermissionsByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete permissions: %w", err)
+	}
+
+	// All files successfully deleted
 	return true, nil
 }
 
