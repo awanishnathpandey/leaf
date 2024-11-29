@@ -7,7 +7,6 @@ package resolvers
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
@@ -25,22 +24,17 @@ func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first in
 	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
-	// Decode the cursor (if provided)
-	var offset int64
-	if after != nil { // Check if `after` is provided (non-nil)
-		offset = *after
-	}
 
 	// Prepare sorting
 	sortField := "NAME" // Default sort field
+	sortOrder := "ASC"  // Default sort order
 	if sort != nil {
-		sortField = string(sort.Field)
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("NAME", "ASC", string(sort.Field), string(sort.Order))
 	}
 
-	sortOrder := "ASC" // Default sort order
-	if sort != nil {
-		sortOrder = string(sort.Order)
-	}
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
 
 	// Prepare filter values
 	var nameFilter, descriptionFilter *string
@@ -77,7 +71,7 @@ func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first in
 	edges := make([]*model.GroupEdge, len(groups))
 	for i, group := range groups {
 		edges[i] = &model.GroupEdge{
-			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.Group{
 				ID:          group.ID,
 				Name:        group.Name,
@@ -91,7 +85,7 @@ func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first in
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := offset+int64(len(groups)) < totalCount
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(groups)), totalCount)
 
 	return &model.GroupConnection{
 		TotalCount: totalCount,
@@ -112,22 +106,17 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
-	// Decode the cursor (if provided)
-	var offset int64
-	if after != nil { // Check if `after` is provided (non-nil)
-		offset = *after
-	}
 
 	// Prepare sorting
 	sortField := "NAME" // Default sort field
+	sortOrder := "ASC"  // Default sort order
 	if sort != nil {
-		sortField = string(sort.Field)
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("NAME", "ASC", string(sort.Field), string(sort.Order))
 	}
 
-	sortOrder := "ASC" // Default sort order
-	if sort != nil {
-		sortOrder = string(sort.Order)
-	}
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
 
 	// Prepare filter values
 	var nameFilter, slugFilter *string
@@ -164,7 +153,7 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 	edges := make([]*model.FileEdge, len(files))
 	for i, file := range files {
 		edges[i] = &model.FileEdge{
-			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.File{
 				ID:        file.ID,
 				Name:      file.Name,
@@ -180,7 +169,7 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := offset+int64(len(files)) < totalCount
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(files)), totalCount)
 
 	return &model.FileConnection{
 		TotalCount: totalCount,
@@ -331,23 +320,17 @@ func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, 
 	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
-	// Decode the cursor (if provided)
-	var offset int64
-	if after != nil { // Check if `after` is provided (non-nil)
-		offset = *after
-	}
 
 	// Prepare sorting
 	sortField := "NAME" // Default sort field
+	sortOrder := "ASC"  // Default sort order
 	if sort != nil {
-		sortField = string(sort.Field)
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("NAME", "ASC", string(sort.Field), string(sort.Order))
 	}
 
-	// Prepare sorting
-	sortOrder := "ASC" // Default sort field
-	if sort != nil {
-		sortOrder = string(sort.Order)
-	}
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
 
 	// Prepare filter values
 	var nameFilter, slugFilter, descriptionFilter *string
@@ -384,7 +367,7 @@ func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, 
 	edges := make([]*model.FolderEdge, len(folders))
 	for i, folder := range folders {
 		edges[i] = &model.FolderEdge{
-			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.Folder{
 				ID:          folder.ID,
 				Name:        folder.Name,
@@ -399,7 +382,7 @@ func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, 
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := offset+int64(len(folders)) < totalCount
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(folders)), totalCount)
 
 	return &model.FolderConnection{
 		TotalCount: totalCount,

@@ -7,7 +7,6 @@ package resolvers
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
@@ -399,22 +398,17 @@ func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, f
 	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
-	// Decode the cursor (if provided)
-	var offset int64
-	if after != nil { // Check if `after` is provided (non-nil)
-		offset = *after
-	}
 
 	// Prepare sorting
 	sortField := "NAME" // Default sort field
+	sortOrder := "ASC"  // Default sort order
 	if sort != nil {
-		sortField = string(sort.Field)
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("NAME", "ASC", string(sort.Field), string(sort.Order))
 	}
 
-	sortOrder := "ASC" // Default sort order
-	if sort != nil {
-		sortOrder = string(sort.Order)
-	}
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
 
 	// Prepare filter values
 	var nameFilter, descriptionFilter *string
@@ -451,7 +445,7 @@ func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, f
 	edges := make([]*model.RoleEdge, len(roles))
 	for i, role := range roles {
 		edges[i] = &model.RoleEdge{
-			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.Role{
 				ID:          role.ID,
 				Name:        role.Name,
@@ -465,7 +459,7 @@ func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, f
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := offset+int64(len(roles)) < totalCount
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(roles)), totalCount)
 
 	return &model.RoleConnection{
 		TotalCount: totalCount,
@@ -486,23 +480,17 @@ func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, fi
 	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
-	// Decode the cursor (if provided)
-	var offset int64
-	if after != nil { // Check if `after` is provided (non-nil)
-		offset = *after
-	}
 
 	// Prepare sorting
 	sortField := "NAME" // Default sort field
+	sortOrder := "ASC"  // Default sort order
 	if sort != nil {
-		sortField = string(sort.Field)
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("NAME", "ASC", string(sort.Field), string(sort.Order))
 	}
 
-	// Prepare sorting
-	sortOrder := "ASC" // Default sort field
-	if sort != nil {
-		sortOrder = string(sort.Order)
-	}
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
 
 	// Prepare filter values
 	var nameFilter, descriptionFilter *string
@@ -536,7 +524,7 @@ func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, fi
 	edges := make([]*model.RoleEdge, len(roles))
 	for i, role := range roles {
 		edges[i] = &model.RoleEdge{
-			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.Role{
 				ID:          role.ID,
 				Name:        role.Name,
@@ -550,7 +538,7 @@ func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, fi
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := offset+int64(len(roles)) < totalCount
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(roles)), totalCount)
 
 	return &model.RoleConnection{
 		TotalCount: totalCount,
@@ -571,23 +559,17 @@ func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int
 	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
-	// Decode the cursor (if provided)
-	var offset int64
-	if after != nil { // Check if `after` is provided (non-nil)
-		offset = *after
-	}
 
 	// Prepare sorting
 	sortField := "NAME" // Default sort field
+	sortOrder := "ASC"  // Default sort order
 	if sort != nil {
-		sortField = string(sort.Field)
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("NAME", "ASC", string(sort.Field), string(sort.Order))
 	}
 
-	// Prepare sorting
-	sortOrder := "ASC" // Default sort field
-	if sort != nil {
-		sortOrder = string(sort.Order)
-	}
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
 
 	// Prepare filter values
 	var nameFilter, descriptionFilter *string
@@ -621,7 +603,7 @@ func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int
 	edges := make([]*model.PermissionEdge, len(permissions))
 	for i, permission := range permissions {
 		edges[i] = &model.PermissionEdge{
-			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.Permission{
 				ID:          permission.ID,
 				Name:        permission.Name,
@@ -635,7 +617,7 @@ func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := offset+int64(len(permissions)) < totalCount
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(permissions)), totalCount)
 
 	return &model.PermissionConnection{
 		TotalCount: totalCount,
@@ -706,22 +688,17 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first i
 	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
-	// Decode the cursor (if provided)
-	var offset int64
-	if after != nil { // Check if `after` is provided (non-nil)
-		offset = *after
-	}
 
 	// Prepare sorting
 	sortField := "NAME" // Default sort field
+	sortOrder := "ASC"  // Default sort order
 	if sort != nil {
-		sortField = string(sort.Field)
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("NAME", "ASC", string(sort.Field), string(sort.Order))
 	}
 
-	sortOrder := "ASC" // Default sort order
-	if sort != nil {
-		sortOrder = string(sort.Order)
-	}
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
 
 	// Prepare filter values
 	var nameFilter, descriptionFilter *string
@@ -758,7 +735,7 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first i
 	edges := make([]*model.PermissionEdge, len(permissions))
 	for i, permission := range permissions {
 		edges[i] = &model.PermissionEdge{
-			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.Permission{
 				ID:          permission.ID,
 				Name:        permission.Name,
@@ -772,7 +749,7 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first i
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := offset+int64(len(permissions)) < totalCount
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(permissions)), totalCount)
 
 	return &model.PermissionConnection{
 		TotalCount: totalCount,
@@ -793,22 +770,17 @@ func (r *roleResolver) Users(ctx context.Context, obj *model.Role, first int64, 
 	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
-	// Decode the cursor (if provided)
-	var offset int64
-	if after != nil { // Check if `after` is provided (non-nil)
-		offset = *after
-	}
 
 	// Prepare sorting
 	sortField := "NAME" // Default sort field
+	sortOrder := "ASC"  // Default sort order
 	if sort != nil {
-		sortField = string(sort.Field)
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("NAME", "ASC", string(sort.Field), string(sort.Order))
 	}
 
-	sortOrder := "ASC" // Default sort order
-	if sort != nil {
-		sortOrder = string(sort.Order)
-	}
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
 
 	// Prepare filter values
 	var nameFilter, emailFilter *string
@@ -845,7 +817,7 @@ func (r *roleResolver) Users(ctx context.Context, obj *model.Role, first int64, 
 	edges := make([]*model.UserEdge, len(users))
 	for i, user := range users {
 		edges[i] = &model.UserEdge{
-			Cursor: strconv.FormatInt(offset+int64(i)+1, 10), // Create cursor from index
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.User{
 				ID:              user.ID,
 				Name:            user.Name,
@@ -862,7 +834,7 @@ func (r *roleResolver) Users(ctx context.Context, obj *model.Role, first int64, 
 	}
 
 	// Calculate hasNextPage
-	hasNextPage := offset+int64(len(users)) < totalCount
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(users)), totalCount)
 
 	return &model.UserConnection{
 		TotalCount: totalCount,
