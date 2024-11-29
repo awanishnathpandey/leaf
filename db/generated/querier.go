@@ -34,6 +34,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id int64) error
 	DeleteUsersByIDs(ctx context.Context, dollar_1 []int64) error
 	GetDashboardKPICount(ctx context.Context) (GetDashboardKPICountRow, error)
+	GetEmailTemplateByName(ctx context.Context, name string) (GetEmailTemplateByNameRow, error)
 	GetFile(ctx context.Context, id int64) (File, error)
 	GetFilesByFolder(ctx context.Context, folderID int64) ([]File, error)
 	GetFilesByFolderID(ctx context.Context, folderID int64) ([]File, error)

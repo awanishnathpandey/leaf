@@ -34,6 +34,11 @@ type DashboardKPICount struct {
 	Files       int64 `json:"files"`
 }
 
+type EmailResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
 type File struct {
 	ID        int64            `json:"id"`
 	Name      string           `json:"name"`
@@ -212,6 +217,12 @@ type RoleFilter struct {
 type RoleSort struct {
 	Field RoleSortField `json:"field"`
 	Order SortOrder     `json:"order"`
+}
+
+type SendEmailInput struct {
+	To           string                 `json:"to"`
+	TemplateName string                 `json:"templateName"`
+	Data         map[string]interface{} `json:"data"`
 }
 
 type UpdateFolder struct {

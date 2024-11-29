@@ -12,6 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rs/zerolog v1.33.0
 	github.com/vektah/gqlparser/v2 v2.5.19
+	github.com/wneessen/go-mail v0.5.2
 	golang.org/x/crypto v0.29.0
 )
 

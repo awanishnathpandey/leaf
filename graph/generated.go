@@ -71,6 +71,11 @@ type ComplexityRoot struct {
 		Users       func(childComplexity int) int
 	}
 
+	EmailResponse struct {
+		Message func(childComplexity int) int
+		Success func(childComplexity int) int
+	}
+
 	File struct {
 		CreatedAt func(childComplexity int) int
 		CreatedBy func(childComplexity int) int
@@ -183,6 +188,7 @@ type ComplexityRoot struct {
 		RemoveRoleFromUser        func(childComplexity int, roleID int64, userID int64) int
 		RemoveUserFromGroup       func(childComplexity int, groupID int64, userID int64) int
 		ResetPassword             func(childComplexity int, input model.ResetPassword) int
+		SendEmail                 func(childComplexity int, input model.SendEmailInput) int
 		UpdateFile                func(childComplexity int, input model.UpdateFile) int
 		UpdateFolder              func(childComplexity int, input model.UpdateFolder) int
 		UpdateGroup               func(childComplexity int, input model.UpdateGroup) int
@@ -311,6 +317,7 @@ type MutationResolver interface {
 	ResetPassword(ctx context.Context, input model.ResetPassword) (bool, error)
 	ChangePassword(ctx context.Context, input model.ChangePassword) (bool, error)
 	VerifyEmail(ctx context.Context, token string) (bool, error)
+	SendEmail(ctx context.Context, input model.SendEmailInput) (*model.EmailResponse, error)
 	CreateFile(ctx context.Context, input model.CreateFile) (*model.File, error)
 	UpdateFile(ctx context.Context, input model.UpdateFile) (*model.File, error)
 	DeleteFile(ctx context.Context, id int64) (bool, error)
@@ -479,6 +486,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DashboardKPICount.Users(childComplexity), true
+
+	case "EmailResponse.message":
+		if e.complexity.EmailResponse.Message == nil {
+			break
+		}
+
+		return e.complexity.EmailResponse.Message(childComplexity), true
+
+	case "EmailResponse.success":
+		if e.complexity.EmailResponse.Success == nil {
+			break
+		}
+
+		return e.complexity.EmailResponse.Success(childComplexity), true
 
 	case "File.createdAt":
 		if e.complexity.File.CreatedAt == nil {
@@ -1242,6 +1263,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ResetPassword(childComplexity, args["input"].(model.ResetPassword)), true
 
+	case "Mutation.sendEmail":
+		if e.complexity.Mutation.SendEmail == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_sendEmail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SendEmail(childComplexity, args["input"].(model.SendEmailInput)), true
+
 	case "Mutation.updateFile":
 		if e.complexity.Mutation.UpdateFile == nil {
 			break
@@ -1898,6 +1931,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPermissionSort,
 		ec.unmarshalInputRoleFilter,
 		ec.unmarshalInputRoleSort,
+		ec.unmarshalInputSendEmailInput,
 		ec.unmarshalInputUpdateFile,
 		ec.unmarshalInputUpdateFolder,
 		ec.unmarshalInputUpdateGroup,
@@ -2007,7 +2041,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema/auth.graphqls" "schema/file.graphqls" "schema/folder.graphqls" "schema/group.graphqls" "schema/kpi.graphqls" "schema/permission.graphqls" "schema/user.graphqls"
+//go:embed "schema/auth.graphqls" "schema/email.graphqls" "schema/file.graphqls" "schema/folder.graphqls" "schema/group.graphqls" "schema/kpi.graphqls" "schema/permission.graphqls" "schema/user.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -2020,6 +2054,7 @@ func sourceData(filename string) string {
 
 var sources = []*ast.Source{
 	{Name: "schema/auth.graphqls", Input: sourceData("schema/auth.graphqls"), BuiltIn: false},
+	{Name: "schema/email.graphqls", Input: sourceData("schema/email.graphqls"), BuiltIn: false},
 	{Name: "schema/file.graphqls", Input: sourceData("schema/file.graphqls"), BuiltIn: false},
 	{Name: "schema/folder.graphqls", Input: sourceData("schema/folder.graphqls"), BuiltIn: false},
 	{Name: "schema/group.graphqls", Input: sourceData("schema/group.graphqls"), BuiltIn: false},
@@ -3454,6 +3489,29 @@ func (ec *executionContext) field_Mutation_resetPassword_argsInput(
 	}
 
 	var zeroVal model.ResetPassword
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_sendEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_sendEmail_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_sendEmail_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.SendEmailInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNSendEmailInput2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐSendEmailInput(ctx, tmp)
+	}
+
+	var zeroVal model.SendEmailInput
 	return zeroVal, nil
 }
 
@@ -5249,6 +5307,94 @@ func (ec *executionContext) fieldContext_DashboardKPICount_files(_ context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EmailResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.EmailResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EmailResponse_success(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Success, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EmailResponse_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EmailResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EmailResponse_message(ctx context.Context, field graphql.CollectedField, obj *model.EmailResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EmailResponse_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EmailResponse_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EmailResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7978,6 +8124,67 @@ func (ec *executionContext) fieldContext_Mutation_verifyEmail(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_verifyEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_sendEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_sendEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SendEmail(rctx, fc.Args["input"].(model.SendEmailInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EmailResponse)
+	fc.Result = res
+	return ec.marshalNEmailResponse2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐEmailResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_sendEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_EmailResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_EmailResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EmailResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_sendEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -16051,6 +16258,47 @@ func (ec *executionContext) unmarshalInputRoleSort(ctx context.Context, obj inte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSendEmailInput(ctx context.Context, obj interface{}) (model.SendEmailInput, error) {
+	var it model.SendEmailInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"to", "templateName", "data"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "to":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.To = data
+		case "templateName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("templateName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemplateName = data
+		case "data":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+			data, err := ec.unmarshalNMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Data = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateFile(ctx context.Context, obj interface{}) (model.UpdateFile, error) {
 	var it model.UpdateFile
 	asMap := map[string]interface{}{}
@@ -16659,6 +16907,50 @@ func (ec *executionContext) _DashboardKPICount(ctx context.Context, sel ast.Sele
 			}
 		case "files":
 			out.Values[i] = ec._DashboardKPICount_files(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var emailResponseImplementors = []string{"EmailResponse"}
+
+func (ec *executionContext) _EmailResponse(ctx context.Context, sel ast.SelectionSet, obj *model.EmailResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, emailResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EmailResponse")
+		case "success":
+			out.Values[i] = ec._EmailResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._EmailResponse_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -17539,6 +17831,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "verifyEmail":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_verifyEmail(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sendEmail":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_sendEmail(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -19332,6 +19631,20 @@ func (ec *executionContext) marshalNDashboardKPICount2ᚖgithubᚗcomᚋawanishn
 	return ec._DashboardKPICount(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNEmailResponse2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐEmailResponse(ctx context.Context, sel ast.SelectionSet, v model.EmailResponse) graphql.Marshaler {
+	return ec._EmailResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEmailResponse2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐEmailResponse(ctx context.Context, sel ast.SelectionSet, v *model.EmailResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EmailResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNFile2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v model.File) graphql.Marshaler {
 	return ec._File(ctx, sel, &v)
 }
@@ -19728,6 +20041,27 @@ func (ec *executionContext) marshalNLoginResponse2ᚖgithubᚗcomᚋawanishnathp
 	return ec._LoginResponse(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -19920,6 +20254,11 @@ func (ec *executionContext) unmarshalNRoleSortField2githubᚗcomᚋawanishnathpa
 
 func (ec *executionContext) marshalNRoleSortField2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐRoleSortField(ctx context.Context, sel ast.SelectionSet, v model.RoleSortField) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNSendEmailInput2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐSendEmailInput(ctx context.Context, v interface{}) (model.SendEmailInput, error) {
+	res, err := ec.unmarshalInputSendEmailInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNSortOrder2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v interface{}) (model.SortOrder, error) {

@@ -4,6 +4,7 @@ package resolvers
 
 import (
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/external/mail"
 	"github.com/awanishnathpandey/leaf/graph/model"
 )
 
@@ -19,4 +20,5 @@ type Resolver struct {
 	groups      []*model.Group
 	roles       []*model.Role
 	permissions []*model.Permission
+	MailService *mail.MailService
 }

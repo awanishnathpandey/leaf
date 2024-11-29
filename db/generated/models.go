@@ -8,6 +8,14 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type EmailTemplate struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	Content   string `json:"content"`
+	CreatedAt int64  `json:"created_at"`
+	UpdatedAt int64  `json:"updated_at"`
+}
+
 type File struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`

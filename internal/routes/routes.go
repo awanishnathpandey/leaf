@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/external/mail"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/resolvers"
 	"github.com/awanishnathpandey/leaf/internal/middleware"
@@ -49,9 +50,23 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries) {
 	// app.Post("/graphql", adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	// 	graphqlHandler.ServeHTTP(w, r)
 	// }))
+	// Load the SMTP configuration
+	mailconfig, err := mail.LoadConfig()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to load mail configuration")
+	}
+
+	// Print loaded config (optional for debugging)
+	mailconfig.PrintConfig()
+
+	// Create a new MailService with the loaded config
+	mailService, err := mail.NewMailService(mailconfig)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to inititalize mail service")
+	}
 
 	// GraphQL handler using gqlgen
-	graphqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries}}))
+	graphqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries, MailService: mailService}}))
 
 	// Add transports (e.g., POST method) if needed
 	graphqlHandler.AddTransport(transport.POST{})

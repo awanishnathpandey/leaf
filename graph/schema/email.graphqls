@@ -1,0 +1,16 @@
+scalar Map
+
+input SendEmailInput {
+  to: String!
+  templateName: String!
+  data: Map!
+}
+
+type EmailResponse {
+  success: Boolean!
+  message: String!
+}
+
+extend type Mutation {
+  sendEmail(input: SendEmailInput!): EmailResponse!
+}

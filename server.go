@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"net/smtp"
 	"os"
 	"os/signal"
 
@@ -18,6 +20,34 @@ func main() {
 	// Set zerolog to output JSON format
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(os.Stdout)
+
+	smtpHost := "sandbox.smtp.mailtrap.io"
+	smtpPort := "587"
+	username := "55977545ecae61"
+	password := "024b4f5cb34018"
+	from := "no-reply@example.com"
+	to := "recipient@example.com"
+	subject := "Test Email"
+	body := "This is a test email."
+
+	// Set up authentication information
+	auth := smtp.PlainAuth("", username, password, smtpHost)
+
+	// Create email message
+	message := []byte("Subject: " + subject + "\r\n" +
+		"From: " + from + "\r\n" +
+		"To: " + to + "\r\n" +
+		"\r\n" +
+		body + "\r\n")
+
+	// Connect to Mailtrap and send email
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, message)
+	if err != nil {
+		fmt.Printf("Failed to send email: %v\n", err)
+		return
+	}
+
+	fmt.Println("Email sent successfully")
 
 	// Initialize database connection
 	dbPool, err := database.ConnectDB()
