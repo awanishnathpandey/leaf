@@ -57,7 +57,7 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries) {
 	}
 
 	// Print loaded config (optional for debugging)
-	mailconfig.PrintConfig()
+	// mailconfig.PrintConfig()
 
 	// Create a new MailService with the loaded config
 	mailService, err := mail.NewMailService(mailconfig)

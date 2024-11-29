@@ -42,9 +42,9 @@ func ReplacePlaceholders(body string, data map[string]string) string {
 }
 
 // SendEmail sends an email using the template and dynamic data
-func (ms *MailService) SendEmail(to, subject, templateName string, data map[string]interface{}) error {
+func (ms *MailService) SendEmail(to []string, subject, templateContent string, data map[string]interface{}) error {
 	// Render the template with dynamic data
-	renderedTemplate, err := RenderTemplate(templateName, data)
+	renderedTemplate, err := RenderTemplate(templateContent, data)
 	if err != nil {
 		return fmt.Errorf("failed to render template: %w", err)
 	}
@@ -56,8 +56,24 @@ func (ms *MailService) SendEmail(to, subject, templateName string, data map[stri
 	if err := msg.From(ms.config.SMTPFrom); err != nil {
 		return fmt.Errorf("failed to set sender: %w", err)
 	}
-	if err := msg.To(to); err != nil {
-		return fmt.Errorf("failed to set recipient: %w", err)
+
+	var errorRecipients []string
+	// // Add multiple recipients
+	for _, recipient := range to {
+		if err := msg.AddTo(recipient); err != nil {
+			// Log the error but continue with the next recipient
+			errorRecipients = append(errorRecipients, fmt.Sprintf("failed to add To recipient %s: %v", recipient, err))
+		}
+	}
+	// if err := msg.To("res@res.com,comma@res.com"); err != nil {
+	// 	return fmt.Errorf("failed to set recipient: %w", err)
+	// }
+	// If there were any errors, log them but still proceed to send the email
+	if len(errorRecipients) > 0 {
+		for _, msg := range errorRecipients {
+			// Optionally, log each error
+			fmt.Println(msg)
+		}
 	}
 
 	// Set email content (HTML format)
@@ -69,7 +85,7 @@ func (ms *MailService) SendEmail(to, subject, templateName string, data map[stri
 	defer cancel()
 	// fmt.Println("SMTP User:", ms.config.SMTPUser)
 	// fmt.Println("SMTP From:", ms.config.SMTPFrom)
-	// fmt.Println("SMTP Host:", ms.config.SMTPHost)
+	// fmt.Println("SMTP to:", to)
 
 	if err := ms.client.DialAndSendWithContext(ctx, msg); err != nil {
 		return fmt.Errorf("failed to send email: %w", err)
