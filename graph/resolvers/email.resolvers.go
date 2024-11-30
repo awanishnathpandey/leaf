@@ -25,20 +25,26 @@ func (r *mutationResolver) SendEmail(ctx context.Context, input model.SendEmailI
 		return nil, fmt.Errorf("failed to fetch template: %w", err)
 	}
 
+	mailData, err := mail.ConvertMailData(templateData.MailData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert mail data: %w", err)
+	}
+
 	// Debugging: Log the received input
 	// fmt.Printf("Received input: %#v\n", input)
 
 	// Step 3: Render the template with provided data
-	renderedTemplate, err := mail.RenderTemplate(templateData.Content, input.Data)
+	renderedTemplate, err := mail.RenderTemplate(templateData.Content, mailData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render template: %w", err)
 	}
 
 	// Debugging: Log the rendered template content (optional)
 	// fmt.Println("Rendered Template Content:", renderedTemplate)
+	mailSubject := "Welcome!"
 
 	// Step 4: Send the email with the rendered template
-	err = r.MailService.SendEmail(input.To, input.Cc, input.Bcc, "Welcome!", renderedTemplate, input.Data)
+	err = r.MailService.SendEmail(templateData.MailTo, templateData.MailCc, templateData.MailBcc, mailSubject, renderedTemplate, mailData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send email: %w", err)
 	}

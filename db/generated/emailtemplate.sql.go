@@ -10,20 +10,25 @@ import (
 )
 
 const getEmailTemplateByName = `-- name: GetEmailTemplateByName :one
-SELECT name, content
+SELECT id, name, content, mail_to, mail_cc, mail_bcc, mail_data, created_at, updated_at
 FROM email_templates
 WHERE name = $1
 LIMIT 1
 `
 
-type GetEmailTemplateByNameRow struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
-}
-
-func (q *Queries) GetEmailTemplateByName(ctx context.Context, name string) (GetEmailTemplateByNameRow, error) {
+func (q *Queries) GetEmailTemplateByName(ctx context.Context, name string) (EmailTemplate, error) {
 	row := q.db.QueryRow(ctx, getEmailTemplateByName, name)
-	var i GetEmailTemplateByNameRow
-	err := row.Scan(&i.Name, &i.Content)
+	var i EmailTemplate
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Content,
+		&i.MailTo,
+		&i.MailCc,
+		&i.MailBcc,
+		&i.MailData,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }

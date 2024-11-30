@@ -9,11 +9,15 @@ import (
 )
 
 type EmailTemplate struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Content   string `json:"content"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
+	ID        int64    `json:"id"`
+	Name      string   `json:"name"`
+	Content   string   `json:"content"`
+	MailTo    []string `json:"mail_to"`
+	MailCc    []string `json:"mail_cc"`
+	MailBcc   []string `json:"mail_bcc"`
+	MailData  []byte   `json:"mail_data"`
+	CreatedAt int64    `json:"created_at"`
+	UpdatedAt int64    `json:"updated_at"`
 }
 
 type File struct {

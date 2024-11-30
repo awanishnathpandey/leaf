@@ -3,11 +3,15 @@ CREATE TABLE email_templates (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
+    mail_to TEXT[] DEFAULT NULL,
+    mail_cc TEXT[] DEFAULT NULL,
+    mail_bcc TEXT[] DEFAULT NULL,
+    mail_data JSONB DEFAULT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())
 );
 -- +goose StatementBegin
-INSERT INTO email_templates (name, content)
+INSERT INTO email_templates (name, content, mail_to, mail_cc, mail_bcc, mail_data)
 VALUES 
 (
     'welcome_email', 
@@ -59,7 +63,11 @@ VALUES
             </div>
         </div>
     </body>
-    </html>'
+    </html>',
+    ARRAY['admin@example.com', 'admin2@example.com'], 
+    ARRAY['admincc@example.com', 'admin2cc@example.com'], 
+    ARRAY['adminbcc@example.com', 'admin2bcc@example.com'], 
+    '{"Name": "John Doe", "Email": "YV5tD@example.com"}'::jsonb
 );
 -- +goose StatementEnd
 
