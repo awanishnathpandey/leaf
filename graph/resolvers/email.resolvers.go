@@ -38,6 +38,17 @@ func (r *mutationResolver) SendEmail(ctx context.Context, input model.SendEmailI
 		return nil, fmt.Errorf("failed to convert mail data: %w", err)
 	}
 
+	// fmt.Println(mailData["Name"])
+	// fmt.Println(mailData["Email"])
+	// mailData is already of type map[string]interface{}
+	if mailData != nil {
+		// Update the name and email fields in the map
+		mailData["Name"] = ctx.Value("userEmail").(string)  // Replace with the new name
+		mailData["Email"] = ctx.Value("userEmail").(string) // Replace with the new email
+	} else {
+		return nil, fmt.Errorf("mailData is nil")
+	}
+
 	// Step 3: Render the template with provided data
 	renderedTemplate, err := mail.RenderTemplate(templateData.Content, mailData)
 	if err != nil {
