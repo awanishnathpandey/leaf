@@ -10,10 +10,18 @@ import (
 
 	"github.com/awanishnathpandey/leaf/external/mail"
 	"github.com/awanishnathpandey/leaf/graph/model"
+	"github.com/awanishnathpandey/leaf/internal/utils"
 )
 
 // SendEmail is the resolver for the sendEmail field.
 func (r *mutationResolver) SendEmail(ctx context.Context, input model.SendEmailInput) (*model.EmailResponse, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all"}
+
+	// Check if the user has the required permissions
+	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
 	// Step 1: Validate template name
 	templateName := input.TemplateName
 	if templateName == "" {
@@ -30,17 +38,12 @@ func (r *mutationResolver) SendEmail(ctx context.Context, input model.SendEmailI
 		return nil, fmt.Errorf("failed to convert mail data: %w", err)
 	}
 
-	// Debugging: Log the received input
-	// fmt.Printf("Received input: %#v\n", input)
-
 	// Step 3: Render the template with provided data
 	renderedTemplate, err := mail.RenderTemplate(templateData.Content, mailData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render template: %w", err)
 	}
 
-	// Debugging: Log the rendered template content (optional)
-	// fmt.Println("Rendered Template Content:", renderedTemplate)
 	mailSubject := "Welcome!"
 
 	// Step 4: Send the email with the rendered template
