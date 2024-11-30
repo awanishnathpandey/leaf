@@ -42,7 +42,7 @@ func ReplacePlaceholders(body string, data map[string]string) string {
 }
 
 // SendEmail sends an email using the template and dynamic data
-func (ms *MailService) SendEmail(to []string, subject, templateContent string, data map[string]interface{}) error {
+func (ms *MailService) SendEmail(to []string, cc []string, bcc []string, subject, templateContent string, data map[string]interface{}) error {
 	// Render the template with dynamic data
 	renderedTemplate, err := RenderTemplate(templateContent, data)
 	if err != nil {
@@ -63,6 +63,20 @@ func (ms *MailService) SendEmail(to []string, subject, templateContent string, d
 		if err := msg.AddTo(recipient); err != nil {
 			// Log the error but continue with the next recipient
 			errorRecipients = append(errorRecipients, fmt.Sprintf("failed to add To recipient %s: %v", recipient, err))
+		}
+	}
+
+	for _, recipient := range cc {
+		if err := msg.AddCc(recipient); err != nil {
+			// Log the error but continue with the next recipient
+			errorRecipients = append(errorRecipients, fmt.Sprintf("failed to add Cc recipient %s: %v", recipient, err))
+		}
+	}
+
+	for _, recipient := range bcc {
+		if err := msg.AddBcc(recipient); err != nil {
+			// Log the error but continue with the next recipient
+			errorRecipients = append(errorRecipients, fmt.Sprintf("failed to add Bcc recipient %s: %v", recipient, err))
 		}
 	}
 	// if err := msg.To("res@res.com,comma@res.com"); err != nil {

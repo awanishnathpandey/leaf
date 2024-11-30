@@ -1,7 +1,9 @@
 scalar Map
 
 input SendEmailInput {
-  to: [String!]!
+  to: [String!]
+  cc:  [String!]
+  bcc: [String!]
   templateName: String!
   data: Map!
 }

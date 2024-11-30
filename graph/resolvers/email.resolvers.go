@@ -38,7 +38,7 @@ func (r *mutationResolver) SendEmail(ctx context.Context, input model.SendEmailI
 	// fmt.Println("Rendered Template Content:", renderedTemplate)
 
 	// Step 4: Send the email with the rendered template
-	err = r.MailService.SendEmail(input.To, "Welcome!", renderedTemplate, input.Data)
+	err = r.MailService.SendEmail(input.To, input.Cc, input.Bcc, "Welcome!", renderedTemplate, input.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send email: %w", err)
 	}

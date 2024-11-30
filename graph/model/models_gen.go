@@ -220,7 +220,9 @@ type RoleSort struct {
 }
 
 type SendEmailInput struct {
-	To           []string               `json:"to"`
+	To           []string               `json:"to,omitempty"`
+	Cc           []string               `json:"cc,omitempty"`
+	Bcc          []string               `json:"bcc,omitempty"`
 	TemplateName string                 `json:"templateName"`
 	Data         map[string]interface{} `json:"data"`
 }
