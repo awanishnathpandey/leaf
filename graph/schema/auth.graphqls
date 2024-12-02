@@ -4,7 +4,8 @@
 
 type AuthUser {
   id: ID!
-  name: String!
+  firstName: String!
+  lastName: String!
   email: String!
   lastSeenAt: Int!
   createdAt: Int!
@@ -12,7 +13,8 @@ type AuthUser {
 }
 
 input register {
-  name: String!
+  firstName: String!
+  lastName: String!
   email: String!
   password: String!
 }

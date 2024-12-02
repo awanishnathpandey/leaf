@@ -38,7 +38,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 
 	// Call the generated CreateUser function with the params
 	user, err := r.DB.CreateUser(ctx, generated.CreateUserParams{
-		Name:      input.Name,
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
 		Email:     input.Email,
 		Password:  hashedPassword,
 		CreatedBy: ctx.Value("userEmail").(string),
@@ -50,7 +51,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 	// Return the newly created user
 	return &model.User{
 		ID:              user.ID,
-		Name:            user.Name,
+		FirstName:       user.FirstName,
+		LastName:        user.LastName,
 		Email:           user.Email,
 		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
 		LastSeenAt:      user.LastSeenAt,
@@ -80,7 +82,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 	// Call the sqlc generated query to update the user in the database
 	user, err := r.DB.UpdateUser(ctx, generated.UpdateUserParams{
 		ID:        input.ID,
-		Name:      input.Name,
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
 		Email:     input.Email,
 		UpdatedBy: ctx.Value("userEmail").(string),
 	})
@@ -91,7 +94,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 	// Map the SQLC model to the GraphQL model
 	return &model.User{
 		ID:              user.ID,
-		Name:            user.Name,
+		FirstName:       user.FirstName,
+		LastName:        user.LastName,
 		Email:           user.Email,
 		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
 		LastSeenAt:      user.LastSeenAt,
@@ -226,7 +230,8 @@ func (r *queryResolver) Users(ctx context.Context, first int64, after *int64, fi
 			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.User{
 				ID:              user.ID,
-				Name:            user.Name,
+				FirstName:       user.FirstName,
+				LastName:        user.LastName,
 				Email:           user.Email,
 				EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
 				LastSeenAt:      user.LastSeenAt,
@@ -270,7 +275,8 @@ func (r *queryResolver) GetUser(ctx context.Context, id int64) (*model.User, err
 	// Convert the SQL result to GraphQL model
 	return &model.User{
 		ID:              user.ID,
-		Name:            user.Name,
+		FirstName:       user.FirstName,
+		LastName:        user.LastName,
 		Email:           user.Email,
 		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
 		LastSeenAt:      user.LastSeenAt,
@@ -298,7 +304,8 @@ func (r *queryResolver) GetUserByEmail(ctx context.Context, email string) (*mode
 	// Convert the SQL result to GraphQL model
 	return &model.User{
 		ID:              user.ID,
-		Name:            user.Name,
+		FirstName:       user.FirstName,
+		LastName:        user.LastName,
 		Email:           user.Email,
 		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
 		LastSeenAt:      user.LastSeenAt,

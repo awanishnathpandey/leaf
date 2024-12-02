@@ -1,7 +1,7 @@
 -- name: RegisterUser :one
 INSERT INTO users (
-  name, email, password
+  first_name, last_name, email, password
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4
 )
 RETURNING *;

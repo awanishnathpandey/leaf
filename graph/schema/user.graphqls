@@ -4,7 +4,8 @@
 
 type User {
   id: ID!
-  name: String!
+  firstName: String!
+  lastName: String!
   email: String!
   password: String!
   emailVerifiedAt: Int
@@ -19,14 +20,16 @@ type User {
 }
 
 input CreateUser {
-  name: String!
+  firstName: String!
+  lastName: String!
   email: String!
   password: String!
 }
 
 input UpdateUser {
   id: ID!
-  name: String!
+  firstName: String!
+  lastName: String!
   email: String!
 }
 

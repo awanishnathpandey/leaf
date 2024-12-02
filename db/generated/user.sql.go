@@ -13,15 +13,16 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-  name, email, password, created_by, updated_by
+  first_name, last_name, email, password, created_by, updated_by
 ) VALUES (
-  $1, $2, $3, $4, $4
+  $1, $2, $3, $4, $5, $5
 )
-RETURNING id, name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
+RETURNING id, first_name, last_name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type CreateUserParams struct {
-	Name      string `json:"name"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 	CreatedBy string `json:"created_by"`
@@ -29,7 +30,8 @@ type CreateUserParams struct {
 
 type CreateUserRow struct {
 	ID              int64       `json:"id"`
-	Name            string      `json:"name"`
+	FirstName       string      `json:"first_name"`
+	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
@@ -42,7 +44,8 @@ type CreateUserRow struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRow(ctx, createUser,
-		arg.Name,
+		arg.FirstName,
+		arg.LastName,
 		arg.Email,
 		arg.Password,
 		arg.CreatedBy,
@@ -50,7 +53,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
+		&i.FirstName,
+		&i.LastName,
 		&i.Email,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
@@ -84,7 +88,7 @@ func (q *Queries) DeleteUsersByIDs(ctx context.Context, dollar_1 []int64) error 
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
+SELECT id, first_name, last_name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -93,7 +97,8 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
+		&i.FirstName,
+		&i.LastName,
 		&i.Email,
 		&i.Password,
 		&i.EmailVerifiedAt,
@@ -108,7 +113,7 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
+SELECT id, first_name, last_name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -117,7 +122,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
+		&i.FirstName,
+		&i.LastName,
 		&i.Email,
 		&i.Password,
 		&i.EmailVerifiedAt,
@@ -168,7 +174,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
+SELECT id, first_name, last_name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 ORDER BY email
 `
 
@@ -183,7 +189,8 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.FirstName,
+			&i.LastName,
 			&i.Email,
 			&i.Password,
 			&i.EmailVerifiedAt,
@@ -207,7 +214,8 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 const paginatedUsers = `-- name: PaginatedUsers :many
 SELECT 
     id, 
-    name, 
+    first_name, 
+    last_name,
     email, 
     password, 
     email_verified_at, 
@@ -219,15 +227,15 @@ SELECT
     updated_by
 FROM users
 WHERE 
-    (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
+    (coalesce($3, '') = '' OR first_name ILIKE '%' || $3 || '%')
     AND (coalesce($4, '') = '' OR email ILIKE '%' || $4 || '%')
 ORDER BY 
     CASE 
-        WHEN $5 = 'NAME' AND $6 = 'ASC' THEN name 
+        WHEN $5 = 'NAME' AND $6 = 'ASC' THEN first_name 
         WHEN $5 = 'EMAIL' AND $6 = 'ASC' THEN email 
     END ASC,
     CASE 
-        WHEN $5 = 'NAME' AND $6 = 'DESC' THEN name 
+        WHEN $5 = 'NAME' AND $6 = 'DESC' THEN first_name 
         WHEN $5 = 'EMAIL' AND $6 = 'DESC' THEN email 
     END DESC
 LIMIT $1
@@ -261,7 +269,8 @@ func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) 
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.FirstName,
+			&i.LastName,
 			&i.Email,
 			&i.Password,
 			&i.EmailVerifiedAt,
@@ -286,7 +295,7 @@ const paginatedUsersCount = `-- name: PaginatedUsersCount :one
 SELECT COUNT(*)
 FROM users
 WHERE 
-    (coalesce($1, '') = '' OR name ILIKE '%' || $1 || '%')
+    (coalesce($1, '') = '' OR first_name ILIKE '%' || $1 || '%')
     AND (coalesce($2, '') = '' OR email ILIKE '%' || $2 || '%')
 `
 
@@ -304,21 +313,23 @@ func (q *Queries) PaginatedUsersCount(ctx context.Context, arg PaginatedUsersCou
 
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
-  set name = $2, email = $3, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
+  set first_name = $2, last_name = $3, email = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
-RETURNING id, name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
+RETURNING id, first_name, last_name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type UpdateUserParams struct {
 	ID        int64  `json:"id"`
-	Name      string `json:"name"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	UpdatedBy string `json:"updated_by"`
 }
 
 type UpdateUserRow struct {
 	ID              int64       `json:"id"`
-	Name            string      `json:"name"`
+	FirstName       string      `json:"first_name"`
+	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
@@ -332,14 +343,16 @@ type UpdateUserRow struct {
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.ID,
-		arg.Name,
+		arg.FirstName,
+		arg.LastName,
 		arg.Email,
 		arg.UpdatedBy,
 	)
 	var i UpdateUserRow
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
+		&i.FirstName,
+		&i.LastName,
 		&i.Email,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
@@ -371,5 +384,16 @@ WHERE id = $1
 
 func (q *Queries) UpdateUserLastSeenAt(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, updateUserLastSeenAt, id)
+	return err
+}
+
+const updateUserLastSeenAtByEmail = `-- name: UpdateUserLastSeenAtByEmail :exec
+UPDATE users
+  set last_seen_at = EXTRACT(EPOCH FROM NOW())
+WHERE email = $1
+`
+
+func (q *Queries) UpdateUserLastSeenAtByEmail(ctx context.Context, email string) error {
+	_, err := q.db.Exec(ctx, updateUserLastSeenAtByEmail, email)
 	return err
 }

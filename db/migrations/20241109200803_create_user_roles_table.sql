@@ -13,17 +13,17 @@ CREATE TABLE user_roles (
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM users u, roles r
-WHERE u.name = 'admin' AND LOWER(r.name) = 'admin';
+WHERE u.first_name = 'admin' AND LOWER(r.name) = 'admin';
 
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM users u, roles r
-WHERE u.name = 'admin2' AND LOWER(r.name) = 'admin';
+WHERE u.first_name = 'admin2' AND LOWER(r.name) = 'admin';
 
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM users u, roles r
-WHERE u.name = 'user' AND LOWER(r.name) = 'user';
+WHERE u.first_name = 'user' AND LOWER(r.name) = 'user';
 -- +goose StatementEnd
 
 -- +goose Down

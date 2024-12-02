@@ -11,15 +11,25 @@ import (
 )
 
 type MyClaims struct {
+	ClientID  string `json:"client_id"`
+	UID       string `json:"uid"`
+	Mail      string `json:"mail"`
+	GivenName string `json:"givenName"`
+	Surname   string `json:"sn"`
+	Email     string `json:"email"`
 	jwt.RegisteredClaims
-	UserEmail string `json:"user_email"` // Custom field for user email
 }
 
 // GenerateJWT generates a JWT token for a given user ID.
-func GenerateJWT(userID int64, userEmail string) (string, error) {
+func GenerateJWT(userID int64, email, givenName, surname string) (string, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		return "", fmt.Errorf("JWT_SECRET is not set in the environment")
+	}
+
+	clientID := os.Getenv("JWT_CLIENT_ID")
+	if clientID == "" {
+		return "", fmt.Errorf("JWT_CLIENT_ID is not set in the environment")
 	}
 
 	jwtIssuer := os.Getenv("JWT_ISSUER")
@@ -32,14 +42,24 @@ func GenerateJWT(userID int64, userEmail string) (string, error) {
 		return "", fmt.Errorf("JWT_EXPIRY_MINUTES is invalid: %v", err)
 	}
 
+	jwtAudience := os.Getenv("JWT_AUDIENCE")
+	if jwtAudience == "" {
+		return "", fmt.Errorf("JWT_AUDIENCE is not set in the environment")
+	}
+
 	claims := &MyClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   fmt.Sprintf("%d", userID), // User ID as the subject
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(jwtExpiryMinutes) * time.Minute)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    jwtIssuer,
+			// IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:   jwtIssuer,
+			Audience: []string{jwtAudience},
 		},
-		UserEmail: userEmail, // Add email as a custom claim
+		ClientID:  clientID,
+		UID:       fmt.Sprintf("%d", userID),
+		Mail:      email,
+		GivenName: givenName,
+		Surname:   surname,
+		Email:     email,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

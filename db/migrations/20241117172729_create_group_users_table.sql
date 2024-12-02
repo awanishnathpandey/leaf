@@ -14,12 +14,12 @@ CREATE TABLE
 INSERT INTO group_users (user_id, group_id)
 SELECT u.id, g.id
 FROM users u, groups g
-WHERE LOWER(u.name) = 'admin' AND g.name = 'Admin Group';
+WHERE LOWER(u.first_name) = 'admin' AND g.name = 'Admin Group';
 
 INSERT INTO group_users (user_id, group_id)
 SELECT u.id, g.id
 FROM users u, groups g
-WHERE LOWER(u.name) = 'admin' AND g.name = 'Default Group';
+WHERE LOWER(u.first_name) = 'admin' AND g.name = 'Default Group';
 -- +goose StatementEnd
 
 -- +goose Down

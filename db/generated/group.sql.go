@@ -907,7 +907,8 @@ func (q *Queries) GetPaginatedGroupsByUserIDCount(ctx context.Context, arg GetPa
 const getPaginatedUsersByGroupID = `-- name: GetPaginatedUsersByGroupID :many
 SELECT 
     u.id, 
-    u.name, 
+    u.first_name,
+    u.last_name, 
     u.email, 
     u.email_verified_at, 
     u.last_seen_at, 
@@ -920,15 +921,15 @@ FROM users u
 JOIN group_users gu ON u.id = gu.user_id
 WHERE 
     gu.group_id = $3  -- Filter by group_id
-    AND (coalesce($4, '') = '' OR u.name ILIKE '%' || $4 || '%')
+    AND (coalesce($4, '') = '' OR u.first_name ILIKE '%' || $4 || '%')
     AND (coalesce($5, '') = '' OR u.email ILIKE '%' || $5 || '%')
 ORDER BY 
     CASE 
-        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN u.name 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN u.first_name 
         WHEN $6 = 'EMAIL' AND $7 = 'ASC' THEN u.email 
     END ASC,
     CASE 
-        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN u.name 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN u.first_name 
         WHEN $6 = 'EMAIL' AND $7 = 'DESC' THEN u.email 
     END DESC
 LIMIT $1
@@ -947,7 +948,8 @@ type GetPaginatedUsersByGroupIDParams struct {
 
 type GetPaginatedUsersByGroupIDRow struct {
 	ID              int64       `json:"id"`
-	Name            string      `json:"name"`
+	FirstName       string      `json:"first_name"`
+	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
@@ -977,7 +979,8 @@ func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginat
 		var i GetPaginatedUsersByGroupIDRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.FirstName,
+			&i.LastName,
 			&i.Email,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
@@ -1002,7 +1005,7 @@ SELECT COUNT(*) FROM users u
 JOIN group_users gu ON u.id = gu.user_id
 WHERE 
     gu.group_id = $1  -- Filter by group_id
-    AND (coalesce($2, '') = '' OR u.name ILIKE '%' || $2 || '%')
+    AND (coalesce($2, '') = '' OR u.first_name ILIKE '%' || $2 || '%')
     AND (coalesce($3, '') = '' OR u.email ILIKE '%' || $3 || '%')
 `
 
@@ -1020,7 +1023,7 @@ func (q *Queries) GetPaginatedUsersByGroupIDCount(ctx context.Context, arg GetPa
 }
 
 const getUsersByGroupID = `-- name: GetUsersByGroupID :many
-SELECT u.id, u.name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
+SELECT u.id, u.first_name, u.last_name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
 FROM users u
 JOIN group_users gu ON u.id = gu.user_id
 WHERE gu.group_id = $1
@@ -1028,7 +1031,8 @@ WHERE gu.group_id = $1
 
 type GetUsersByGroupIDRow struct {
 	ID              int64       `json:"id"`
-	Name            string      `json:"name"`
+	FirstName       string      `json:"first_name"`
+	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
@@ -1048,7 +1052,8 @@ func (q *Queries) GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUs
 		var i GetUsersByGroupIDRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.FirstName,
+			&i.LastName,
 			&i.Email,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,

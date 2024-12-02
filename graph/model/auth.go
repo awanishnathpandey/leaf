@@ -14,26 +14,26 @@ type Login struct {
 	Email    string `json:"email"`
 }
 
-type Register struct {
-	Name     string `json:"name" validate:"required,min=2,max=100"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=3,max=50"`
-}
+// type Register struct {
+// 	Name     string `json:"name" validate:"required,min=2,max=100"`
+// 	Email    string `json:"email" validate:"required,email"`
+// 	Password string `json:"password" validate:"required,min=3,max=50"`
+// }
 
 type ResetPassword struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
 
-type AuthUser struct {
-	ID              int64  `json:"id"`
-	Name            string `json:"name"`
-	Email           string `json:"email"`
-	EmailVerifiedAt *int64 `json:"emailVerifiedAt,omitempty"`
-	LastSeenAt      int64  `json:"lastSeenAt"`
-	CreatedAt       int64  `json:"createdAt"`
-	UpdatedAt       int64  `json:"updatedAt"`
-}
+// type AuthUser struct {
+// 	ID              int64  `json:"id"`
+// 	Name            string `json:"name"`
+// 	Email           string `json:"email"`
+// 	EmailVerifiedAt *int64 `json:"emailVerifiedAt,omitempty"`
+// 	LastSeenAt      int64  `json:"lastSeenAt"`
+// 	CreatedAt       int64  `json:"createdAt"`
+// 	UpdatedAt       int64  `json:"updatedAt"`
+// }
 
 type LoginResponse struct {
 	Token string    `json:"token"`

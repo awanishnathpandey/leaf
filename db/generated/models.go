@@ -111,7 +111,8 @@ type RolePermission struct {
 
 type User struct {
 	ID              int64       `json:"id"`
-	Name            string      `json:"name"`
+	FirstName       string      `json:"first_name"`
+	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
 	Password        string      `json:"password"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`

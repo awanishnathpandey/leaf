@@ -2,7 +2,8 @@
 CREATE TABLE
     users (
         id BIGSERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
+        first_name VARCHAR(255) NOT NULL,
+        last_name VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
         email_verified_at BIGINT,
@@ -15,9 +16,9 @@ CREATE TABLE
     );
 
 -- +goose StatementBegin
-INSERT INTO users (name, email, password, email_verified_at) VALUES ('admin', 'admin@example.com', '$2a$14$v.59rKsYjjC5K.LacDrHCO/hCoXr/IZiR3HFUEG7IenOU.nV.MXfK', EXTRACT(EPOCH FROM NOW()));
-INSERT INTO users (name, email, password, email_verified_at) VALUES ('admin2', 'admin2@example.com', '$2a$14$v.59rKsYjjC5K.LacDrHCO/hCoXr/IZiR3HFUEG7IenOU.nV.MXfK', EXTRACT(EPOCH FROM NOW()));
-INSERT INTO users (name, email, password, email_verified_at) VALUES ('user', 'user@example.com', '$2a$14$v.59rKsYjjC5K.LacDrHCO/hCoXr/IZiR3HFUEG7IenOU.nV.MXfK', EXTRACT(EPOCH FROM NOW()));
+INSERT INTO users (first_name, last_name, email, password, email_verified_at) VALUES ('admin', '-', 'admin@example.com', '$2a$14$v.59rKsYjjC5K.LacDrHCO/hCoXr/IZiR3HFUEG7IenOU.nV.MXfK', EXTRACT(EPOCH FROM NOW()));
+INSERT INTO users (first_name, last_name, email, password, email_verified_at) VALUES ('admin2', '-', 'admin2@example.com', '$2a$14$v.59rKsYjjC5K.LacDrHCO/hCoXr/IZiR3HFUEG7IenOU.nV.MXfK', EXTRACT(EPOCH FROM NOW()));
+INSERT INTO users (first_name, last_name, email, password, email_verified_at) VALUES ('user', '-', 'user@example.com', '$2a$14$v.59rKsYjjC5K.LacDrHCO/hCoXr/IZiR3HFUEG7IenOU.nV.MXfK', EXTRACT(EPOCH FROM NOW()));
 -- INSERT INTO users (name, email, password, email_verified_at) VALUES ('user1', 'user1@example.com', '$2a$14$v.59rKsYjjC5K.LacDrHCO/hCoXr/IZiR3HFUEG7IenOU.nV.MXfK', EXTRACT(EPOCH FROM NOW()));
 -- INSERT INTO users (name, email, password, email_verified_at) VALUES ('user2', 'user2@example.com', '$2a$14$v.59rKsYjjC5K.LacDrHCO/hCoXr/IZiR3HFUEG7IenOU.nV.MXfK', EXTRACT(EPOCH FROM NOW()));
 -- INSERT INTO users (name, email, password, email_verified_at) VALUES ('user3', 'user3@example.com', '$2a$14$v.59rKsYjjC5K.LacDrHCO/hCoXr/IZiR3HFUEG7IenOU.nV.MXfK', EXTRACT(EPOCH FROM NOW()));

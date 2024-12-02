@@ -88,7 +88,7 @@ SELECT * FROM permissions
 ORDER BY name;
 
 -- name: GetUsersByRoleID :many
-SELECT u.id, u.name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
+SELECT u.id, u.first_name, u.last_name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
 FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE ur.role_id = $1;
@@ -216,7 +216,8 @@ WHERE
 -- name: GetPaginatedUsersByRoleID :many
 SELECT 
     u.id, 
-    u.name, 
+    u.first_name,
+    u.last_name, 
     u.email, 
     u.email_verified_at, 
     u.last_seen_at, 
@@ -229,15 +230,15 @@ FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE 
     ur.role_id = sqlc.narg(role_id)  -- Filter by role_id
-    AND (coalesce(sqlc.narg(name_filter), '') = '' OR u.name ILIKE '%' || sqlc.narg(name_filter) || '%')
+    AND (coalesce(sqlc.narg(name_filter), '') = '' OR u.first_name ILIKE '%' || sqlc.narg(name_filter) || '%')
     AND (coalesce(sqlc.narg(email_filter), '') = '' OR u.email ILIKE '%' || sqlc.narg(email_filter) || '%')
 ORDER BY 
     CASE 
-        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN u.name 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'ASC' THEN u.first_name 
         WHEN sqlc.narg(sort_field) = 'EMAIL' AND sqlc.narg(sort_order) = 'ASC' THEN u.email 
     END ASC,
     CASE 
-        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN u.name 
+        WHEN sqlc.narg(sort_field) = 'NAME' AND sqlc.narg(sort_order) = 'DESC' THEN u.first_name 
         WHEN sqlc.narg(sort_field) = 'EMAIL' AND sqlc.narg(sort_order) = 'DESC' THEN u.email 
     END DESC
 LIMIT $1

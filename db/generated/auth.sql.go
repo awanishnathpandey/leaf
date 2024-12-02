@@ -11,25 +11,32 @@ import (
 
 const registerUser = `-- name: RegisterUser :one
 INSERT INTO users (
-  name, email, password
+  first_name, last_name, email, password
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4
 )
-RETURNING id, name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
+RETURNING id, first_name, last_name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type RegisterUserParams struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 }
 
 func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, registerUser, arg.Name, arg.Email, arg.Password)
+	row := q.db.QueryRow(ctx, registerUser,
+		arg.FirstName,
+		arg.LastName,
+		arg.Email,
+		arg.Password,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
+		&i.FirstName,
+		&i.LastName,
 		&i.Email,
 		&i.Password,
 		&i.EmailVerifiedAt,

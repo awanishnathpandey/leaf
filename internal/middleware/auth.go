@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,8 +16,13 @@ import (
 
 // MyClaims struct that includes JWT standard claims and any custom claims
 type MyClaims struct {
+	ClientID  string `json:"client_id"`
+	UID       string `json:"uid"`
+	Mail      string `json:"mail"`
+	GivenName string `json:"givenName"`
+	Surname   string `json:"sn"`
+	Email     string `json:"email"`
 	jwt.RegisteredClaims
-	UserEmail string `json:"user_email"`
 }
 
 // Global variable to hold queries object
@@ -29,12 +33,13 @@ func InitializeQueries(q *generated.Queries) {
 	queries = q
 }
 
-// Cache for user existence checks (key = userID, value = cacheEntry)
-var userCache = make(map[int64]cacheEntry)
+// Cache for user existence checks (key = userEmail, value = cacheEntry)
+var userCache = make(map[string]cacheEntry)
 
 // Cache entry structure, including the timestamp of when it was created
 type cacheEntry struct {
-	exists    bool
+	userID    int64
+	userEmail string
 	timestamp time.Time
 }
 
@@ -42,8 +47,8 @@ type cacheEntry struct {
 const cacheExpiration = 5 * time.Minute
 
 // Asynchronous worker to update last_seen
-const numWorkers = 10                   // Number of workers in the pool
-var updateQueue = make(chan int64, 100) // Buffered channel for user IDs
+const numWorkers = 10                    // Number of workers in the pool
+var updateQueue = make(chan string, 100) // Buffered channel for user IDs
 
 func init() {
 	// Start worker goroutines for processing updates
@@ -53,24 +58,24 @@ func init() {
 }
 
 // Worker to process updates
+// Worker to process updates
 func worker() {
-	for userID := range updateQueue {
-		err := updateLastSeen(userID)
+	for userEmail := range updateQueue {
+		err := updateLastSeen(userEmail)
 		if err != nil {
-			log.Error().Err(err).Int64("userID", userID).Msg("Failed to update last_seen")
-			// log.Printf("Failed to update last_seen for user %d: %v\n", userID, err)
+			log.Error().Err(err).Str("userEmail", userEmail).Msg("Failed to update last_seen")
 		}
 	}
 }
 
 // Update the database asynchronously
-func updateLastSeen(userID int64) error {
+func updateLastSeen(userEmail string) error {
 	ctx := context.Background()
 
-	// Update the last_seen in the database
-	err := queries.UpdateUserLastSeenAt(ctx, userID)
+	// Update the last_seen in the database for the given userEmail
+	err := queries.UpdateUserLastSeenAtByEmail(ctx, userEmail)
 	if err != nil {
-		return fmt.Errorf("failed to update last_seen for user %d: %w", userID, err)
+		return fmt.Errorf("failed to update last_seen for user %s: %w", userEmail, err)
 	}
 	return nil
 }
@@ -146,61 +151,53 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 		}
 
 		// Store claims (user info, etc.) in the request context
-		userEmail := claims.UserEmail // Retrieve userEmail from claims
+		userEmail := claims.Email // Retrieve userEmail from claims
 		if userEmail == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Email not found in token",
 			})
 		}
-		userID := claims.Subject // The subject is typically a string
-		uidInt64, err := strconv.ParseInt(userID, 10, 64)
-		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid user ID in token",
-			})
-		}
+		// userID := claims.UID // The subject is typically a string
+		// uidInt64, err := strconv.ParseInt(userID, 10, 64)
+		// if err != nil {
+		// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+		// 		"error": "Invalid user ID in token",
+		// 	})
+		// }
 
 		// Check cache for user existence with expiration handling
-		if entry, found := userCache[uidInt64]; found {
-			// If the cache entry exists and is not expired, proceed
+		if entry, found := userCache[userEmail]; found {
 			if time.Since(entry.timestamp) < cacheExpiration {
-				if !entry.exists {
-					return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-						"error": "User not found",
-					})
-				}
-			} else {
-				// Cache expired, remove the entry and recheck
-				delete(userCache, uidInt64)
+				// Valid cache entry
+				c.Locals("userID", entry.userID)
+				c.Locals("userEmail", entry.userEmail)
+				updateQueue <- entry.userEmail // Enqueue userEmail for last_seen update
+				return c.Next()
 			}
+			// Cache expired, remove entry
+			delete(userCache, userEmail)
 		}
 
 		// Query the database if the user is not in the cache or cache expired
 		ctx := context.Background()
-		_, err = queries.GetUserID(ctx, uidInt64)
+		user, err := queries.GetUserByEmail(ctx, userEmail)
 		if err != nil {
-			// Cache the result as user not found
-			userCache[uidInt64] = cacheEntry{
-				exists:    false,
-				timestamp: time.Now(),
-			}
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "User not found",
-			})
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User not found"})
 		}
 
-		// User found, update cache
-		userCache[uidInt64] = cacheEntry{
-			exists:    true,
+		// Update cache
+		userCache[userEmail] = cacheEntry{
+			userID:    user.ID,
+			userEmail: user.Email,
 			timestamp: time.Now(),
 		}
 
-		// Update last_seen in the database asynchronously by enqueueing the user ID
-		updateQueue <- uidInt64
-
 		// Use Locals to store userID for easy access later in your handlers
-		c.Locals("userID", uidInt64)
-		c.Locals("userEmail", userEmail)
+		c.Locals("userID", user.ID)
+		c.Locals("userEmail", user.Email)
+
+		// Update last_seen in the database asynchronously by enqueueing the user ID
+		updateQueue <- userEmail
 
 		// Allow the request to continue to the next handler
 		return c.Next()

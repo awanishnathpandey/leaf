@@ -8,6 +8,16 @@ import (
 	"strconv"
 )
 
+type AuthUser struct {
+	ID         int64  `json:"id"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Email      string `json:"email"`
+	LastSeenAt int64  `json:"lastSeenAt"`
+	CreatedAt  int64  `json:"createdAt"`
+	UpdatedAt  int64  `json:"updatedAt"`
+}
+
 type CreateFolder struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
@@ -20,9 +30,10 @@ type CreateGroup struct {
 }
 
 type CreateUser struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 }
 
 type DashboardKPICount struct {
@@ -237,14 +248,16 @@ type UpdateGroup struct {
 }
 
 type UpdateUser struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID        int64  `json:"id"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
 }
 
 type User struct {
 	ID              int64            `json:"id"`
-	Name            string           `json:"name"`
+	FirstName       string           `json:"firstName"`
+	LastName        string           `json:"lastName"`
 	Email           string           `json:"email"`
 	Password        string           `json:"password"`
 	EmailVerifiedAt *int64           `json:"emailVerifiedAt,omitempty"`
@@ -277,6 +290,13 @@ type UserFilter struct {
 type UserSort struct {
 	Field UserSortField `json:"field"`
 	Order SortOrder     `json:"order"`
+}
+
+type Register struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 }
 
 type FileSortField string

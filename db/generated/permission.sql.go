@@ -470,7 +470,8 @@ func (q *Queries) GetPaginatedRolesByUserIDCount(ctx context.Context, arg GetPag
 const getPaginatedUsersByRoleID = `-- name: GetPaginatedUsersByRoleID :many
 SELECT 
     u.id, 
-    u.name, 
+    u.first_name,
+    u.last_name, 
     u.email, 
     u.email_verified_at, 
     u.last_seen_at, 
@@ -483,15 +484,15 @@ FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE 
     ur.role_id = $3  -- Filter by role_id
-    AND (coalesce($4, '') = '' OR u.name ILIKE '%' || $4 || '%')
+    AND (coalesce($4, '') = '' OR u.first_name ILIKE '%' || $4 || '%')
     AND (coalesce($5, '') = '' OR u.email ILIKE '%' || $5 || '%')
 ORDER BY 
     CASE 
-        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN u.name 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN u.first_name 
         WHEN $6 = 'EMAIL' AND $7 = 'ASC' THEN u.email 
     END ASC,
     CASE 
-        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN u.name 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN u.first_name 
         WHEN $6 = 'EMAIL' AND $7 = 'DESC' THEN u.email 
     END DESC
 LIMIT $1
@@ -510,7 +511,8 @@ type GetPaginatedUsersByRoleIDParams struct {
 
 type GetPaginatedUsersByRoleIDRow struct {
 	ID              int64       `json:"id"`
-	Name            string      `json:"name"`
+	FirstName       string      `json:"first_name"`
+	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
@@ -540,7 +542,8 @@ func (q *Queries) GetPaginatedUsersByRoleID(ctx context.Context, arg GetPaginate
 		var i GetPaginatedUsersByRoleIDRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.FirstName,
+			&i.LastName,
 			&i.Email,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
@@ -821,7 +824,7 @@ func (q *Queries) GetUserPermissions(ctx context.Context, userID int64) ([]strin
 }
 
 const getUsersByRoleID = `-- name: GetUsersByRoleID :many
-SELECT u.id, u.name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
+SELECT u.id, u.first_name, u.last_name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
 FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE ur.role_id = $1
@@ -829,7 +832,8 @@ WHERE ur.role_id = $1
 
 type GetUsersByRoleIDRow struct {
 	ID              int64       `json:"id"`
-	Name            string      `json:"name"`
+	FirstName       string      `json:"first_name"`
+	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
@@ -849,7 +853,8 @@ func (q *Queries) GetUsersByRoleID(ctx context.Context, roleID int64) ([]GetUser
 		var i GetUsersByRoleIDRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.FirstName,
+			&i.LastName,
 			&i.Email,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,

@@ -74,7 +74,8 @@ func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64
 			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.User{
 				ID:              user.ID,
-				Name:            user.Name,
+				FirstName:       user.FirstName,
+				LastName:        user.LastName,
 				Email:           user.Email,
 				EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
 				LastSeenAt:      user.LastSeenAt,
