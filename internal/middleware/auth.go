@@ -1,8 +1,11 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -22,6 +25,7 @@ type MyClaims struct {
 	GivenName string `json:"givenName"`
 	Surname   string `json:"sn"`
 	Email     string `json:"email"`
+	Aud       string `json:"aud"`
 	jwt.RegisteredClaims
 }
 
@@ -121,25 +125,56 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 
 		// Parse and validate the token
 		claims := &MyClaims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			// Check if the signing method matches
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method %v", token.Header["alg"])
-			}
-			return secretKey, nil
-		})
-
+		_, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
 		if err != nil {
+			log.Error().Err(err).Msg("Failed to parse token")
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Invalid token",
 				"details": err.Error(),
 			})
 		}
 
-		// Check if the token is valid
-		if !token.Valid {
+		// log.Info().
+		// 	Str("Issuer", claims.Issuer).
+		// 	Str("ClientID", claims.ClientID).
+		// 	Str("UID", claims.UID).
+		// 	Msg("Parsed token claims")
+		switch claims.Issuer {
+		case "leaf":
+			token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+				// Check if the signing method matches
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method %v", token.Header["alg"])
+				}
+				return secretKey, nil
+			})
+
+			if err != nil {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"error":   "Invalid token",
+					"details": err.Error(),
+				})
+			}
+
+			// Check if the token is valid
+			if !token.Valid {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"error": "Invalid token",
+				})
+			}
+		case "different":
+			// Validate token with the panda verification endpoint
+			isValid, err := verifyWithOAuthToken(tokenString)
+			if err != nil || !isValid {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"error":   "Token verification failed for OAuth",
+					"details": err.Error(),
+				})
+			}
+
+		default:
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid token",
+				"error": "Unknown issuer",
 			})
 		}
 
@@ -202,4 +237,41 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 		// Allow the request to continue to the next handler
 		return c.Next()
 	}
+}
+
+// verifyWithPanda sends the token to the panda verification endpoint
+func verifyWithOAuthToken(token string) (bool, error) {
+	verificationURL := os.Getenv("JWT_VERIFICATION_URL")
+	payload := map[string]string{
+		"token":           token,
+		"client_id":       os.Getenv("JWT_CLIENT_ID"),
+		"token_type_hint": "access_token",
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, verificationURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return false, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("verification request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return false, fmt.Errorf("failed to decode verification response: %w", err)
+	}
+
+	if active, ok := result["active"].(bool); ok {
+		return active, nil
+	}
+	return false, fmt.Errorf("unexpected response format")
 }

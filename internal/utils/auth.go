@@ -17,6 +17,7 @@ type MyClaims struct {
 	GivenName string `json:"givenName"`
 	Surname   string `json:"sn"`
 	Email     string `json:"email"`
+	Aud       string `json:"aud"`
 	jwt.RegisteredClaims
 }
 
@@ -51,8 +52,7 @@ func GenerateJWT(userID int64, email, givenName, surname string) (string, error)
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(jwtExpiryMinutes) * time.Minute)),
 			// IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:   jwtIssuer,
-			Audience: []string{jwtAudience},
+			Issuer: jwtIssuer,
 		},
 		ClientID:  clientID,
 		UID:       fmt.Sprintf("%d", userID),
@@ -60,6 +60,7 @@ func GenerateJWT(userID int64, email, givenName, surname string) (string, error)
 		GivenName: givenName,
 		Surname:   surname,
 		Email:     email,
+		Aud:       jwtAudience,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
