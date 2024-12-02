@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -15,7 +16,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// MyClaims struct that includes JWT standard claims and any custom claims
+// MyClaims struct includes JWT standard claims and custom claims
 type MyClaims struct {
 	ClientID  string `json:"client_id"`
 	UID       string `json:"uid"`
@@ -27,44 +28,58 @@ type MyClaims struct {
 	jwt.RegisteredClaims
 }
 
-// Global variable to hold queries object
-var queries *generated.Queries
+// Global variables
+var (
+	queries     *generated.Queries // Holds the database queries object
+	userCache   = make(map[string]cacheEntry)
+	updateQueue = make(chan string, 100) // Buffered channel for updates
+	stopWorkers = make(chan struct{})    // Channel to signal workers to stop
+	wg          sync.WaitGroup           // WaitGroup for worker synchronization
+	cacheLock   sync.RWMutex             // Protects userCache from concurrent access
+	cacheTTL    = 5 * time.Minute        // Cache expiration time
+	numWorkers  = 10                     // Number of worker goroutines
+)
 
-// Initialize the queries object once at the beginning of the app
-func InitializeQueries(q *generated.Queries) {
-	queries = q
-}
-
-// Cache for user existence checks (key = userEmail, value = cacheEntry)
-var userCache = make(map[string]cacheEntry)
-
-// Cache entry structure, including the timestamp of when it was created
+// Cache entry structure
 type cacheEntry struct {
 	userID    int64
 	userEmail string
 	timestamp time.Time
 }
 
-// Cache expiration time (set to 5 minutes)
-const cacheExpiration = 5 * time.Minute
-
-// Asynchronous worker to update last_seen
-const numWorkers = 10                    // Number of workers in the pool
-var updateQueue = make(chan string, 100) // Buffered channel for user IDs
-
-func init() {
-	// Start worker goroutines for processing updates
-	for i := 0; i < numWorkers; i++ {
-		go worker()
-	}
+// Initialize the queries object once
+func InitializeQueries(q *generated.Queries) {
+	queries = q
 }
 
-// Worker to process updates
+// StartWorkerPool initializes the worker pool
+func StartWorkerPool() {
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go worker()
+	}
+	log.Info().Msgf("%d workers started", numWorkers)
+}
+
+// StopWorkerPool gracefully stops all workers
+func StopWorkerPool() {
+	close(stopWorkers)
+	wg.Wait()
+	log.Info().Msg("All workers stopped")
+}
+
+// Worker goroutine processes tasks in the queue
 func worker() {
-	for userEmail := range updateQueue {
-		err := updateLastSeen(userEmail)
-		if err != nil {
-			log.Error().Err(err).Str("userEmail", userEmail).Msg("Failed to update last_seen")
+	defer wg.Done()
+	for {
+		select {
+		case userEmail := <-updateQueue:
+			err := updateLastSeen(userEmail)
+			if err != nil {
+				log.Error().Err(err).Str("userEmail", userEmail).Msg("Failed to update last_seen")
+			}
+		case <-stopWorkers:
+			return
 		}
 	}
 }
@@ -72,8 +87,6 @@ func worker() {
 // Update the database asynchronously
 func updateLastSeen(userEmail string) error {
 	ctx := context.Background()
-
-	// Update the last_seen in the database for the given userEmail
 	err := queries.UpdateUserLastSeenAtByEmail(ctx, userEmail)
 	if err != nil {
 		return fmt.Errorf("failed to update last_seen for user %s: %w", userEmail, err)
@@ -192,32 +205,34 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 			})
 		}
 
-		// Check cache for user existence with expiration handling
-		if entry, found := userCache[userEmail]; found {
-			if time.Since(entry.timestamp) < cacheExpiration {
-				// Valid cache entry
-				c.Locals("userID", entry.userID)
-				c.Locals("userEmail", entry.userEmail)
-				updateQueue <- entry.userEmail // Enqueue userEmail for last_seen update
-				return c.Next()
-			}
-			// Cache expired, remove entry
-			delete(userCache, userEmail)
+		// Check cache
+		cacheLock.RLock()
+		entry, found := userCache[userEmail]
+		cacheLock.RUnlock()
+
+		if found && time.Since(entry.timestamp) < cacheTTL {
+			c.Locals("userID", entry.userID)
+			c.Locals("userEmail", entry.userEmail)
+			updateQueue <- entry.userEmail
+			return c.Next()
 		}
 
-		// Query the database if the user is not in the cache or cache expired
+		// Query database if not in cache or expired
 		ctx := context.Background()
 		user, err := queries.GetUserByEmail(ctx, userEmail)
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User not found"})
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "User not found",
+			})
 		}
 
-		// Update cache
+		cacheLock.Lock()
 		userCache[userEmail] = cacheEntry{
 			userID:    user.ID,
 			userEmail: user.Email,
 			timestamp: time.Now(),
 		}
+		cacheLock.Unlock()
 
 		// Use Locals to store userID for easy access later in your handlers
 		c.Locals("userID", user.ID)

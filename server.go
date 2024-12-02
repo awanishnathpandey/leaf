@@ -31,6 +31,7 @@ func main() {
 	queries := generated.New(dbPool)
 	// Initialize middleware with queries object
 	middleware.InitializeQueries(queries)
+	middleware.StartWorkerPool()
 
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{})
@@ -44,6 +45,8 @@ func main() {
 	go func() {
 		<-c
 		log.Info().Msg("Gracefully shutting down...")
+		// Stop worker pool
+		middleware.StopWorkerPool()
 		_ = app.Shutdown()
 	}()
 
