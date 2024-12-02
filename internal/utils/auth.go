@@ -1,8 +1,11 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -91,4 +94,41 @@ func VerifyJWT(tokenString string) (*jwt.RegisteredClaims, error) {
 		return nil, errors.New("invalid token claims")
 	}
 	return claims, nil
+}
+
+// verifyWithOAuthToken sends the token to the verification endpoint
+func VerifyWithOAuthToken(token string) (bool, error) {
+	verificationURL := os.Getenv("JWT_VERIFICATION_URL")
+	payload := map[string]string{
+		"token":           token,
+		"client_id":       os.Getenv("JWT_CLIENT_ID"),
+		"token_type_hint": "access_token",
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, verificationURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return false, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("verification request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return false, fmt.Errorf("failed to decode verification response: %w", err)
+	}
+
+	if active, ok := result["active"].(bool); ok {
+		return active, nil
+	}
+	return false, fmt.Errorf("unexpected response format")
 }

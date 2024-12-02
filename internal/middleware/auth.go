@@ -1,11 +1,8 @@
 package middleware
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -13,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/internal/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -62,7 +60,6 @@ func init() {
 }
 
 // Worker to process updates
-// Worker to process updates
 func worker() {
 	for userEmail := range updateQueue {
 		err := updateLastSeen(userEmail)
@@ -90,10 +87,6 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 		// Get the JWT_SECRET from the environment
 		secretKey := []byte(os.Getenv("JWT_SECRET"))
 
-		// Skip authentication for login/register routes
-		// if strings.Contains(c.Path(), "login") || strings.Contains(c.Path(), "register") {
-		// 	return c.Next()
-		// }
 		body := c.Body()
 		if strings.Contains(string(body), "login") || strings.Contains(string(body), "register") {
 			return c.Next()
@@ -163,12 +156,18 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 				})
 			}
 		case "different":
-			// Validate token with the panda verification endpoint
-			isValid, err := verifyWithOAuthToken(tokenString)
-			if err != nil || !isValid {
+			// Validate token with the OAuth verification endpoint
+			isValid, err := utils.VerifyWithOAuthToken(tokenString)
+			if err != nil {
 				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-					"error":   "Token verification failed for OAuth",
+					"error":   "OAuth Token verification failed for OAuth",
 					"details": err.Error(),
+				})
+			}
+			// Check if the OAuth token is valid
+			if !isValid {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"error": "Invalid OAuthtoken",
 				})
 			}
 
@@ -178,7 +177,7 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 			})
 		}
 
-		// Check if the token is expired
+		// Check if the verified token is expired
 		if claims.ExpiresAt != nil && claims.ExpiresAt.Time.Before(time.Now()) {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Token expired",
@@ -192,13 +191,6 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 				"error": "Email not found in token",
 			})
 		}
-		// userID := claims.UID // The subject is typically a string
-		// uidInt64, err := strconv.ParseInt(userID, 10, 64)
-		// if err != nil {
-		// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-		// 		"error": "Invalid user ID in token",
-		// 	})
-		// }
 
 		// Check cache for user existence with expiration handling
 		if entry, found := userCache[userEmail]; found {
@@ -237,41 +229,4 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 		// Allow the request to continue to the next handler
 		return c.Next()
 	}
-}
-
-// verifyWithPanda sends the token to the panda verification endpoint
-func verifyWithOAuthToken(token string) (bool, error) {
-	verificationURL := os.Getenv("JWT_VERIFICATION_URL")
-	payload := map[string]string{
-		"token":           token,
-		"client_id":       os.Getenv("JWT_CLIENT_ID"),
-		"token_type_hint": "access_token",
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return false, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, verificationURL, bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		return false, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return false, fmt.Errorf("verification request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return false, fmt.Errorf("failed to decode verification response: %w", err)
-	}
-
-	if active, ok := result["active"].(bool); ok {
-		return active, nil
-	}
-	return false, fmt.Errorf("unexpected response format")
 }
