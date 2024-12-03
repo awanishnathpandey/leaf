@@ -7,6 +7,8 @@ A modern backend project that utilizes a range of tools and libraries for type-s
 - gqlgen: GraphQL-first type-safe server.
 - Goose: Database migrations management.
 - Go Fiber: High-performance web framework using fastHTTP.
+- Go Mail: Mail service integration, supports multiple receipients with attachments
+- JWT v5: Application authentication + custom OAuth token validation
 - pgx v5: PostgreSQL driver with connection pooling.
 - sqlc: Type-safe database query generation.
 - dotenv: Manages environment variables.
@@ -26,7 +28,7 @@ CREATE DATABASE db_leaf;
 ```
 3. Configure your environment variables: Add the PostgreSQL connection string (DSN) to your `.env` file:
 ```env
-DATABASE_URL=postgres://postgres@localhost:5432/db_leaf?sslmode=disable
+DATABASE_URL=postgres://postgres:password@localhost:5432/db_leaf?sslmode=disable
 ```
 4. Start PostgreSQL: You can start the PostgreSQL service manually by running:
 ```cmd
@@ -38,15 +40,15 @@ goose -dir ./db/migrations create create_users_table sql
 ```
 6. Apply migrations: Run the following command to apply migrations to your PostgreSQL database:
 ```cmd
-goose -dir ./db/migrations postgres "postgres://postgres@localhost:5432/db_leaf?sslmode=disable" up
+goose -dir ./db/migrations postgres "postgres://postgres:password@localhost:5432/db_leaf?sslmode=disable" up
 ```
 7. Rollback a migration: If you want to undo the last migration, use:
 ```cmd
-goose -dir ./db/migrations postgres "postgres://postgres@localhost:5432/db_leaf?sslmode=disable" down
+goose -dir ./db/migrations postgres "postgres://postgres:password@localhost:5432/db_leaf?sslmode=disable" down
 ```
 8. Reset all migrations: To reset and rollback all migrations, run:
 ```cmd
-goose -dir ./db/migrations postgres "postgres://postgres@localhost:5432/db_leaf?sslmode=disable" reset
+goose -dir ./db/migrations postgres "postgres://postgres:password@localhost:5432/db_leaf?sslmode=disable" reset
 ```
 9. Start the application: Once migrations are applied, run the application:
 
@@ -87,7 +89,7 @@ The generated models, queries, and queriers will be placed in the `db/generated`
 go run github.com/99designs/gqlgen generate
 ```
 
-4. GraphQL Schemas: All GraphQL schemas are located in the `graph/schema/*.graphqls` directory. Example: `user.graphqls`.
+4. GraphQL Schemas: All GraphQL schemas are located in the `graph/schema/*.graphqls` directory. Example: `user.graphqls`. The cursor pagination is added to the existing models along with sort and filter types for each models.
 
 5. Generated Models: The models will be generated in `graph/model/models_gen.go`. You can separate them into individual files for better organization (e.g., `user.go` for user-related models).
 
