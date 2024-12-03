@@ -83,12 +83,16 @@ func GenerateJWT(userID int64, email, givenName, surname string) (string, error)
 }
 
 // VerifyJWT verifies the provided JWT token and returns the claims
-func VerifyJWT(tokenString string) (*jwt.RegisteredClaims, error) {
+func VerifyJWT(tokenString string) (*MyClaims, error) {
 	secretKey := []byte(os.Getenv("JWT_SECRET"))
 
-	// Parse the token
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-		// Return the secret key for verification
+	// // Parse the token
+	// token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+	// 	// Return the secret key for verification
+	// 	return secretKey, nil
+	// })
+
+	token, err := jwt.ParseWithClaims(tokenString, &MyClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 	if err != nil || !token.Valid {
@@ -96,10 +100,11 @@ func VerifyJWT(tokenString string) (*jwt.RegisteredClaims, error) {
 	}
 
 	// Return the claims (you can extract any custom claim here)
-	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+	claims, ok := token.Claims.(*MyClaims)
 	if !ok {
 		return nil, errors.New("invalid token claims")
 	}
+	fmt.Println(claims)
 	return claims, nil
 }
 
@@ -189,22 +194,27 @@ func GenerateJWTRefresh(userID int64, email string) (string, error) {
 }
 
 // VerifyJWT verifies the provided JWT token and returns the claims
-func VerifyJWTRefresh(tokenString string) (*jwt.RegisteredClaims, error) {
-	refreshSecretKey := []byte(os.Getenv("JWT_REFRESH_SECRET"))
+func VerifyJWTRefresh(tokenString string) (*MyRefreshClaims, error) {
+	secretKey := []byte(os.Getenv("JWT_REFRESH_SECRET"))
 
-	// Parse the token
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-		// Return the secret key for verification
-		return refreshSecretKey, nil
+	// // Parse the token
+	// token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+	// 	// Return the secret key for verification
+	// 	return secretKey, nil
+	// })
+
+	refreshToken, err := jwt.ParseWithClaims(tokenString, &MyRefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return secretKey, nil
 	})
-	if err != nil || !token.Valid {
+	if err != nil || !refreshToken.Valid {
 		return nil, errors.New("invalid refresh token")
 	}
 
 	// Return the claims (you can extract any custom claim here)
-	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+	claims, ok := refreshToken.Claims.(*MyRefreshClaims)
 	if !ok {
 		return nil, errors.New("invalid refresh token claims")
 	}
+	fmt.Println(claims)
 	return claims, nil
 }

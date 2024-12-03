@@ -6,6 +6,7 @@ package resolvers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -157,7 +158,49 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (bool,
 
 // RefreshToken is the resolver for the refreshToken field.
 func (r *mutationResolver) RefreshToken(ctx context.Context, input *model.RefreshToken) (*model.LoginResponse, error) {
-	panic(fmt.Errorf("not implemented: RefreshToken - refreshToken"))
+	claims, err := utils.VerifyJWTRefresh(input.RefreshToken)
+	if err != nil {
+		return nil, errors.New("invalid or expired refresh token")
+	}
+	user, err := r.DB.GetUserByEmail(ctx, claims.Email)
+	if err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
+	}
+	accessToken, err := utils.GenerateJWT(user.ID, user.Email, user.FirstName, user.LastName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate access token")
+	}
+	jwtExpiryMinutes, err := strconv.Atoi(os.Getenv("JWT_EXPIRY_MINUTES"))
+	if err != nil {
+		return nil, fmt.Errorf("JWT_EXPIRY_MINUTES is invalid: %v", err)
+	}
+
+	refreshToken, err := utils.GenerateJWTRefresh(user.ID, user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token")
+	}
+
+	// Return the token and user in the response
+	loginResponse := &model.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    int64(jwtExpiryMinutes) * 60,
+		User: &model.AuthUser{
+			ID:             user.ID,
+			FirstName:      user.FirstName,
+			LastName:       user.LastName,
+			Email:          user.Email,
+			JobTitle:       &user.JobTitle.String,
+			LineOfBusiness: &user.LineOfBusiness.String,
+			LineManager:    &user.LineManager.String,
+			LastSeenAt:     user.LastSeenAt,
+			CreatedAt:      user.CreatedAt,
+			UpdatedAt:      user.UpdatedAt,
+		},
+	}
+
+	return loginResponse, nil
+
 }
 
 // Me is the resolver for the me field.
