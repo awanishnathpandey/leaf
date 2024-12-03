@@ -38,7 +38,9 @@ var (
 	wg                        sync.WaitGroup           // WaitGroup for worker synchronization
 	cacheLock                 sync.RWMutex             // Protects userCache from concurrent access
 	cacheTTL                  = 5 * time.Minute        // Cache expiration time
-	numWorkers                = 10                     // Number of worker goroutines
+	cacheCleanupInterval      = 10 * time.Minute
+	cacheMaxSize              = 1000
+	numWorkers                = 10 // Number of worker goroutines
 	unauthenticatedOperations = [][]byte{
 		[]byte("login"),
 		[]byte("register"),
@@ -67,6 +69,8 @@ func StartWorkerPool() {
 		go worker()
 	}
 	log.Info().Msgf("%d workers started", numWorkers)
+	// Periodic cache cleanup
+	go startCacheCleanup()
 }
 
 // StopWorkerPool gracefully stops all workers
@@ -100,6 +104,60 @@ func updateLastSeen(userEmail string) error {
 		return fmt.Errorf("failed to update last_seen for user %s: %w", userEmail, err)
 	}
 	return nil
+}
+
+func startCacheCleanup() {
+	ticker := time.NewTicker(cacheCleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			cleanupExpiredCacheEntries()
+			evictIfNeeded()
+		case <-stopWorkers:
+			return
+		}
+	}
+}
+
+func cleanupExpiredCacheEntries() {
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+
+	for email, entry := range userCache {
+		if time.Since(entry.timestamp) > cacheTTL {
+			delete(userCache, email)
+		}
+	}
+
+	log.Info().Msg("User Cache cleanup complete")
+}
+
+// evictIfNeeded checks the cache size and evicts the oldest entry if the cache exceeds the max size.
+func evictIfNeeded() {
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+
+	// If the cache exceeds the max size, evict the oldest entry
+	if len(userCache) > cacheMaxSize {
+		oldestEmail := ""
+		oldestTimestamp := time.Now()
+
+		// Find the oldest cache entry
+		for email, entry := range userCache {
+			if entry.timestamp.Before(oldestTimestamp) {
+				oldestTimestamp = entry.timestamp
+				oldestEmail = email
+			}
+		}
+
+		// Delete the oldest entry from the cache
+		if oldestEmail != "" {
+			delete(userCache, oldestEmail)
+			log.Info().Msgf("Evicted oldest cache entry: %s", oldestEmail)
+		}
+	}
 }
 
 // JWTMiddleware is a custom middleware to authenticate requests using JWT

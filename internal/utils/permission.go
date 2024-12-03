@@ -16,6 +16,7 @@ var (
 	permissionsTimestamps = make(map[int64]time.Time) // Map to store the timestamp of when permissions were last fetched
 	cacheMutex            = &sync.RWMutex{}
 	cacheExpiry           = 5 * time.Minute // Cache expiration time
+	cacheMaxSize          = 100             // Max size of the cache
 )
 
 // CheckUserPermissions verifies if the user has the required permissions for an action,
@@ -28,25 +29,26 @@ func CheckUserPermissions(ctx context.Context, requiredPermissions []string, que
 	}
 
 	// Check cache first
-	if permissions, found := getCachedPermissions(userID); found {
+	permissions, found := getCachedPermissions(userID)
+	if found {
 		// If found in cache, use the cached permissions
 		if hasRequiredPermissions(permissions, requiredPermissions) {
 			return nil
 		}
-	} else {
-		// If not found in cache, fetch from database and update cache
-		userPermissions, err := queries.GetUserPermissions(ctx, userID)
-		if err != nil {
-			return fmt.Errorf("failed to fetch user permissions: %w", err)
-		}
+	}
 
-		// Cache the fetched permissions with a timestamp
-		cachePermissions(userID, userPermissions)
+	// If not found in cache, fetch from database and update cache
+	userPermissions, err := queries.GetUserPermissions(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch user permissions: %w", err)
+	}
 
-		// Check permissions
-		if hasRequiredPermissions(userPermissions, requiredPermissions) {
-			return nil
-		}
+	// Cache the fetched permissions with a timestamp
+	cachePermissions(userID, userPermissions)
+
+	// Check permissions
+	if hasRequiredPermissions(userPermissions, requiredPermissions) {
+		return nil
 	}
 
 	// Return error if permissions are insufficient
@@ -76,8 +78,28 @@ func cachePermissions(userID int64, permissions []string) {
 	cacheMutex.Lock() // Write lock for cache
 	defer cacheMutex.Unlock()
 
+	// Check if the cache size exceeds the limit
+	if len(userPermissionsCache) >= cacheMaxSize {
+		evictExpiredCacheEntries() // Evict expired entries if the cache is full
+	}
+
+	// Store the permissions and update the timestamp
 	userPermissionsCache[userID] = permissions
 	permissionsTimestamps[userID] = time.Now() // Update the timestamp for this user
+}
+
+// evictExpiredCacheEntries removes expired entries from the cache.
+func evictExpiredCacheEntries() {
+	for userID, timestamp := range permissionsTimestamps {
+		if time.Since(timestamp) > cacheExpiry {
+			// Remove the expired entry from both cache maps
+			delete(userPermissionsCache, userID)
+			delete(permissionsTimestamps, userID)
+		}
+	}
+
+	// If the cache still exceeds the max size, we can perform additional logic here.
+	// This could be either random eviction or eviction based on some custom policy (e.g., LRU).
 }
 
 // permissionsTimestamp retrieves the timestamp of when the permissions were last updated.
