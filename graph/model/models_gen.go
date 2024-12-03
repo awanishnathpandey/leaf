@@ -167,6 +167,13 @@ type GroupSort struct {
 	Order SortOrder      `json:"order"`
 }
 
+type LoginResponse struct {
+	AccessToken  string    `json:"access_token"`
+	User         *AuthUser `json:"user"`
+	RefreshToken string    `json:"refresh_token"`
+	ExpiresIn    int64     `json:"expires_in"`
+}
+
 type Mutation struct {
 }
 
@@ -313,6 +320,10 @@ type UserFilter struct {
 type UserSort struct {
 	Field UserSortField `json:"field"`
 	Order SortOrder     `json:"order"`
+}
+
+type RefreshToken struct {
+	RefreshToken string `json:"refreshToken"`
 }
 
 type Register struct {

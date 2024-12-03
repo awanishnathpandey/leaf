@@ -27,9 +27,15 @@ input login {
   email: String!
 }
 
+input refreshToken {
+  refreshToken: String!
+}
+
 type LoginResponse {
-  token: String!
+  access_token: String!
   user: AuthUser!
+  refresh_token:String!
+  expires_in: Int!
 }
 
 input forgotPassword {
@@ -58,4 +64,5 @@ extend type Mutation {
   resetPassword(input: resetPassword!): Boolean!
   changePassword(input: changePassword!): Boolean!
   verifyEmail(token: String!): Boolean!
+  refreshToken(input: refreshToken): LoginResponse!
 }

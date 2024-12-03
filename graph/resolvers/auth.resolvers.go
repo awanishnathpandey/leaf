@@ -7,6 +7,8 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
@@ -66,14 +68,25 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (*model
 	if err := utils.CheckPassword(user.Password, input.Password); err != nil {
 		return nil, fmt.Errorf("invalid credentials")
 	}
-	token, err := utils.GenerateJWT(user.ID, user.Email, user.FirstName, user.LastName)
+	accessToken, err := utils.GenerateJWT(user.ID, user.Email, user.FirstName, user.LastName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate token")
+		return nil, fmt.Errorf("failed to generate access token")
+	}
+	jwtExpiryMinutes, err := strconv.Atoi(os.Getenv("JWT_EXPIRY_MINUTES"))
+	if err != nil {
+		return nil, fmt.Errorf("JWT_EXPIRY_MINUTES is invalid: %v", err)
+	}
+
+	refreshToken, err := utils.GenerateJWTRefresh(user.ID, user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token")
 	}
 
 	// Return the token and user in the response
 	loginResponse := &model.LoginResponse{
-		Token: token,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    int64(jwtExpiryMinutes) * 60,
 		User: &model.AuthUser{
 			ID:             user.ID,
 			FirstName:      user.FirstName,
@@ -135,12 +148,16 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input model.Chang
 	}
 
 	return true, nil
-
 }
 
 // VerifyEmail is the resolver for the verifyEmail field.
 func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (bool, error) {
 	panic(fmt.Errorf("not implemented: VerifyEmail - verifyEmail"))
+}
+
+// RefreshToken is the resolver for the refreshToken field.
+func (r *mutationResolver) RefreshToken(ctx context.Context, input *model.RefreshToken) (*model.LoginResponse, error) {
+	panic(fmt.Errorf("not implemented: RefreshToken - refreshToken"))
 }
 
 // Me is the resolver for the me field.

@@ -35,11 +35,6 @@ type ResetPassword struct {
 // 	UpdatedAt       int64  `json:"updatedAt"`
 // }
 
-type LoginResponse struct {
-	Token string    `json:"token"`
-	User  *AuthUser `json:"user"`
-}
-
 // Validate function to validate NewFolder struct
 func (f *Register) Validate() error {
 	return validate.Struct(f)

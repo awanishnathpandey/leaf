@@ -101,7 +101,7 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 		secretKey := []byte(os.Getenv("JWT_SECRET"))
 
 		body := c.Body()
-		if strings.Contains(string(body), "login") || strings.Contains(string(body), "register") {
+		if strings.Contains(string(body), "login") || strings.Contains(string(body), "register") || strings.Contains(string(body), "refreshToken") {
 			return c.Next()
 		}
 

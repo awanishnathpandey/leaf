@@ -23,6 +23,13 @@ type MyClaims struct {
 	Aud       string `json:"aud"`
 	jwt.RegisteredClaims
 }
+type MyRefreshClaims struct {
+	ClientID string `json:"client_id"`
+	UID      string `json:"uid"`
+	Email    string `json:"email"`
+	Aud      string `json:"aud"`
+	jwt.RegisteredClaims
+}
 
 // GenerateJWT generates a JWT token for a given user ID.
 func GenerateJWT(userID int64, email, givenName, surname string) (string, error) {
@@ -131,4 +138,73 @@ func VerifyWithOAuthToken(token string) (bool, error) {
 		return active, nil
 	}
 	return false, fmt.Errorf("unexpected response format")
+}
+
+// GenerateJWT generates a JWT token for a given user ID.
+func GenerateJWTRefresh(userID int64, email string) (string, error) {
+	jwtRefreshSecret := os.Getenv("JWT_REFRESH_SECRET")
+	if jwtRefreshSecret == "" {
+		return "", fmt.Errorf("JWT_REFRESH_SECRET is not set in the environment")
+	}
+
+	clientID := os.Getenv("JWT_CLIENT_ID")
+	if clientID == "" {
+		return "", fmt.Errorf("JWT_CLIENT_ID is not set in the environment")
+	}
+
+	jwtIssuer := os.Getenv("JWT_ISSUER")
+	if jwtIssuer == "" {
+		return "", fmt.Errorf("JWT_ISSUER is not set in the environment")
+	}
+
+	jwtRefreshExpiryMinutes, err := strconv.Atoi(os.Getenv("JWT_REFRESH_EXPIRY_MINUTES"))
+	if err != nil {
+		return "", fmt.Errorf("JWT_REFRESH_EXPIRY_MINUTES is invalid: %v", err)
+	}
+
+	jwtAudience := os.Getenv("JWT_AUDIENCE")
+	if jwtAudience == "" {
+		return "", fmt.Errorf("JWT_AUDIENCE is not set in the environment")
+	}
+
+	claims := &MyRefreshClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(jwtRefreshExpiryMinutes) * time.Minute)),
+			// IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer: jwtIssuer,
+		},
+		ClientID: clientID,
+		UID:      fmt.Sprintf("%d", userID),
+		Email:    email,
+		Aud:      jwtAudience,
+	}
+
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedRefreshToken, err := refreshToken.SignedString([]byte(jwtRefreshSecret))
+	if err != nil {
+		return "", err
+	}
+
+	return signedRefreshToken, nil
+}
+
+// VerifyJWT verifies the provided JWT token and returns the claims
+func VerifyJWTRefresh(tokenString string) (*jwt.RegisteredClaims, error) {
+	refreshSecretKey := []byte(os.Getenv("JWT_REFRESH_SECRET"))
+
+	// Parse the token
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Return the secret key for verification
+		return refreshSecretKey, nil
+	})
+	if err != nil || !token.Valid {
+		return nil, errors.New("invalid refresh token")
+	}
+
+	// Return the claims (you can extract any custom claim here)
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+	if !ok {
+		return nil, errors.New("invalid refresh token claims")
+	}
+	return claims, nil
 }
