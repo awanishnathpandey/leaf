@@ -18,6 +18,7 @@ type Querier interface {
 	CreateFile(ctx context.Context, arg CreateFileParams) (File, error)
 	CreateFolder(ctx context.Context, arg CreateFolderParams) (Folder, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
+	CreatePasswordReset(ctx context.Context, arg CreatePasswordResetParams) (PasswordReset, error)
 	CreatePermission(ctx context.Context, arg CreatePermissionParams) (Role, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
@@ -27,6 +28,7 @@ type Querier interface {
 	DeleteFoldersByIDs(ctx context.Context, dollar_1 []int64) error
 	DeleteGroup(ctx context.Context, id int64) error
 	DeleteGroupsByIDs(ctx context.Context, dollar_1 []int64) error
+	DeletePasswordResetbyUserID(ctx context.Context, userID int64) error
 	DeletePermission(ctx context.Context, id int64) error
 	DeletePermissionsByIDs(ctx context.Context, dollar_1 []int64) error
 	DeleteRole(ctx context.Context, id int64) error
@@ -70,6 +72,7 @@ type Querier interface {
 	GetPaginatedUsersByGroupIDCount(ctx context.Context, arg GetPaginatedUsersByGroupIDCountParams) (int64, error)
 	GetPaginatedUsersByRoleID(ctx context.Context, arg GetPaginatedUsersByRoleIDParams) ([]GetPaginatedUsersByRoleIDRow, error)
 	GetPaginatedUsersByRoleIDCount(ctx context.Context, arg GetPaginatedUsersByRoleIDCountParams) (int64, error)
+	GetPasswordResetbyUserID(ctx context.Context, userID int64) (PasswordReset, error)
 	GetPermission(ctx context.Context, id int64) (GetPermissionRow, error)
 	GetPermissionsByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error)
 	GetPermissionsByRoleID(ctx context.Context, roleID int64) ([]Permission, error)

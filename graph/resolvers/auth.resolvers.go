@@ -6,12 +6,14 @@ package resolvers
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
 	"strconv"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/external/mail"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/utils"
@@ -107,12 +109,119 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (*model
 
 // ForgotPassword is the resolver for the forgotPassword field.
 func (r *mutationResolver) ForgotPassword(ctx context.Context, input model.ForgotPassword) (bool, error) {
-	panic(fmt.Errorf("not implemented: ForgotPassword - forgotPassword"))
+	user, err := r.DB.GetUserByEmail(ctx, input.Email)
+	if err != nil {
+		return false, fmt.Errorf("user not found: %w", err)
+	}
+
+	// Generate a reset token
+	resetToken, err := utils.GeneratePasswordResetToken(user.ID)
+	if err != nil {
+		return false, fmt.Errorf("failed to generate reset token: %w", err)
+	}
+
+	existingPasswordReset, err := r.DB.GetPasswordResetbyUserID(ctx, user.ID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		// Return an error if the query fails (excluding no rows found)
+		return false, fmt.Errorf("failed to get password reset: %w", err)
+	}
+
+	if existingPasswordReset.ID != 0 {
+		// If an entry exists, delete it
+		err = r.DB.DeletePasswordResetbyUserID(ctx, user.ID)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete existing password reset: %w", err)
+		}
+	}
+
+	// Create a new password reset entry
+	newPasswordReset, err := r.DB.CreatePasswordReset(ctx, generated.CreatePasswordResetParams{
+		UserID:     user.ID,
+		ResetToken: resetToken,
+		CreatedBy:  user.Email,
+	})
+
+	if err != nil {
+		return false, fmt.Errorf("failed to store reset token: %w", err)
+	}
+	// Fetch the template from the database
+	templateData, err := r.DB.GetEmailTemplateByName(ctx, "password_reset")
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch template: %w", err)
+	}
+
+	mailData, err := mail.ConvertMailData(templateData.MailData)
+	if err != nil {
+		return false, fmt.Errorf("failed to convert mail data: %w", err)
+	}
+	// mailData is already of type map[string]interface{}
+	if mailData != nil {
+		// Update the name and email fields in the map
+		mailData["Name"] = user.FirstName // Replace with the new name
+		mailData["Email"] = user.Email    // Replace with the new email
+		mailData["ResetToken"] = newPasswordReset.ResetToken
+	} else {
+		return false, fmt.Errorf("mailData is nil")
+	}
+	mailTo := []string{user.Email}
+
+	// Step 3: Render the template with provided data
+	renderedTemplate, err := mail.RenderTemplate(templateData.Content, mailData)
+	if err != nil {
+		return false, fmt.Errorf("failed to render template: %w", err)
+	}
+
+	mailSubject := "Your Password Reset Token"
+
+	// Step 4: Send the email with the rendered template
+	err = r.MailService.SendEmail(mailTo, templateData.MailCc, templateData.MailBcc, mailSubject, renderedTemplate, mailData)
+	if err != nil {
+		return false, fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return true, nil
 }
 
 // ResetPassword is the resolver for the resetPassword field.
 func (r *mutationResolver) ResetPassword(ctx context.Context, input model.ResetPassword) (bool, error) {
-	panic(fmt.Errorf("not implemented: ResetPassword - resetPassword"))
+	user, err := r.DB.GetUserByEmail(ctx, input.Email)
+	if err != nil {
+		return false, fmt.Errorf("user not found: %w", err)
+	}
+
+	// Fetch the existing password reset entry
+	existingPasswordReset, err := r.DB.GetPasswordResetbyUserID(ctx, user.ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, fmt.Errorf("no password reset entry found")
+		}
+		return false, fmt.Errorf("failed to retrieve password reset entry: %w", err)
+	}
+
+	// Validate the reset token
+	if existingPasswordReset.ResetToken != input.ResetToken {
+		return false, fmt.Errorf("invalid reset token")
+	}
+
+	// Hash the new password
+	hashedPassword, err := utils.HashPassword(input.NewPassword)
+	if err != nil {
+		return false, fmt.Errorf("failed to hash password: %w", err)
+	}
+	// Update the user's password
+	err = r.DB.UpdateUserPassword(ctx, generated.UpdateUserPasswordParams{
+		Email:    user.Email,
+		Password: hashedPassword,
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to update password: %w", err)
+	}
+	// Delete the password reset entry
+	err = r.DB.DeletePasswordResetbyUserID(ctx, user.ID)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete password reset: %w", err)
+	}
+	return true, nil
 }
 
 // ChangePassword is the resolver for the changePassword field.
@@ -149,11 +258,6 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input model.Chang
 	}
 
 	return true, nil
-}
-
-// VerifyEmail is the resolver for the verifyEmail field.
-func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (bool, error) {
-	panic(fmt.Errorf("not implemented: VerifyEmail - verifyEmail"))
 }
 
 // RefreshToken is the resolver for the refreshToken field.
@@ -200,7 +304,6 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input *model.Refres
 	}
 
 	return loginResponse, nil
-
 }
 
 // Me is the resolver for the me field.

@@ -83,6 +83,16 @@ type GroupUser struct {
 	UpdatedBy string `json:"updated_by"`
 }
 
+type PasswordReset struct {
+	ID         int64  `json:"id"`
+	UserID     int64  `json:"user_id"`
+	ResetToken string `json:"reset_token"`
+	CreatedAt  int64  `json:"created_at"`
+	UpdatedAt  int64  `json:"updated_at"`
+	CreatedBy  string `json:"created_by"`
+	UpdatedBy  string `json:"updated_by"`
+}
+
 type Permission struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`

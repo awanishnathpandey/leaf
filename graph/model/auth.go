@@ -20,10 +20,10 @@ type Login struct {
 // 	Password string `json:"password" validate:"required,min=3,max=50"`
 // }
 
-type ResetPassword struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
+// type ResetPassword struct {
+// 	Name  string `json:"name"`
+// 	Email string `json:"email"`
+// }
 
 // type AuthUser struct {
 // 	ID              int64  `json:"id"`

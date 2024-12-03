@@ -2,6 +2,8 @@ package utils
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -217,4 +219,16 @@ func VerifyJWTRefresh(tokenString string) (*MyRefreshClaims, error) {
 	}
 	fmt.Println(claims)
 	return claims, nil
+}
+
+func GeneratePasswordResetToken(userID int64) (string, error) {
+	// Create a slice of bytes with the required length
+	bytes := make([]byte, 20)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	// Convert the byte slice into a hexadecimal string
+	return hex.EncodeToString(bytes), nil
 }

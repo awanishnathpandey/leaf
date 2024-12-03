@@ -333,6 +333,12 @@ type Register struct {
 	Password  string `json:"password"`
 }
 
+type ResetPassword struct {
+	ResetToken  string `json:"resetToken"`
+	Email       string `json:"email"`
+	NewPassword string `json:"newPassword"`
+}
+
 type FileSortField string
 
 const (
