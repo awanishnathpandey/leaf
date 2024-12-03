@@ -1,5 +1,5 @@
 -- name: CreateFile :one
-INSERT INTO files (name, slug, url, folder_id, created_by, updated_by)
+INSERT INTO files (name, slug, file_path, folder_id, created_by, updated_by)
 VALUES ($1, $2, $3, $4, $5, $5)
 RETURNING *;
 
@@ -17,7 +17,7 @@ WHERE folder_id = $1;
 
 -- name: UpdateFile :one
 UPDATE files
-SET name = $2, slug = $3, url = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
+SET name = $2, slug = $3, file_path = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
 RETURNING *;
 

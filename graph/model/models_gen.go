@@ -9,13 +9,23 @@ import (
 )
 
 type AuthUser struct {
-	ID         int64  `json:"id"`
-	FirstName  string `json:"firstName"`
-	LastName   string `json:"lastName"`
-	Email      string `json:"email"`
-	LastSeenAt int64  `json:"lastSeenAt"`
-	CreatedAt  int64  `json:"createdAt"`
-	UpdatedAt  int64  `json:"updatedAt"`
+	ID             int64   `json:"id"`
+	FirstName      string  `json:"firstName"`
+	LastName       string  `json:"lastName"`
+	Email          string  `json:"email"`
+	JobTitle       *string `json:"jobTitle,omitempty"`
+	LineOfBusiness *string `json:"lineOfBusiness,omitempty"`
+	LineManager    *string `json:"lineManager,omitempty"`
+	LastSeenAt     int64   `json:"lastSeenAt"`
+	CreatedAt      int64   `json:"createdAt"`
+	UpdatedAt      int64   `json:"updatedAt"`
+}
+
+type CreateFile struct {
+	Name     string `json:"name"`
+	Slug     string `json:"slug"`
+	FilePath string `json:"filePath"`
+	FolderID int64  `json:"folderId"`
 }
 
 type CreateFolder struct {
@@ -51,17 +61,20 @@ type EmailResponse struct {
 }
 
 type File struct {
-	ID        int64            `json:"id"`
-	Name      string           `json:"name"`
-	Slug      string           `json:"slug"`
-	URL       string           `json:"url"`
-	FolderID  int64            `json:"folderId"`
-	Folder    *Folder          `json:"folder"`
-	CreatedAt int64            `json:"createdAt"`
-	UpdatedAt int64            `json:"updatedAt"`
-	CreatedBy string           `json:"createdBy"`
-	UpdatedBy string           `json:"updatedBy"`
-	Groups    *GroupConnection `json:"groups"`
+	ID           int64            `json:"id"`
+	Name         string           `json:"name"`
+	Slug         string           `json:"slug"`
+	FilePath     string           `json:"filePath"`
+	FileType     string           `json:"fileType"`
+	FileBytes    int64            `json:"fileBytes"`
+	AutoDownload bool             `json:"autoDownload"`
+	FolderID     int64            `json:"folderId"`
+	Folder       *Folder          `json:"folder"`
+	CreatedAt    int64            `json:"createdAt"`
+	UpdatedAt    int64            `json:"updatedAt"`
+	CreatedBy    string           `json:"createdBy"`
+	UpdatedBy    string           `json:"updatedBy"`
+	Groups       *GroupConnection `json:"groups"`
 }
 
 type FileConnection struct {
@@ -234,6 +247,13 @@ type SendEmailInput struct {
 	TemplateName string `json:"templateName"`
 }
 
+type UpdateFile struct {
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	Slug     string `json:"slug"`
+	FilePath string `json:"filePath"`
+}
+
 type UpdateFolder struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
@@ -260,6 +280,9 @@ type User struct {
 	LastName        string           `json:"lastName"`
 	Email           string           `json:"email"`
 	Password        string           `json:"password"`
+	JobTitle        *string          `json:"jobTitle,omitempty"`
+	LineOfBusiness  *string          `json:"lineOfBusiness,omitempty"`
+	LineManager     *string          `json:"lineManager,omitempty"`
 	EmailVerifiedAt *int64           `json:"emailVerifiedAt,omitempty"`
 	LastSeenAt      int64            `json:"lastSeenAt"`
 	CreatedAt       int64            `json:"createdAt"`

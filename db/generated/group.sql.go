@@ -107,7 +107,7 @@ func (q *Queries) DeleteGroupsByIDs(ctx context.Context, dollar_1 []int64) error
 }
 
 const getFilesByGroupID = `-- name: GetFilesByGroupID :many
-SELECT f.id, f.name, f.slug, f.url, f.folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by
+SELECT f.id, f.name, f.slug, f.file_path, f.file_type, f.file_bytes, f.auto_download, f.folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by
 FROM files f
 JOIN group_files gf ON f.id = gf.file_id
 WHERE gf.group_id = $1
@@ -126,7 +126,10 @@ func (q *Queries) GetFilesByGroupID(ctx context.Context, groupID int64) ([]File,
 			&i.ID,
 			&i.Name,
 			&i.Slug,
-			&i.Url,
+			&i.FilePath,
+			&i.FileType,
+			&i.FileBytes,
+			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -337,7 +340,7 @@ func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group,
 }
 
 const getPaginatedFilesByGroupID = `-- name: GetPaginatedFilesByGroupID :many
-SELECT id, name, slug, url, folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by, group_id, file_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM files f
+SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by, group_id, file_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM files f
 JOIN group_files gf ON f.id = gf.file_id
 WHERE 
     gf.group_id = $3  -- Filter by group_id
@@ -367,21 +370,24 @@ type GetPaginatedFilesByGroupIDParams struct {
 }
 
 type GetPaginatedFilesByGroupIDRow struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	Url         string `json:"url"`
-	FolderID    int64  `json:"folder_id"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
-	GroupID     int64  `json:"group_id"`
-	FileID      int64  `json:"file_id"`
-	CreatedAt_2 int64  `json:"created_at_2"`
-	UpdatedAt_2 int64  `json:"updated_at_2"`
-	CreatedBy_2 string `json:"created_by_2"`
-	UpdatedBy_2 string `json:"updated_by_2"`
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Slug         string `json:"slug"`
+	FilePath     string `json:"file_path"`
+	FileType     string `json:"file_type"`
+	FileBytes    int64  `json:"file_bytes"`
+	AutoDownload bool   `json:"auto_download"`
+	FolderID     int64  `json:"folder_id"`
+	CreatedAt    int64  `json:"created_at"`
+	UpdatedAt    int64  `json:"updated_at"`
+	CreatedBy    string `json:"created_by"`
+	UpdatedBy    string `json:"updated_by"`
+	GroupID      int64  `json:"group_id"`
+	FileID       int64  `json:"file_id"`
+	CreatedAt_2  int64  `json:"created_at_2"`
+	UpdatedAt_2  int64  `json:"updated_at_2"`
+	CreatedBy_2  string `json:"created_by_2"`
+	UpdatedBy_2  string `json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginatedFilesByGroupIDParams) ([]GetPaginatedFilesByGroupIDRow, error) {
@@ -405,7 +411,10 @@ func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginat
 			&i.ID,
 			&i.Name,
 			&i.Slug,
-			&i.Url,
+			&i.FilePath,
+			&i.FileType,
+			&i.FileBytes,
+			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -909,7 +918,10 @@ SELECT
     u.id, 
     u.first_name,
     u.last_name, 
-    u.email, 
+    u.email,
+    u.job_title,
+    u.line_of_business,
+    u.line_manager, 
     u.email_verified_at, 
     u.last_seen_at, 
     u.created_at, 
@@ -951,6 +963,9 @@ type GetPaginatedUsersByGroupIDRow struct {
 	FirstName       string      `json:"first_name"`
 	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
+	JobTitle        pgtype.Text `json:"job_title"`
+	LineOfBusiness  pgtype.Text `json:"line_of_business"`
+	LineManager     pgtype.Text `json:"line_manager"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
 	CreatedAt       int64       `json:"created_at"`
@@ -982,6 +997,9 @@ func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginat
 			&i.FirstName,
 			&i.LastName,
 			&i.Email,
+			&i.JobTitle,
+			&i.LineOfBusiness,
+			&i.LineManager,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
 			&i.CreatedAt,
@@ -1023,7 +1041,7 @@ func (q *Queries) GetPaginatedUsersByGroupIDCount(ctx context.Context, arg GetPa
 }
 
 const getUsersByGroupID = `-- name: GetUsersByGroupID :many
-SELECT u.id, u.first_name, u.last_name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
+SELECT u.id, u.first_name, u.last_name, u.email, u.job_title, u.line_of_business, u.line_manager, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
 FROM users u
 JOIN group_users gu ON u.id = gu.user_id
 WHERE gu.group_id = $1
@@ -1034,6 +1052,9 @@ type GetUsersByGroupIDRow struct {
 	FirstName       string      `json:"first_name"`
 	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
+	JobTitle        pgtype.Text `json:"job_title"`
+	LineOfBusiness  pgtype.Text `json:"line_of_business"`
+	LineManager     pgtype.Text `json:"line_manager"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
 	CreatedAt       int64       `json:"created_at"`
@@ -1055,6 +1076,9 @@ func (q *Queries) GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUs
 			&i.FirstName,
 			&i.LastName,
 			&i.Email,
+			&i.JobTitle,
+			&i.LineOfBusiness,
+			&i.LineManager,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
 			&i.CreatedAt,

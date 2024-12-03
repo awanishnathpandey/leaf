@@ -15,7 +15,7 @@ INSERT INTO users (
 ) VALUES (
   $1, $2, $3, $4
 )
-RETURNING id, first_name, last_name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
+RETURNING id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type RegisterUserParams struct {
@@ -39,6 +39,9 @@ func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (Use
 		&i.LastName,
 		&i.Email,
 		&i.Password,
+		&i.JobTitle,
+		&i.LineOfBusiness,
+		&i.LineManager,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
 		&i.CreatedAt,
@@ -48,4 +51,20 @@ func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (Use
 		&i.UpdatedBy,
 	)
 	return i, err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE users
+  set password = $2, updated_at = EXTRACT(EPOCH FROM NOW())
+WHERE email = $1
+`
+
+type UpdateUserPasswordParams struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.Email, arg.Password)
+	return err
 }

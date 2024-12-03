@@ -88,7 +88,7 @@ SELECT * FROM permissions
 ORDER BY name;
 
 -- name: GetUsersByRoleID :many
-SELECT u.id, u.first_name, u.last_name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
+SELECT u.id, u.first_name, u.last_name, u.email, u.job_title, u.line_of_business, u.line_manager, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
 FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE ur.role_id = $1;
@@ -218,7 +218,10 @@ SELECT
     u.id, 
     u.first_name,
     u.last_name, 
-    u.email, 
+    u.email,
+    u.job_title,
+    u.line_of_business,
+    u.line_manager, 
     u.email_verified_at, 
     u.last_seen_at, 
     u.created_at, 

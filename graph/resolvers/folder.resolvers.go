@@ -155,15 +155,17 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 		edges[i] = &model.FileEdge{
 			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.File{
-				ID:        file.ID,
-				Name:      file.Name,
-				Slug:      file.Slug,
-				URL:       file.Url,
-				FolderID:  file.FolderID,
-				CreatedAt: file.CreatedAt,
-				UpdatedAt: file.UpdatedAt,
-				CreatedBy: file.CreatedBy,
-				UpdatedBy: file.UpdatedBy,
+				ID:           file.ID,
+				Name:         file.Name,
+				Slug:         file.Slug,
+				FilePath:     file.FilePath,
+				FileBytes:    file.FileBytes,
+				AutoDownload: file.AutoDownload,
+				FolderID:     file.FolderID,
+				CreatedAt:    file.CreatedAt,
+				UpdatedAt:    file.UpdatedAt,
+				CreatedBy:    file.CreatedBy,
+				UpdatedBy:    file.UpdatedBy,
 			},
 		}
 	}

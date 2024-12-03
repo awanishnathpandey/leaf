@@ -6,7 +6,10 @@ type File {
   id: ID!
   name: String!
   slug: String!
-  url: String!
+  filePath: String!
+  fileType: String!
+  fileBytes: Int!
+  autoDownload: Boolean!
   folderId: Int!
   folder: Folder!
   createdAt: Int!
@@ -19,7 +22,7 @@ type File {
 input CreateFile {
   name: String!
   slug: String!
-  url: String!
+  filePath: String!
   folderId: ID!       # The folder to which the file belongs
 }
 
@@ -27,7 +30,7 @@ input UpdateFile {
   id: ID!
   name: String!
   slug: String!
-  url: String!
+  filePath: String!
 }
 
 # Filters for Files

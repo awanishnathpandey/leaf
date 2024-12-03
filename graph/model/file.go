@@ -12,19 +12,19 @@ package model
 // 	UpdatedAt int64    `json:"updatedAt"`
 // }
 
-type UpdateFile struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-	Slug string `json:"slug"`
-	URL  string `json:"url"`
-}
+// type UpdateFile struct {
+// 	ID   int64  `json:"id"`
+// 	Name string `json:"name"`
+// 	Slug string `json:"slug"`
+// 	FilePath  string `json:"url"`
+// }
 
-type CreateFile struct {
-	Name     string `json:"name"`
-	Slug     string `json:"slug" validate:"required,min=3,max=100"`
-	URL      string `json:"url" validate:"required,min=3"`
-	FolderID int64  `json:"folderId"`
-}
+// type CreateFile struct {
+// 	Name     string `json:"name"`
+// 	Slug     string `json:"slug" validate:"required,min=3,max=100"`
+// 	URL      string `json:"url" validate:"required,min=3"`
+// 	FolderID int64  `json:"folderId"`
+// }
 
 // Validate function to validate NewFolder struct
 func (f *CreateFile) Validate() error {

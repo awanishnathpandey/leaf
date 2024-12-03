@@ -20,13 +20,13 @@ INSERT INTO users (
 ) VALUES (
   $1, $2, $3, $4, $5, $5
 )
-RETURNING id, first_name, last_name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by;
+RETURNING id, first_name, last_name, email, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by;
 
 -- name: UpdateUser :one
 UPDATE users
   set first_name = $2, last_name = $3, email = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
-RETURNING id, first_name, last_name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by;
+RETURNING id, first_name, last_name, email, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by;
 
 -- name: UpdateUserEmailVerifiedAt :exec
 UPDATE users
@@ -61,7 +61,10 @@ SELECT
     first_name, 
     last_name,
     email, 
-    password, 
+    password,
+    job_title,
+    line_of_business,
+    line_manager, 
     email_verified_at, 
     last_seen_at, 
     created_at, 

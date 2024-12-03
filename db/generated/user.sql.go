@@ -17,7 +17,7 @@ INSERT INTO users (
 ) VALUES (
   $1, $2, $3, $4, $5, $5
 )
-RETURNING id, first_name, last_name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
+RETURNING id, first_name, last_name, email, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type CreateUserParams struct {
@@ -33,6 +33,9 @@ type CreateUserRow struct {
 	FirstName       string      `json:"first_name"`
 	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
+	JobTitle        pgtype.Text `json:"job_title"`
+	LineOfBusiness  pgtype.Text `json:"line_of_business"`
+	LineManager     pgtype.Text `json:"line_manager"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
 	CreatedAt       int64       `json:"created_at"`
@@ -56,6 +59,9 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		&i.FirstName,
 		&i.LastName,
 		&i.Email,
+		&i.JobTitle,
+		&i.LineOfBusiness,
+		&i.LineManager,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
 		&i.CreatedAt,
@@ -88,7 +94,7 @@ func (q *Queries) DeleteUsersByIDs(ctx context.Context, dollar_1 []int64) error 
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, first_name, last_name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
+SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -101,6 +107,9 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.LastName,
 		&i.Email,
 		&i.Password,
+		&i.JobTitle,
+		&i.LineOfBusiness,
+		&i.LineManager,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
 		&i.CreatedAt,
@@ -113,7 +122,7 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, first_name, last_name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
+SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -126,6 +135,9 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.LastName,
 		&i.Email,
 		&i.Password,
+		&i.JobTitle,
+		&i.LineOfBusiness,
+		&i.LineManager,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
 		&i.CreatedAt,
@@ -174,7 +186,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, first_name, last_name, email, password, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
+SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 ORDER BY email
 `
 
@@ -193,6 +205,9 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.LastName,
 			&i.Email,
 			&i.Password,
+			&i.JobTitle,
+			&i.LineOfBusiness,
+			&i.LineManager,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
 			&i.CreatedAt,
@@ -217,7 +232,10 @@ SELECT
     first_name, 
     last_name,
     email, 
-    password, 
+    password,
+    job_title,
+    line_of_business,
+    line_manager, 
     email_verified_at, 
     last_seen_at, 
     created_at, 
@@ -273,6 +291,9 @@ func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) 
 			&i.LastName,
 			&i.Email,
 			&i.Password,
+			&i.JobTitle,
+			&i.LineOfBusiness,
+			&i.LineManager,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
 			&i.CreatedAt,
@@ -315,7 +336,7 @@ const updateUser = `-- name: UpdateUser :one
 UPDATE users
   set first_name = $2, last_name = $3, email = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
-RETURNING id, first_name, last_name, email, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
+RETURNING id, first_name, last_name, email, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type UpdateUserParams struct {
@@ -331,6 +352,9 @@ type UpdateUserRow struct {
 	FirstName       string      `json:"first_name"`
 	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
+	JobTitle        pgtype.Text `json:"job_title"`
+	LineOfBusiness  pgtype.Text `json:"line_of_business"`
+	LineManager     pgtype.Text `json:"line_manager"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
 	CreatedAt       int64       `json:"created_at"`
@@ -354,6 +378,9 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		&i.FirstName,
 		&i.LastName,
 		&i.Email,
+		&i.JobTitle,
+		&i.LineOfBusiness,
+		&i.LineManager,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
 		&i.CreatedAt,

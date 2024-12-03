@@ -45,6 +45,9 @@ func (r *mutationResolver) Register(ctx context.Context, input model.Register) (
 		FirstName:       user.FirstName,
 		LastName:        user.LastName,
 		Email:           user.Email,
+		JobTitle:        &user.JobTitle.String,
+		LineOfBusiness:  &user.LineOfBusiness.String,
+		LineManager:     &user.LineManager.String,
 		EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
 		LastSeenAt:      user.LastSeenAt,
 		CreatedAt:       user.CreatedAt,
@@ -72,13 +75,16 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (*model
 	loginResponse := &model.LoginResponse{
 		Token: token,
 		User: &model.AuthUser{
-			ID:         user.ID,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
-			Email:      user.Email,
-			LastSeenAt: user.LastSeenAt,
-			CreatedAt:  user.CreatedAt,
-			UpdatedAt:  user.UpdatedAt,
+			ID:             user.ID,
+			FirstName:      user.FirstName,
+			LastName:       user.LastName,
+			Email:          user.Email,
+			JobTitle:       &user.JobTitle.String,
+			LineOfBusiness: &user.LineOfBusiness.String,
+			LineManager:    &user.LineManager.String,
+			LastSeenAt:     user.LastSeenAt,
+			CreatedAt:      user.CreatedAt,
+			UpdatedAt:      user.UpdatedAt,
 		},
 	}
 
@@ -97,7 +103,39 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, input model.ResetP
 
 // ChangePassword is the resolver for the changePassword field.
 func (r *mutationResolver) ChangePassword(ctx context.Context, input model.ChangePassword) (bool, error) {
-	panic(fmt.Errorf("not implemented: ChangePassword - changePassword"))
+	if input.NewPassword == "" || input.OldPassword == "" {
+		return false, fmt.Errorf("password cannot be empty")
+	}
+	// Retrieve userID from context
+	// userID := ctx.Value("userID").(int64) // Access the user ID from the context
+	userEmail := ctx.Value("userEmail").(string)
+
+	// Fetch user from DB based on the userID
+	user, err := r.DB.GetUserByEmail(ctx, userEmail)
+	if err != nil {
+		return false, fmt.Errorf("user not found: %w", err)
+	}
+	// Validate the old password
+	if err := utils.CheckPassword(user.Password, input.OldPassword); err != nil {
+		return false, fmt.Errorf("incorrect old password")
+	}
+
+	// Hash the new password
+	hashedPassword, err := utils.HashPassword(input.NewPassword)
+	if err != nil {
+		return false, fmt.Errorf("failed to hash password: %w", err)
+	}
+	// Update the user's password
+	err = r.DB.UpdateUserPassword(ctx, generated.UpdateUserPasswordParams{
+		Email:    user.Email,
+		Password: hashedPassword,
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to update password: %w", err)
+	}
+
+	return true, nil
+
 }
 
 // VerifyEmail is the resolver for the verifyEmail field.
@@ -114,18 +152,21 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	// Fetch user from DB based on the userID
 	user, err := r.DB.GetUserByEmail(ctx, userEmail)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	// Map the generated.User to model.User
 	modelUser := &model.User{
-		ID:         user.ID, // Assuming both have the same field names
-		FirstName:  user.FirstName,
-		LastName:   user.LastName,
-		Email:      user.Email,
-		LastSeenAt: user.LastSeenAt,
-		CreatedAt:  user.CreatedAt,
-		UpdatedAt:  user.UpdatedAt,
+		ID:             user.ID, // Assuming both have the same field names
+		FirstName:      user.FirstName,
+		LastName:       user.LastName,
+		Email:          user.Email,
+		JobTitle:       &user.JobTitle.String,
+		LineOfBusiness: &user.LineOfBusiness.String,
+		LineManager:    &user.LineManager.String,
+		LastSeenAt:     user.LastSeenAt,
+		CreatedAt:      user.CreatedAt,
+		UpdatedAt:      user.UpdatedAt,
 	}
 
 	return modelUser, nil
@@ -139,28 +180,3 @@ func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *authUserResolver) FirstName(ctx context.Context, obj *model.AuthUser) (string, error) {
-	panic(fmt.Errorf("not implemented: FirstName - firstName"))
-}
-func (r *authUserResolver) LastName(ctx context.Context, obj *model.AuthUser) (string, error) {
-	panic(fmt.Errorf("not implemented: LastName - lastName"))
-}
-func (r *registerResolver) FirstName(ctx context.Context, obj *model.Register, data string) error {
-	panic(fmt.Errorf("not implemented: FirstName - firstName"))
-}
-func (r *registerResolver) LastName(ctx context.Context, obj *model.Register, data string) error {
-	panic(fmt.Errorf("not implemented: LastName - lastName"))
-}
-func (r *Resolver) AuthUser() graph.AuthUserResolver { return &authUserResolver{r} }
-func (r *Resolver) Register() graph.RegisterResolver { return &registerResolver{r} }
-type authUserResolver struct{ *Resolver }
-type registerResolver struct{ *Resolver }
-*/

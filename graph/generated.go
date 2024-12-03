@@ -54,13 +54,16 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	AuthUser struct {
-		CreatedAt  func(childComplexity int) int
-		Email      func(childComplexity int) int
-		FirstName  func(childComplexity int) int
-		ID         func(childComplexity int) int
-		LastName   func(childComplexity int) int
-		LastSeenAt func(childComplexity int) int
-		UpdatedAt  func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Email          func(childComplexity int) int
+		FirstName      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		JobTitle       func(childComplexity int) int
+		LastName       func(childComplexity int) int
+		LastSeenAt     func(childComplexity int) int
+		LineManager    func(childComplexity int) int
+		LineOfBusiness func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
 	}
 
 	DashboardKPICount struct {
@@ -78,17 +81,20 @@ type ComplexityRoot struct {
 	}
 
 	File struct {
-		CreatedAt func(childComplexity int) int
-		CreatedBy func(childComplexity int) int
-		Folder    func(childComplexity int) int
-		FolderID  func(childComplexity int) int
-		Groups    func(childComplexity int, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) int
-		ID        func(childComplexity int) int
-		Name      func(childComplexity int) int
-		Slug      func(childComplexity int) int
-		URL       func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		UpdatedBy func(childComplexity int) int
+		AutoDownload func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		CreatedBy    func(childComplexity int) int
+		FileBytes    func(childComplexity int) int
+		FilePath     func(childComplexity int) int
+		FileType     func(childComplexity int) int
+		Folder       func(childComplexity int) int
+		FolderID     func(childComplexity int) int
+		Groups       func(childComplexity int, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) int
+		ID           func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Slug         func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+		UpdatedBy    func(childComplexity int) int
 	}
 
 	FileConnection struct {
@@ -278,8 +284,11 @@ type ComplexityRoot struct {
 		FirstName       func(childComplexity int) int
 		Groups          func(childComplexity int, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) int
 		ID              func(childComplexity int) int
+		JobTitle        func(childComplexity int) int
 		LastName        func(childComplexity int) int
 		LastSeenAt      func(childComplexity int) int
+		LineManager     func(childComplexity int) int
+		LineOfBusiness  func(childComplexity int) int
 		Password        func(childComplexity int) int
 		Roles           func(childComplexity int, first int64, after *int64, filter *model.RoleFilter, sort *model.RoleSort) int
 		UpdatedAt       func(childComplexity int) int
@@ -433,6 +442,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AuthUser.ID(childComplexity), true
 
+	case "AuthUser.jobTitle":
+		if e.complexity.AuthUser.JobTitle == nil {
+			break
+		}
+
+		return e.complexity.AuthUser.JobTitle(childComplexity), true
+
 	case "AuthUser.lastName":
 		if e.complexity.AuthUser.LastName == nil {
 			break
@@ -446,6 +462,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AuthUser.LastSeenAt(childComplexity), true
+
+	case "AuthUser.lineManager":
+		if e.complexity.AuthUser.LineManager == nil {
+			break
+		}
+
+		return e.complexity.AuthUser.LineManager(childComplexity), true
+
+	case "AuthUser.lineOfBusiness":
+		if e.complexity.AuthUser.LineOfBusiness == nil {
+			break
+		}
+
+		return e.complexity.AuthUser.LineOfBusiness(childComplexity), true
 
 	case "AuthUser.updatedAt":
 		if e.complexity.AuthUser.UpdatedAt == nil {
@@ -510,6 +540,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EmailResponse.Success(childComplexity), true
 
+	case "File.autoDownload":
+		if e.complexity.File.AutoDownload == nil {
+			break
+		}
+
+		return e.complexity.File.AutoDownload(childComplexity), true
+
 	case "File.createdAt":
 		if e.complexity.File.CreatedAt == nil {
 			break
@@ -523,6 +560,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.File.CreatedBy(childComplexity), true
+
+	case "File.fileBytes":
+		if e.complexity.File.FileBytes == nil {
+			break
+		}
+
+		return e.complexity.File.FileBytes(childComplexity), true
+
+	case "File.filePath":
+		if e.complexity.File.FilePath == nil {
+			break
+		}
+
+		return e.complexity.File.FilePath(childComplexity), true
+
+	case "File.fileType":
+		if e.complexity.File.FileType == nil {
+			break
+		}
+
+		return e.complexity.File.FileType(childComplexity), true
 
 	case "File.folder":
 		if e.complexity.File.Folder == nil {
@@ -570,13 +628,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.File.Slug(childComplexity), true
-
-	case "File.url":
-		if e.complexity.File.URL == nil {
-			break
-		}
-
-		return e.complexity.File.URL(childComplexity), true
 
 	case "File.updatedAt":
 		if e.complexity.File.UpdatedAt == nil {
@@ -1841,6 +1892,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.ID(childComplexity), true
 
+	case "User.jobTitle":
+		if e.complexity.User.JobTitle == nil {
+			break
+		}
+
+		return e.complexity.User.JobTitle(childComplexity), true
+
 	case "User.lastName":
 		if e.complexity.User.LastName == nil {
 			break
@@ -1854,6 +1912,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.LastSeenAt(childComplexity), true
+
+	case "User.lineManager":
+		if e.complexity.User.LineManager == nil {
+			break
+		}
+
+		return e.complexity.User.LineManager(childComplexity), true
+
+	case "User.lineOfBusiness":
+		if e.complexity.User.LineOfBusiness == nil {
+			break
+		}
+
+		return e.complexity.User.LineOfBusiness(childComplexity), true
 
 	case "User.password":
 		if e.complexity.User.Password == nil {
@@ -4976,6 +5048,129 @@ func (ec *executionContext) fieldContext_AuthUser_email(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _AuthUser_jobTitle(ctx context.Context, field graphql.CollectedField, obj *model.AuthUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AuthUser_jobTitle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobTitle, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AuthUser_jobTitle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuthUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AuthUser_lineOfBusiness(ctx context.Context, field graphql.CollectedField, obj *model.AuthUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AuthUser_lineOfBusiness(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LineOfBusiness, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AuthUser_lineOfBusiness(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuthUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AuthUser_lineManager(ctx context.Context, field graphql.CollectedField, obj *model.AuthUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AuthUser_lineManager(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LineManager, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AuthUser_lineManager(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuthUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AuthUser_lastSeenAt(ctx context.Context, field graphql.CollectedField, obj *model.AuthUser) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AuthUser_lastSeenAt(ctx, field)
 	if err != nil {
@@ -5592,8 +5787,8 @@ func (ec *executionContext) fieldContext_File_slug(_ context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _File_url(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_File_url(ctx, field)
+func (ec *executionContext) _File_filePath(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_File_filePath(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5606,7 +5801,7 @@ func (ec *executionContext) _File_url(ctx context.Context, field graphql.Collect
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.URL, nil
+		return obj.FilePath, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5623,7 +5818,7 @@ func (ec *executionContext) _File_url(ctx context.Context, field graphql.Collect
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_File_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_File_filePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "File",
 		Field:      field,
@@ -5631,6 +5826,138 @@ func (ec *executionContext) fieldContext_File_url(_ context.Context, field graph
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _File_fileType(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_File_fileType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FileType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_File_fileType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "File",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _File_fileBytes(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_File_fileBytes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FileBytes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_File_fileBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "File",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _File_autoDownload(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_File_autoDownload(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AutoDownload, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_File_autoDownload(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "File",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6218,8 +6545,14 @@ func (ec *executionContext) fieldContext_FileEdge_node(_ context.Context, field 
 				return ec.fieldContext_File_name(ctx, field)
 			case "slug":
 				return ec.fieldContext_File_slug(ctx, field)
-			case "url":
-				return ec.fieldContext_File_url(ctx, field)
+			case "filePath":
+				return ec.fieldContext_File_filePath(ctx, field)
+			case "fileType":
+				return ec.fieldContext_File_fileType(ctx, field)
+			case "fileBytes":
+				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "autoDownload":
+				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
 			case "folder":
@@ -7815,6 +8148,12 @@ func (ec *executionContext) fieldContext_LoginResponse_user(_ context.Context, f
 				return ec.fieldContext_AuthUser_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_AuthUser_email(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_AuthUser_jobTitle(ctx, field)
+			case "lineOfBusiness":
+				return ec.fieldContext_AuthUser_lineOfBusiness(ctx, field)
+			case "lineManager":
+				return ec.fieldContext_AuthUser_lineManager(ctx, field)
 			case "lastSeenAt":
 				return ec.fieldContext_AuthUser_lastSeenAt(ctx, field)
 			case "createdAt":
@@ -7877,6 +8216,12 @@ func (ec *executionContext) fieldContext_Mutation_register(ctx context.Context, 
 				return ec.fieldContext_User_email(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_User_jobTitle(ctx, field)
+			case "lineOfBusiness":
+				return ec.fieldContext_User_lineOfBusiness(ctx, field)
+			case "lineManager":
+				return ec.fieldContext_User_lineManager(ctx, field)
 			case "emailVerifiedAt":
 				return ec.fieldContext_User_emailVerifiedAt(ctx, field)
 			case "lastSeenAt":
@@ -8300,8 +8645,14 @@ func (ec *executionContext) fieldContext_Mutation_createFile(ctx context.Context
 				return ec.fieldContext_File_name(ctx, field)
 			case "slug":
 				return ec.fieldContext_File_slug(ctx, field)
-			case "url":
-				return ec.fieldContext_File_url(ctx, field)
+			case "filePath":
+				return ec.fieldContext_File_filePath(ctx, field)
+			case "fileType":
+				return ec.fieldContext_File_fileType(ctx, field)
+			case "fileBytes":
+				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "autoDownload":
+				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
 			case "folder":
@@ -8379,8 +8730,14 @@ func (ec *executionContext) fieldContext_Mutation_updateFile(ctx context.Context
 				return ec.fieldContext_File_name(ctx, field)
 			case "slug":
 				return ec.fieldContext_File_slug(ctx, field)
-			case "url":
-				return ec.fieldContext_File_url(ctx, field)
+			case "filePath":
+				return ec.fieldContext_File_filePath(ctx, field)
+			case "fileType":
+				return ec.fieldContext_File_fileType(ctx, field)
+			case "fileBytes":
+				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "autoDownload":
+				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
 			case "folder":
@@ -10166,6 +10523,12 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_email(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_User_jobTitle(ctx, field)
+			case "lineOfBusiness":
+				return ec.fieldContext_User_lineOfBusiness(ctx, field)
+			case "lineManager":
+				return ec.fieldContext_User_lineManager(ctx, field)
 			case "emailVerifiedAt":
 				return ec.fieldContext_User_emailVerifiedAt(ctx, field)
 			case "lastSeenAt":
@@ -10251,6 +10614,12 @@ func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context
 				return ec.fieldContext_User_email(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_User_jobTitle(ctx, field)
+			case "lineOfBusiness":
+				return ec.fieldContext_User_lineOfBusiness(ctx, field)
+			case "lineManager":
+				return ec.fieldContext_User_lineManager(ctx, field)
 			case "emailVerifiedAt":
 				return ec.fieldContext_User_emailVerifiedAt(ctx, field)
 			case "lastSeenAt":
@@ -11210,6 +11579,12 @@ func (ec *executionContext) fieldContext_Query_me(_ context.Context, field graph
 				return ec.fieldContext_User_email(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_User_jobTitle(ctx, field)
+			case "lineOfBusiness":
+				return ec.fieldContext_User_lineOfBusiness(ctx, field)
+			case "lineManager":
+				return ec.fieldContext_User_lineManager(ctx, field)
 			case "emailVerifiedAt":
 				return ec.fieldContext_User_emailVerifiedAt(ctx, field)
 			case "lastSeenAt":
@@ -11343,8 +11718,14 @@ func (ec *executionContext) fieldContext_Query_getFile(ctx context.Context, fiel
 				return ec.fieldContext_File_name(ctx, field)
 			case "slug":
 				return ec.fieldContext_File_slug(ctx, field)
-			case "url":
-				return ec.fieldContext_File_url(ctx, field)
+			case "filePath":
+				return ec.fieldContext_File_filePath(ctx, field)
+			case "fileType":
+				return ec.fieldContext_File_fileType(ctx, field)
+			case "fileBytes":
+				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "autoDownload":
+				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
 			case "folder":
@@ -11422,8 +11803,14 @@ func (ec *executionContext) fieldContext_Query_getFilesByFolder(ctx context.Cont
 				return ec.fieldContext_File_name(ctx, field)
 			case "slug":
 				return ec.fieldContext_File_slug(ctx, field)
-			case "url":
-				return ec.fieldContext_File_url(ctx, field)
+			case "filePath":
+				return ec.fieldContext_File_filePath(ctx, field)
+			case "fileType":
+				return ec.fieldContext_File_fileType(ctx, field)
+			case "fileBytes":
+				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "autoDownload":
+				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
 				return ec.fieldContext_File_folderId(ctx, field)
 			case "folder":
@@ -12180,6 +12567,12 @@ func (ec *executionContext) fieldContext_Query_getUser(ctx context.Context, fiel
 				return ec.fieldContext_User_email(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_User_jobTitle(ctx, field)
+			case "lineOfBusiness":
+				return ec.fieldContext_User_lineOfBusiness(ctx, field)
+			case "lineManager":
+				return ec.fieldContext_User_lineManager(ctx, field)
 			case "emailVerifiedAt":
 				return ec.fieldContext_User_emailVerifiedAt(ctx, field)
 			case "lastSeenAt":
@@ -12265,6 +12658,12 @@ func (ec *executionContext) fieldContext_Query_getUserByEmail(ctx context.Contex
 				return ec.fieldContext_User_email(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_User_jobTitle(ctx, field)
+			case "lineOfBusiness":
+				return ec.fieldContext_User_lineOfBusiness(ctx, field)
+			case "lineManager":
+				return ec.fieldContext_User_lineManager(ctx, field)
 			case "emailVerifiedAt":
 				return ec.fieldContext_User_emailVerifiedAt(ctx, field)
 			case "lastSeenAt":
@@ -13336,6 +13735,129 @@ func (ec *executionContext) fieldContext_User_password(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _User_jobTitle(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_jobTitle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobTitle, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_jobTitle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_lineOfBusiness(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_lineOfBusiness(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LineOfBusiness, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_lineOfBusiness(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_lineManager(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_lineManager(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LineManager, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_lineManager(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_emailVerifiedAt(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_emailVerifiedAt(ctx, field)
 	if err != nil {
@@ -14001,6 +14523,12 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_email(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_User_jobTitle(ctx, field)
+			case "lineOfBusiness":
+				return ec.fieldContext_User_lineOfBusiness(ctx, field)
+			case "lineManager":
+				return ec.fieldContext_User_lineManager(ctx, field)
 			case "emailVerifiedAt":
 				return ec.fieldContext_User_emailVerifiedAt(ctx, field)
 			case "lastSeenAt":
@@ -15806,7 +16334,7 @@ func (ec *executionContext) unmarshalInputCreateFile(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "slug", "url", "folderId"}
+	fieldsInOrder := [...]string{"name", "slug", "filePath", "folderId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15827,13 +16355,13 @@ func (ec *executionContext) unmarshalInputCreateFile(ctx context.Context, obj in
 				return it, err
 			}
 			it.Slug = data
-		case "url":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+		case "filePath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filePath"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.URL = data
+			it.FilePath = data
 		case "folderId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("folderId"))
 			data, err := ec.unmarshalNID2int64(ctx, v)
@@ -16419,7 +16947,7 @@ func (ec *executionContext) unmarshalInputUpdateFile(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "slug", "url"}
+	fieldsInOrder := [...]string{"id", "name", "slug", "filePath"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16447,13 +16975,13 @@ func (ec *executionContext) unmarshalInputUpdateFile(ctx context.Context, obj in
 				return it, err
 			}
 			it.Slug = data
-		case "url":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+		case "filePath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filePath"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.URL = data
+			it.FilePath = data
 		}
 	}
 
@@ -16963,6 +17491,12 @@ func (ec *executionContext) _AuthUser(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "jobTitle":
+			out.Values[i] = ec._AuthUser_jobTitle(ctx, field, obj)
+		case "lineOfBusiness":
+			out.Values[i] = ec._AuthUser_lineOfBusiness(ctx, field, obj)
+		case "lineManager":
+			out.Values[i] = ec._AuthUser_lineManager(ctx, field, obj)
 		case "lastSeenAt":
 			out.Values[i] = ec._AuthUser_lastSeenAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -17135,8 +17669,23 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "url":
-			out.Values[i] = ec._File_url(ctx, field, obj)
+		case "filePath":
+			out.Values[i] = ec._File_filePath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "fileType":
+			out.Values[i] = ec._File_fileType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "fileBytes":
+			out.Values[i] = ec._File_fileBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "autoDownload":
+			out.Values[i] = ec._File_autoDownload(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -19156,6 +19705,12 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "jobTitle":
+			out.Values[i] = ec._User_jobTitle(ctx, field, obj)
+		case "lineOfBusiness":
+			out.Values[i] = ec._User_lineOfBusiness(ctx, field, obj)
+		case "lineManager":
+			out.Values[i] = ec._User_lineManager(ctx, field, obj)
 		case "emailVerifiedAt":
 			out.Values[i] = ec._User_emailVerifiedAt(ctx, field, obj)
 		case "lastSeenAt":

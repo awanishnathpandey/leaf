@@ -8,6 +8,9 @@ type User {
   lastName: String!
   email: String!
   password: String!
+  jobTitle: String
+  lineOfBusiness: String
+  lineManager: String
   emailVerifiedAt: Int
   lastSeenAt: Int!
   createdAt: Int!

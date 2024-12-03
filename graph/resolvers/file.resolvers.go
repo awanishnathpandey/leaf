@@ -143,7 +143,7 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFil
 	file, err := r.DB.CreateFile(ctx, generated.CreateFileParams{
 		Name:      input.Name,
 		Slug:      input.Slug,
-		Url:       input.URL,
+		FilePath:  input.FilePath,
 		FolderID:  input.FolderID, // Ensure the Folder ID is passed correctly
 		CreatedBy: ctx.Value("userEmail").(string),
 	})
@@ -153,15 +153,17 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFil
 
 	// Map the result from sqlc to the GraphQL model
 	return &model.File{
-		ID:        file.ID,
-		Name:      file.Name,
-		Slug:      file.Slug,
-		URL:       file.Url,
-		FolderID:  file.FolderID,
-		CreatedAt: file.CreatedAt,
-		UpdatedAt: file.UpdatedAt,
-		CreatedBy: file.CreatedBy,
-		UpdatedBy: file.UpdatedBy,
+		ID:           file.ID,
+		Name:         file.Name,
+		Slug:         file.Slug,
+		FilePath:     file.FilePath,
+		FileBytes:    file.FileBytes,
+		AutoDownload: file.AutoDownload,
+		FolderID:     file.FolderID,
+		CreatedAt:    file.CreatedAt,
+		UpdatedAt:    file.UpdatedAt,
+		CreatedBy:    file.CreatedBy,
+		UpdatedBy:    file.UpdatedBy,
 	}, nil
 }
 
@@ -184,7 +186,7 @@ func (r *mutationResolver) UpdateFile(ctx context.Context, input model.UpdateFil
 		ID:        input.ID,
 		Name:      input.Name,
 		Slug:      input.Slug,
-		Url:       input.URL,
+		FilePath:  input.FilePath,
 		UpdatedBy: ctx.Value("userEmail").(string),
 	})
 	if err != nil {
@@ -193,15 +195,17 @@ func (r *mutationResolver) UpdateFile(ctx context.Context, input model.UpdateFil
 
 	// Map the result from sqlc to the GraphQL model
 	return &model.File{
-		ID:        file.ID,
-		Name:      file.Name,
-		Slug:      file.Slug,
-		URL:       file.Url,
-		FolderID:  file.FolderID,
-		CreatedAt: file.CreatedAt,
-		UpdatedAt: file.UpdatedAt,
-		CreatedBy: file.CreatedBy,
-		UpdatedBy: file.UpdatedBy,
+		ID:           file.ID,
+		Name:         file.Name,
+		Slug:         file.Slug,
+		FilePath:     file.FilePath,
+		FileBytes:    file.FileBytes,
+		AutoDownload: file.AutoDownload,
+		FolderID:     file.FolderID,
+		CreatedAt:    file.CreatedAt,
+		UpdatedAt:    file.UpdatedAt,
+		CreatedBy:    file.CreatedBy,
+		UpdatedBy:    file.UpdatedBy,
 	}, nil
 }
 
@@ -312,15 +316,17 @@ func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, fi
 		edges[i] = &model.FileEdge{
 			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.File{
-				ID:        file.ID,
-				Name:      file.Name,
-				Slug:      file.Slug,
-				URL:       file.Url,
-				FolderID:  file.FolderID,
-				CreatedAt: file.CreatedAt,
-				UpdatedAt: file.UpdatedAt,
-				CreatedBy: file.CreatedBy,
-				UpdatedBy: file.UpdatedBy,
+				ID:           file.ID,
+				Name:         file.Name,
+				Slug:         file.Slug,
+				FilePath:     file.FilePath,
+				FileBytes:    file.FileBytes,
+				AutoDownload: file.AutoDownload,
+				FolderID:     file.FolderID,
+				CreatedAt:    file.CreatedAt,
+				UpdatedAt:    file.UpdatedAt,
+				CreatedBy:    file.CreatedBy,
+				UpdatedBy:    file.UpdatedBy,
 			},
 		}
 	}
@@ -355,13 +361,15 @@ func (r *queryResolver) GetFile(ctx context.Context, id int64) (*model.File, err
 
 	// Convert the SQL result to GraphQL model
 	return &model.File{
-		ID:        file.ID,
-		Name:      file.Name,
-		Slug:      file.Slug,
-		URL:       file.Url,
-		FolderID:  file.FolderID,
-		CreatedAt: file.CreatedAt, // assuming you're using timestamptz
-		UpdatedAt: file.UpdatedAt, // assuming you're using timestamptz
+		ID:           file.ID,
+		Name:         file.Name,
+		Slug:         file.Slug,
+		FilePath:     file.FilePath,
+		FileBytes:    file.FileBytes,
+		AutoDownload: file.AutoDownload,
+		FolderID:     file.FolderID,
+		CreatedAt:    file.CreatedAt, // assuming you're using timestamptz
+		UpdatedAt:    file.UpdatedAt, // assuming you're using timestamptz
 	}, nil
 }
 
@@ -381,13 +389,15 @@ func (r *queryResolver) GetFilesByFolder(ctx context.Context, folderID int64) ([
 	var result []*model.File
 	for _, file := range files {
 		result = append(result, &model.File{
-			ID:        file.ID,
-			Name:      file.Name,
-			Slug:      file.Slug,
-			URL:       file.Url,
-			FolderID:  file.FolderID,
-			CreatedAt: file.CreatedAt,
-			UpdatedAt: file.UpdatedAt,
+			ID:           file.ID,
+			Name:         file.Name,
+			Slug:         file.Slug,
+			FilePath:     file.FilePath,
+			FileBytes:    file.FileBytes,
+			AutoDownload: file.AutoDownload,
+			FolderID:     file.FolderID,
+			CreatedAt:    file.CreatedAt,
+			UpdatedAt:    file.UpdatedAt,
 		})
 	}
 	return result, nil

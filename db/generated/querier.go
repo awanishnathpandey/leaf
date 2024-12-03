@@ -117,6 +117,7 @@ type Querier interface {
 	UpdateUserEmailVerifiedAt(ctx context.Context, id int64) error
 	UpdateUserLastSeenAt(ctx context.Context, id int64) error
 	UpdateUserLastSeenAtByEmail(ctx context.Context, email string) error
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 
 var _ Querier = (*Queries)(nil)

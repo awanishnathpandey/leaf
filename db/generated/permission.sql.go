@@ -472,7 +472,10 @@ SELECT
     u.id, 
     u.first_name,
     u.last_name, 
-    u.email, 
+    u.email,
+    u.job_title,
+    u.line_of_business,
+    u.line_manager, 
     u.email_verified_at, 
     u.last_seen_at, 
     u.created_at, 
@@ -514,6 +517,9 @@ type GetPaginatedUsersByRoleIDRow struct {
 	FirstName       string      `json:"first_name"`
 	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
+	JobTitle        pgtype.Text `json:"job_title"`
+	LineOfBusiness  pgtype.Text `json:"line_of_business"`
+	LineManager     pgtype.Text `json:"line_manager"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
 	CreatedAt       int64       `json:"created_at"`
@@ -545,6 +551,9 @@ func (q *Queries) GetPaginatedUsersByRoleID(ctx context.Context, arg GetPaginate
 			&i.FirstName,
 			&i.LastName,
 			&i.Email,
+			&i.JobTitle,
+			&i.LineOfBusiness,
+			&i.LineManager,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
 			&i.CreatedAt,
@@ -824,7 +833,7 @@ func (q *Queries) GetUserPermissions(ctx context.Context, userID int64) ([]strin
 }
 
 const getUsersByRoleID = `-- name: GetUsersByRoleID :many
-SELECT u.id, u.first_name, u.last_name, u.email, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
+SELECT u.id, u.first_name, u.last_name, u.email, u.job_title, u.line_of_business, u.line_manager, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
 FROM users u
 JOIN user_roles ur ON u.id = ur.user_id
 WHERE ur.role_id = $1
@@ -835,6 +844,9 @@ type GetUsersByRoleIDRow struct {
 	FirstName       string      `json:"first_name"`
 	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
+	JobTitle        pgtype.Text `json:"job_title"`
+	LineOfBusiness  pgtype.Text `json:"line_of_business"`
+	LineManager     pgtype.Text `json:"line_manager"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
 	CreatedAt       int64       `json:"created_at"`
@@ -856,6 +868,9 @@ func (q *Queries) GetUsersByRoleID(ctx context.Context, roleID int64) ([]GetUser
 			&i.FirstName,
 			&i.LastName,
 			&i.Email,
+			&i.JobTitle,
+			&i.LineOfBusiness,
+			&i.LineManager,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
 			&i.CreatedAt,

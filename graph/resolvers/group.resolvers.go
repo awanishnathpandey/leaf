@@ -77,6 +77,9 @@ func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64
 				FirstName:       user.FirstName,
 				LastName:        user.LastName,
 				Email:           user.Email,
+				JobTitle:        &user.JobTitle.String,
+				LineOfBusiness:  &user.LineOfBusiness.String,
+				LineManager:     &user.LineManager.String,
 				EmailVerifiedAt: (*int64)(&user.EmailVerifiedAt.Int64),
 				LastSeenAt:      user.LastSeenAt,
 				CreatedAt:       user.CreatedAt,
@@ -245,15 +248,17 @@ func (r *groupResolver) Files(ctx context.Context, obj *model.Group, first int64
 		edges[i] = &model.FileEdge{
 			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.File{
-				ID:        file.ID,
-				Name:      file.Name,
-				Slug:      file.Slug,
-				URL:       file.Url,
-				FolderID:  file.FolderID,
-				CreatedAt: file.CreatedAt,
-				UpdatedAt: file.UpdatedAt,
-				CreatedBy: file.CreatedBy,
-				UpdatedBy: file.UpdatedBy,
+				ID:           file.ID,
+				Name:         file.Name,
+				Slug:         file.Slug,
+				FilePath:     file.FilePath,
+				FileBytes:    file.FileBytes,
+				AutoDownload: file.AutoDownload,
+				FolderID:     file.FolderID,
+				CreatedAt:    file.CreatedAt,
+				UpdatedAt:    file.UpdatedAt,
+				CreatedBy:    file.CreatedBy,
+				UpdatedBy:    file.UpdatedBy,
 			},
 		}
 	}

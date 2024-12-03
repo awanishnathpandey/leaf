@@ -7,6 +7,9 @@ type AuthUser {
   firstName: String!
   lastName: String!
   email: String!
+  jobTitle: String
+  lineOfBusiness: String
+  lineManager: String
   lastSeenAt: Int!
   createdAt: Int!
   updatedAt: Int!

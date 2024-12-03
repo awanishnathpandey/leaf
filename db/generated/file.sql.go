@@ -12,15 +12,15 @@ import (
 )
 
 const createFile = `-- name: CreateFile :one
-INSERT INTO files (name, slug, url, folder_id, created_by, updated_by)
+INSERT INTO files (name, slug, file_path, folder_id, created_by, updated_by)
 VALUES ($1, $2, $3, $4, $5, $5)
-RETURNING id, name, slug, url, folder_id, created_at, updated_at, created_by, updated_by
+RETURNING id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by
 `
 
 type CreateFileParams struct {
 	Name      string `json:"name"`
 	Slug      string `json:"slug"`
-	Url       string `json:"url"`
+	FilePath  string `json:"file_path"`
 	FolderID  int64  `json:"folder_id"`
 	CreatedBy string `json:"created_by"`
 }
@@ -29,7 +29,7 @@ func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, e
 	row := q.db.QueryRow(ctx, createFile,
 		arg.Name,
 		arg.Slug,
-		arg.Url,
+		arg.FilePath,
 		arg.FolderID,
 		arg.CreatedBy,
 	)
@@ -38,7 +38,10 @@ func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, e
 		&i.ID,
 		&i.Name,
 		&i.Slug,
-		&i.Url,
+		&i.FilePath,
+		&i.FileType,
+		&i.FileBytes,
+		&i.AutoDownload,
 		&i.FolderID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -69,7 +72,7 @@ func (q *Queries) DeleteFilesByIDs(ctx context.Context, dollar_1 []int64) error 
 }
 
 const getFile = `-- name: GetFile :one
-SELECT id, name, slug, url, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE id = $1
 `
 
@@ -80,7 +83,10 @@ func (q *Queries) GetFile(ctx context.Context, id int64) (File, error) {
 		&i.ID,
 		&i.Name,
 		&i.Slug,
-		&i.Url,
+		&i.FilePath,
+		&i.FileType,
+		&i.FileBytes,
+		&i.AutoDownload,
 		&i.FolderID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -91,7 +97,7 @@ func (q *Queries) GetFile(ctx context.Context, id int64) (File, error) {
 }
 
 const getFilesByFolder = `-- name: GetFilesByFolder :many
-SELECT id, name, slug, url, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE folder_id = $1
 `
 
@@ -108,7 +114,10 @@ func (q *Queries) GetFilesByFolder(ctx context.Context, folderID int64) ([]File,
 			&i.ID,
 			&i.Name,
 			&i.Slug,
-			&i.Url,
+			&i.FilePath,
+			&i.FileType,
+			&i.FileBytes,
+			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -126,7 +135,7 @@ func (q *Queries) GetFilesByFolder(ctx context.Context, folderID int64) ([]File,
 }
 
 const getFilesByFolderID = `-- name: GetFilesByFolderID :many
-SELECT id, name, slug, url, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE folder_id = $1
 `
 
@@ -143,7 +152,10 @@ func (q *Queries) GetFilesByFolderID(ctx context.Context, folderID int64) ([]Fil
 			&i.ID,
 			&i.Name,
 			&i.Slug,
-			&i.Url,
+			&i.FilePath,
+			&i.FileType,
+			&i.FileBytes,
+			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -186,7 +198,7 @@ func (q *Queries) GetFilesByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 }
 
 const getPaginatedFilesByFolderID = `-- name: GetPaginatedFilesByFolderID :many
-SELECT id, name, slug, url, folder_id, created_at, updated_at, created_by, updated_by FROM files WHERE 
+SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files WHERE 
     folder_id = $3  -- Filter by folder_id
     AND (coalesce($4, '') = '' OR name ILIKE '%' || $4 || '%')
     AND (coalesce($5, '') = '' OR slug ILIKE '%' || $5 || '%')
@@ -234,7 +246,10 @@ func (q *Queries) GetPaginatedFilesByFolderID(ctx context.Context, arg GetPagina
 			&i.ID,
 			&i.Name,
 			&i.Slug,
-			&i.Url,
+			&i.FilePath,
+			&i.FileType,
+			&i.FileBytes,
+			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -272,7 +287,7 @@ func (q *Queries) GetPaginatedFilesByFolderIDCount(ctx context.Context, arg GetP
 }
 
 const listFiles = `-- name: ListFiles :many
-SELECT id, name, slug, url, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 ORDER BY name
 `
 
@@ -289,7 +304,10 @@ func (q *Queries) ListFiles(ctx context.Context) ([]File, error) {
 			&i.ID,
 			&i.Name,
 			&i.Slug,
-			&i.Url,
+			&i.FilePath,
+			&i.FileType,
+			&i.FileBytes,
+			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -307,7 +325,7 @@ func (q *Queries) ListFiles(ctx context.Context) ([]File, error) {
 }
 
 const paginatedFiles = `-- name: PaginatedFiles :many
-SELECT id, name, slug, url, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE 
     (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
     AND (coalesce($4, '') = '' OR slug ILIKE '%' || $4 || '%')
@@ -353,7 +371,10 @@ func (q *Queries) PaginatedFiles(ctx context.Context, arg PaginatedFilesParams) 
 			&i.ID,
 			&i.Name,
 			&i.Slug,
-			&i.Url,
+			&i.FilePath,
+			&i.FileType,
+			&i.FileBytes,
+			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -391,16 +412,16 @@ func (q *Queries) PaginatedFilesCount(ctx context.Context, arg PaginatedFilesCou
 
 const updateFile = `-- name: UpdateFile :one
 UPDATE files
-SET name = $2, slug = $3, url = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
+SET name = $2, slug = $3, file_path = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
-RETURNING id, name, slug, url, folder_id, created_at, updated_at, created_by, updated_by
+RETURNING id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateFileParams struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	Slug      string `json:"slug"`
-	Url       string `json:"url"`
+	FilePath  string `json:"file_path"`
 	UpdatedBy string `json:"updated_by"`
 }
 
@@ -409,7 +430,7 @@ func (q *Queries) UpdateFile(ctx context.Context, arg UpdateFileParams) (File, e
 		arg.ID,
 		arg.Name,
 		arg.Slug,
-		arg.Url,
+		arg.FilePath,
 		arg.UpdatedBy,
 	)
 	var i File
@@ -417,7 +438,10 @@ func (q *Queries) UpdateFile(ctx context.Context, arg UpdateFileParams) (File, e
 		&i.ID,
 		&i.Name,
 		&i.Slug,
-		&i.Url,
+		&i.FilePath,
+		&i.FileType,
+		&i.FileBytes,
+		&i.AutoDownload,
 		&i.FolderID,
 		&i.CreatedAt,
 		&i.UpdatedAt,

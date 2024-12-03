@@ -21,15 +21,18 @@ type EmailTemplate struct {
 }
 
 type File struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Slug      string `json:"slug"`
-	Url       string `json:"url"`
-	FolderID  int64  `json:"folder_id"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
-	CreatedBy string `json:"created_by"`
-	UpdatedBy string `json:"updated_by"`
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Slug         string `json:"slug"`
+	FilePath     string `json:"file_path"`
+	FileType     string `json:"file_type"`
+	FileBytes    int64  `json:"file_bytes"`
+	AutoDownload bool   `json:"auto_download"`
+	FolderID     int64  `json:"folder_id"`
+	CreatedAt    int64  `json:"created_at"`
+	UpdatedAt    int64  `json:"updated_at"`
+	CreatedBy    string `json:"created_by"`
+	UpdatedBy    string `json:"updated_by"`
 }
 
 type Folder struct {
@@ -115,6 +118,9 @@ type User struct {
 	LastName        string      `json:"last_name"`
 	Email           string      `json:"email"`
 	Password        string      `json:"password"`
+	JobTitle        pgtype.Text `json:"job_title"`
+	LineOfBusiness  pgtype.Text `json:"line_of_business"`
+	LineManager     pgtype.Text `json:"line_manager"`
 	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
 	LastSeenAt      int64       `json:"last_seen_at"`
 	CreatedAt       int64       `json:"created_at"`
