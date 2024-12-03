@@ -217,7 +217,7 @@ func VerifyJWTRefresh(tokenString string) (*MyRefreshClaims, error) {
 	if !ok {
 		return nil, errors.New("invalid refresh token claims")
 	}
-	fmt.Println(claims)
+	// fmt.Println(claims)
 	return claims, nil
 }
 

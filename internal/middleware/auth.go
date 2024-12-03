@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -30,14 +31,21 @@ type MyClaims struct {
 
 // Global variables
 var (
-	queries     *generated.Queries // Holds the database queries object
-	userCache   = make(map[string]cacheEntry)
-	updateQueue = make(chan string, 100) // Buffered channel for updates
-	stopWorkers = make(chan struct{})    // Channel to signal workers to stop
-	wg          sync.WaitGroup           // WaitGroup for worker synchronization
-	cacheLock   sync.RWMutex             // Protects userCache from concurrent access
-	cacheTTL    = 5 * time.Minute        // Cache expiration time
-	numWorkers  = 10                     // Number of worker goroutines
+	queries                   *generated.Queries // Holds the database queries object
+	userCache                 = make(map[string]cacheEntry)
+	updateQueue               = make(chan string, 100) // Buffered channel for updates
+	stopWorkers               = make(chan struct{})    // Channel to signal workers to stop
+	wg                        sync.WaitGroup           // WaitGroup for worker synchronization
+	cacheLock                 sync.RWMutex             // Protects userCache from concurrent access
+	cacheTTL                  = 5 * time.Minute        // Cache expiration time
+	numWorkers                = 10                     // Number of worker goroutines
+	unauthenticatedOperations = [][]byte{
+		[]byte("login"),
+		[]byte("register"),
+		[]byte("refreshToken"),
+		[]byte("forgotPassword"),
+		[]byte("resetPassword"),
+	}
 )
 
 // Cache entry structure
@@ -99,10 +107,13 @@ func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Get the JWT_SECRET from the environment
 		secretKey := []byte(os.Getenv("JWT_SECRET"))
-
 		body := c.Body()
-		if strings.Contains(string(body), "login") || strings.Contains(string(body), "register") || strings.Contains(string(body), "refreshToken") || strings.Contains(string(body), "forgotPassword") || strings.Contains(string(body), "resetPassword") {
-			return c.Next()
+
+		// Check if the body contains any of the allowed operations
+		for _, operation := range unauthenticatedOperations {
+			if bytes.Contains(body, operation) {
+				return c.Next()
+			}
 		}
 
 		// Get the JWT token from the request's Authorization header
