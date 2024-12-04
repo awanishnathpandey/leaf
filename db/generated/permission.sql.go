@@ -197,7 +197,7 @@ func (q *Queries) GetPaginatedPermissionsByRoleID(ctx context.Context, arg GetPa
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedPermissionsByRoleIDRow
+	items := []GetPaginatedPermissionsByRoleIDRow{}
 	for rows.Next() {
 		var i GetPaginatedPermissionsByRoleIDRow
 		if err := rows.Scan(
@@ -307,7 +307,7 @@ func (q *Queries) GetPaginatedRolesByPermissionID(ctx context.Context, arg GetPa
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedRolesByPermissionIDRow
+	items := []GetPaginatedRolesByPermissionIDRow{}
 	for rows.Next() {
 		var i GetPaginatedRolesByPermissionIDRow
 		if err := rows.Scan(
@@ -417,7 +417,7 @@ func (q *Queries) GetPaginatedRolesByUserID(ctx context.Context, arg GetPaginate
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedRolesByUserIDRow
+	items := []GetPaginatedRolesByUserIDRow{}
 	for rows.Next() {
 		var i GetPaginatedRolesByUserIDRow
 		if err := rows.Scan(
@@ -543,7 +543,7 @@ func (q *Queries) GetPaginatedUsersByRoleID(ctx context.Context, arg GetPaginate
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedUsersByRoleIDRow
+	items := []GetPaginatedUsersByRoleIDRow{}
 	for rows.Next() {
 		var i GetPaginatedUsersByRoleIDRow
 		if err := rows.Scan(
@@ -633,7 +633,7 @@ func (q *Queries) GetPermissionsByIDs(ctx context.Context, dollar_1 []int64) ([]
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	items := []int64{}
 	for rows.Next() {
 		var id int64
 		if err := rows.Scan(&id); err != nil {
@@ -660,7 +660,7 @@ func (q *Queries) GetPermissionsByRoleID(ctx context.Context, roleID int64) ([]P
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Permission
+	items := []Permission{}
 	for rows.Next() {
 		var i Permission
 		if err := rows.Scan(
@@ -720,7 +720,7 @@ func (q *Queries) GetRolesByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	items := []int64{}
 	for rows.Next() {
 		var id int64
 		if err := rows.Scan(&id); err != nil {
@@ -747,7 +747,7 @@ func (q *Queries) GetRolesByPermissionID(ctx context.Context, permissionID int64
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Role
+	items := []Role{}
 	for rows.Next() {
 		var i Role
 		if err := rows.Scan(
@@ -782,7 +782,7 @@ func (q *Queries) GetRolesByUserID(ctx context.Context, userID int64) ([]Role, e
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Role
+	items := []Role{}
 	for rows.Next() {
 		var i Role
 		if err := rows.Scan(
@@ -818,7 +818,7 @@ func (q *Queries) GetUserPermissions(ctx context.Context, userID int64) ([]strin
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	items := []string{}
 	for rows.Next() {
 		var name string
 		if err := rows.Scan(&name); err != nil {
@@ -860,7 +860,7 @@ func (q *Queries) GetUsersByRoleID(ctx context.Context, roleID int64) ([]GetUser
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetUsersByRoleIDRow
+	items := []GetUsersByRoleIDRow{}
 	for rows.Next() {
 		var i GetUsersByRoleIDRow
 		if err := rows.Scan(
@@ -898,7 +898,7 @@ func (q *Queries) ListPermissions(ctx context.Context) ([]Permission, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Permission
+	items := []Permission{}
 	for rows.Next() {
 		var i Permission
 		if err := rows.Scan(
@@ -931,7 +931,7 @@ func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Role
+	items := []Role{}
 	for rows.Next() {
 		var i Role
 		if err := rows.Scan(
@@ -993,7 +993,7 @@ func (q *Queries) PaginatedPermissions(ctx context.Context, arg PaginatedPermiss
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Permission
+	items := []Permission{}
 	for rows.Next() {
 		var i Permission
 		if err := rows.Scan(
@@ -1074,7 +1074,7 @@ func (q *Queries) PaginatedRoles(ctx context.Context, arg PaginatedRolesParams) 
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Role
+	items := []Role{}
 	for rows.Next() {
 		var i Role
 		if err := rows.Scan(

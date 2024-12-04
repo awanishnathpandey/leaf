@@ -119,7 +119,7 @@ func (q *Queries) GetFilesByGroupID(ctx context.Context, groupID int64) ([]File,
 		return nil, err
 	}
 	defer rows.Close()
-	var items []File
+	items := []File{}
 	for rows.Next() {
 		var i File
 		if err := rows.Scan(
@@ -159,7 +159,7 @@ func (q *Queries) GetFoldersByGroupID(ctx context.Context, groupID int64) ([]Fol
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Folder
+	items := []Folder{}
 	for rows.Next() {
 		var i Folder
 		if err := rows.Scan(
@@ -222,7 +222,7 @@ func (q *Queries) GetGroupsByFileID(ctx context.Context, fileID int64) ([]Group,
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Group
+	items := []Group{}
 	for rows.Next() {
 		var i Group
 		if err := rows.Scan(
@@ -257,7 +257,7 @@ func (q *Queries) GetGroupsByFolderID(ctx context.Context, folderID int64) ([]Gr
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Group
+	items := []Group{}
 	for rows.Next() {
 		var i Group
 		if err := rows.Scan(
@@ -290,7 +290,7 @@ func (q *Queries) GetGroupsByIDs(ctx context.Context, dollar_1 []int64) ([]int64
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	items := []int64{}
 	for rows.Next() {
 		var id int64
 		if err := rows.Scan(&id); err != nil {
@@ -317,7 +317,7 @@ func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group,
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Group
+	items := []Group{}
 	for rows.Next() {
 		var i Group
 		if err := rows.Scan(
@@ -404,7 +404,7 @@ func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginat
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedFilesByGroupIDRow
+	items := []GetPaginatedFilesByGroupIDRow{}
 	for rows.Next() {
 		var i GetPaginatedFilesByGroupIDRow
 		if err := rows.Scan(
@@ -525,7 +525,7 @@ func (q *Queries) GetPaginatedFoldersByGroupID(ctx context.Context, arg GetPagin
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedFoldersByGroupIDRow
+	items := []GetPaginatedFoldersByGroupIDRow{}
 	for rows.Next() {
 		var i GetPaginatedFoldersByGroupIDRow
 		if err := rows.Scan(
@@ -643,7 +643,7 @@ func (q *Queries) GetPaginatedGroupsByFileID(ctx context.Context, arg GetPaginat
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedGroupsByFileIDRow
+	items := []GetPaginatedGroupsByFileIDRow{}
 	for rows.Next() {
 		var i GetPaginatedGroupsByFileIDRow
 		if err := rows.Scan(
@@ -753,7 +753,7 @@ func (q *Queries) GetPaginatedGroupsByFolderID(ctx context.Context, arg GetPagin
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedGroupsByFolderIDRow
+	items := []GetPaginatedGroupsByFolderIDRow{}
 	for rows.Next() {
 		var i GetPaginatedGroupsByFolderIDRow
 		if err := rows.Scan(
@@ -863,7 +863,7 @@ func (q *Queries) GetPaginatedGroupsByUserID(ctx context.Context, arg GetPaginat
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedGroupsByUserIDRow
+	items := []GetPaginatedGroupsByUserIDRow{}
 	for rows.Next() {
 		var i GetPaginatedGroupsByUserIDRow
 		if err := rows.Scan(
@@ -989,7 +989,7 @@ func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginat
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPaginatedUsersByGroupIDRow
+	items := []GetPaginatedUsersByGroupIDRow{}
 	for rows.Next() {
 		var i GetPaginatedUsersByGroupIDRow
 		if err := rows.Scan(
@@ -1068,7 +1068,7 @@ func (q *Queries) GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUs
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetUsersByGroupIDRow
+	items := []GetUsersByGroupIDRow{}
 	for rows.Next() {
 		var i GetUsersByGroupIDRow
 		if err := rows.Scan(
@@ -1106,7 +1106,7 @@ func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Group
+	items := []Group{}
 	for rows.Next() {
 		var i Group
 		if err := rows.Scan(
@@ -1168,7 +1168,7 @@ func (q *Queries) PaginatedGroups(ctx context.Context, arg PaginatedGroupsParams
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Group
+	items := []Group{}
 	for rows.Next() {
 		var i Group
 		if err := rows.Scan(

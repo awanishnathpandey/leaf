@@ -107,7 +107,7 @@ func (q *Queries) GetFilesByFolder(ctx context.Context, folderID int64) ([]File,
 		return nil, err
 	}
 	defer rows.Close()
-	var items []File
+	items := []File{}
 	for rows.Next() {
 		var i File
 		if err := rows.Scan(
@@ -145,7 +145,7 @@ func (q *Queries) GetFilesByFolderID(ctx context.Context, folderID int64) ([]Fil
 		return nil, err
 	}
 	defer rows.Close()
-	var items []File
+	items := []File{}
 	for rows.Next() {
 		var i File
 		if err := rows.Scan(
@@ -183,7 +183,7 @@ func (q *Queries) GetFilesByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	items := []int64{}
 	for rows.Next() {
 		var id int64
 		if err := rows.Scan(&id); err != nil {
@@ -239,7 +239,7 @@ func (q *Queries) GetPaginatedFilesByFolderID(ctx context.Context, arg GetPagina
 		return nil, err
 	}
 	defer rows.Close()
-	var items []File
+	items := []File{}
 	for rows.Next() {
 		var i File
 		if err := rows.Scan(
@@ -297,7 +297,7 @@ func (q *Queries) ListFiles(ctx context.Context) ([]File, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []File
+	items := []File{}
 	for rows.Next() {
 		var i File
 		if err := rows.Scan(
@@ -364,7 +364,7 @@ func (q *Queries) PaginatedFiles(ctx context.Context, arg PaginatedFilesParams) 
 		return nil, err
 	}
 	defer rows.Close()
-	var items []File
+	items := []File{}
 	for rows.Next() {
 		var i File
 		if err := rows.Scan(

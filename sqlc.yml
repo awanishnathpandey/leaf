@@ -13,6 +13,7 @@ sql:
         emit_prepared_queries: true    # Enable prepared queries for better performance
         emit_exported_queries: true    # Allow SQL statements to be exported
         emit_interface: false           # Avoid generating Querier interface
+        emit_empty_slices: true         # Emit empty slices instead of nil
         overrides:
           - db_type: "bigint"   # Map PostgreSQL BIGINT globally
             go_type: "int64"    # Use int64 instead of pgtype.Int8

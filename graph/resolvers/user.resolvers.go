@@ -40,7 +40,14 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx) // Ensure rollback if anything goes wrong
+	// Ensure that the transaction is rolled back in case of an error
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(ctx); rbErr != nil {
+				err = fmt.Errorf("failed to rollback transaction: %v", rbErr)
+			}
+		}
+	}()
 
 	// Use the transaction as the DBTX argument
 	txQueries := r.DB.WithTx(tx)

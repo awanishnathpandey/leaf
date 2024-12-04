@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/internal/config"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -33,14 +34,14 @@ type MyClaims struct {
 var (
 	queries                   *generated.Queries // Holds the database queries object
 	userCache                 = make(map[string]cacheEntry)
-	updateQueue               = make(chan string, 100) // Buffered channel for updates
-	stopWorkers               = make(chan struct{})    // Channel to signal workers to stop
-	wg                        sync.WaitGroup           // WaitGroup for worker synchronization
-	cacheLock                 sync.RWMutex             // Protects userCache from concurrent access
-	cacheTTL                  = 5 * time.Minute        // Cache expiration time
-	cacheCleanupInterval      = 10 * time.Minute
-	cacheMaxSize              = 1000
-	numWorkers                = 10 // Number of worker goroutines
+	updateQueue               chan string           // Buffered channel for updates
+	stopWorkers               = make(chan struct{}) // Channel to signal workers to stop
+	wg                        sync.WaitGroup        // WaitGroup for worker synchronization
+	cacheLock                 sync.RWMutex          // Protects userCache from concurrent access
+	cacheTTL                  time.Duration         // Cache expiration time
+	cacheCleanupInterval      time.Duration
+	cacheMaxSize              int
+	numWorkers                int // Number of worker goroutines
 	unauthenticatedOperations = [][]byte{
 		[]byte("login"),
 		[]byte("register"),
@@ -64,6 +65,17 @@ func InitializeQueries(q *generated.Queries) {
 
 // StartWorkerPool initializes the worker pool
 func StartWorkerPool() {
+	cacheTTL = config.GetCacheExpiry() // Cache expiration time
+	cacheCleanupInterval = config.GetCacheCleanupInterval()
+	cacheMaxSize = config.GetCacheMaxSize()
+	numWorkers = config.GetWorkerPoolSize()
+	updateQueue = make(chan string, config.GetAuthLastSeenQueueSize())
+
+	// Load environment variables
+	err := config.LoadEnv()
+	if err != nil {
+		log.Info().Msgf("loaded env from workers")
+	}
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go worker()

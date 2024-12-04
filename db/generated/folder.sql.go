@@ -102,7 +102,7 @@ func (q *Queries) GetFoldersByIDs(ctx context.Context, dollar_1 []int64) ([]int6
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	items := []int64{}
 	for rows.Next() {
 		var id int64
 		if err := rows.Scan(&id); err != nil {
@@ -127,7 +127,7 @@ func (q *Queries) ListFolders(ctx context.Context) ([]Folder, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Folder
+	items := []Folder{}
 	for rows.Next() {
 		var i Folder
 		if err := rows.Scan(
@@ -195,7 +195,7 @@ func (q *Queries) PaginatedFolders(ctx context.Context, arg PaginatedFoldersPara
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Folder
+	items := []Folder{}
 	for rows.Next() {
 		var i Folder
 		if err := rows.Scan(

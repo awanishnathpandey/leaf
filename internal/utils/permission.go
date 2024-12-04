@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/internal/config"
 )
 
 var (
@@ -15,9 +16,15 @@ var (
 	userPermissionsCache  = make(map[int64][]string)
 	permissionsTimestamps = make(map[int64]time.Time) // Map to store the timestamp of when permissions were last fetched
 	cacheMutex            = &sync.RWMutex{}
-	cacheExpiry           = 5 * time.Minute // Cache expiration time
-	cacheMaxSize          = 100             // Max size of the cache
+	cacheExpiry           time.Duration // Cache expiration time, to be set in init
+	cacheMaxSize          int           // Max size of the cache, to be set in init
 )
+
+func init() {
+	// Initialize cache settings at runtime
+	cacheExpiry = config.GetCacheExpiry()   // Cache expiration time
+	cacheMaxSize = config.GetCacheMaxSize() // Max size of the cache
+}
 
 // CheckUserPermissions verifies if the user has the required permissions for an action,
 // with added caching to improve performance by reducing database queries.

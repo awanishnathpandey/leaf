@@ -171,7 +171,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	items := []int64{}
 	for rows.Next() {
 		var id int64
 		if err := rows.Scan(&id); err != nil {
@@ -196,7 +196,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	items := []User{}
 	for rows.Next() {
 		var i User
 		if err := rows.Scan(
@@ -282,7 +282,7 @@ func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) 
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	items := []User{}
 	for rows.Next() {
 		var i User
 		if err := rows.Scan(
