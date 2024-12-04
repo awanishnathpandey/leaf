@@ -11,22 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createFile = `-- name: CreateFile :one
+const CreateFile = `-- name: CreateFile :one
 INSERT INTO files (name, slug, file_path, folder_id, created_by, updated_by)
 VALUES ($1, $2, $3, $4, $5, $5)
 RETURNING id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by
 `
 
 type CreateFileParams struct {
-	Name      string `json:"name"`
-	Slug      string `json:"slug"`
-	FilePath  string `json:"file_path"`
-	FolderID  int64  `json:"folder_id"`
-	CreatedBy string `json:"created_by"`
+	Name      string `db:"name" json:"name"`
+	Slug      string `db:"slug" json:"slug"`
+	FilePath  string `db:"file_path" json:"file_path"`
+	FolderID  int64  `db:"folder_id" json:"folder_id"`
+	CreatedBy string `db:"created_by" json:"created_by"`
 }
 
 func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, error) {
-	row := q.db.QueryRow(ctx, createFile,
+	row := q.db.QueryRow(ctx, CreateFile,
 		arg.Name,
 		arg.Slug,
 		arg.FilePath,
@@ -51,33 +51,33 @@ func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, e
 	return i, err
 }
 
-const deleteFile = `-- name: DeleteFile :exec
+const DeleteFile = `-- name: DeleteFile :exec
 DELETE FROM files
 WHERE id = $1
 `
 
 func (q *Queries) DeleteFile(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteFile, id)
+	_, err := q.db.Exec(ctx, DeleteFile, id)
 	return err
 }
 
-const deleteFilesByIDs = `-- name: DeleteFilesByIDs :exec
+const DeleteFilesByIDs = `-- name: DeleteFilesByIDs :exec
 DELETE FROM files
 WHERE id = ANY($1::bigint[])
 `
 
 func (q *Queries) DeleteFilesByIDs(ctx context.Context, dollar_1 []int64) error {
-	_, err := q.db.Exec(ctx, deleteFilesByIDs, dollar_1)
+	_, err := q.db.Exec(ctx, DeleteFilesByIDs, dollar_1)
 	return err
 }
 
-const getFile = `-- name: GetFile :one
+const GetFile = `-- name: GetFile :one
 SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE id = $1
 `
 
 func (q *Queries) GetFile(ctx context.Context, id int64) (File, error) {
-	row := q.db.QueryRow(ctx, getFile, id)
+	row := q.db.QueryRow(ctx, GetFile, id)
 	var i File
 	err := row.Scan(
 		&i.ID,
@@ -96,13 +96,13 @@ func (q *Queries) GetFile(ctx context.Context, id int64) (File, error) {
 	return i, err
 }
 
-const getFilesByFolder = `-- name: GetFilesByFolder :many
+const GetFilesByFolder = `-- name: GetFilesByFolder :many
 SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE folder_id = $1
 `
 
 func (q *Queries) GetFilesByFolder(ctx context.Context, folderID int64) ([]File, error) {
-	rows, err := q.db.Query(ctx, getFilesByFolder, folderID)
+	rows, err := q.db.Query(ctx, GetFilesByFolder, folderID)
 	if err != nil {
 		return nil, err
 	}
@@ -134,13 +134,13 @@ func (q *Queries) GetFilesByFolder(ctx context.Context, folderID int64) ([]File,
 	return items, nil
 }
 
-const getFilesByFolderID = `-- name: GetFilesByFolderID :many
+const GetFilesByFolderID = `-- name: GetFilesByFolderID :many
 SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE folder_id = $1
 `
 
 func (q *Queries) GetFilesByFolderID(ctx context.Context, folderID int64) ([]File, error) {
-	rows, err := q.db.Query(ctx, getFilesByFolderID, folderID)
+	rows, err := q.db.Query(ctx, GetFilesByFolderID, folderID)
 	if err != nil {
 		return nil, err
 	}
@@ -172,13 +172,13 @@ func (q *Queries) GetFilesByFolderID(ctx context.Context, folderID int64) ([]Fil
 	return items, nil
 }
 
-const getFilesByIDs = `-- name: GetFilesByIDs :many
+const GetFilesByIDs = `-- name: GetFilesByIDs :many
 SELECT id FROM files
 WHERE id = ANY($1::bigint[])
 `
 
 func (q *Queries) GetFilesByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
-	rows, err := q.db.Query(ctx, getFilesByIDs, dollar_1)
+	rows, err := q.db.Query(ctx, GetFilesByIDs, dollar_1)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func (q *Queries) GetFilesByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 	return items, nil
 }
 
-const getPaginatedFilesByFolderID = `-- name: GetPaginatedFilesByFolderID :many
+const GetPaginatedFilesByFolderID = `-- name: GetPaginatedFilesByFolderID :many
 SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files WHERE 
     folder_id = $3  -- Filter by folder_id
     AND (coalesce($4, '') = '' OR name ILIKE '%' || $4 || '%')
@@ -216,17 +216,17 @@ OFFSET $2
 `
 
 type GetPaginatedFilesByFolderIDParams struct {
-	Limit      int32       `json:"limit"`
-	Offset     int32       `json:"offset"`
-	FolderID   pgtype.Int8 `json:"folder_id"`
-	NameFilter interface{} `json:"name_filter"`
-	SlugFilter interface{} `json:"slug_filter"`
-	SortField  interface{} `json:"sort_field"`
-	SortOrder  interface{} `json:"sort_order"`
+	Limit      int32       `db:"limit" json:"limit"`
+	Offset     int32       `db:"offset" json:"offset"`
+	FolderID   pgtype.Int8 `db:"folder_id" json:"folder_id"`
+	NameFilter interface{} `db:"name_filter" json:"name_filter"`
+	SlugFilter interface{} `db:"slug_filter" json:"slug_filter"`
+	SortField  interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder  interface{} `db:"sort_order" json:"sort_order"`
 }
 
 func (q *Queries) GetPaginatedFilesByFolderID(ctx context.Context, arg GetPaginatedFilesByFolderIDParams) ([]File, error) {
-	rows, err := q.db.Query(ctx, getPaginatedFilesByFolderID,
+	rows, err := q.db.Query(ctx, GetPaginatedFilesByFolderID,
 		arg.Limit,
 		arg.Offset,
 		arg.FolderID,
@@ -266,7 +266,7 @@ func (q *Queries) GetPaginatedFilesByFolderID(ctx context.Context, arg GetPagina
 	return items, nil
 }
 
-const getPaginatedFilesByFolderIDCount = `-- name: GetPaginatedFilesByFolderIDCount :one
+const GetPaginatedFilesByFolderIDCount = `-- name: GetPaginatedFilesByFolderIDCount :one
 SELECT COUNT(*) FROM files WHERE 
     folder_id = $1  -- Filter by folder_id
     AND (coalesce($2, '') = '' OR name ILIKE '%' || $2 || '%')
@@ -274,25 +274,25 @@ SELECT COUNT(*) FROM files WHERE
 `
 
 type GetPaginatedFilesByFolderIDCountParams struct {
-	FolderID   pgtype.Int8 `json:"folder_id"`
-	NameFilter interface{} `json:"name_filter"`
-	SlugFilter interface{} `json:"slug_filter"`
+	FolderID   pgtype.Int8 `db:"folder_id" json:"folder_id"`
+	NameFilter interface{} `db:"name_filter" json:"name_filter"`
+	SlugFilter interface{} `db:"slug_filter" json:"slug_filter"`
 }
 
 func (q *Queries) GetPaginatedFilesByFolderIDCount(ctx context.Context, arg GetPaginatedFilesByFolderIDCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getPaginatedFilesByFolderIDCount, arg.FolderID, arg.NameFilter, arg.SlugFilter)
+	row := q.db.QueryRow(ctx, GetPaginatedFilesByFolderIDCount, arg.FolderID, arg.NameFilter, arg.SlugFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const listFiles = `-- name: ListFiles :many
+const ListFiles = `-- name: ListFiles :many
 SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 ORDER BY name
 `
 
 func (q *Queries) ListFiles(ctx context.Context) ([]File, error) {
-	rows, err := q.db.Query(ctx, listFiles)
+	rows, err := q.db.Query(ctx, ListFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +324,7 @@ func (q *Queries) ListFiles(ctx context.Context) ([]File, error) {
 	return items, nil
 }
 
-const paginatedFiles = `-- name: PaginatedFiles :many
+const PaginatedFiles = `-- name: PaginatedFiles :many
 SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE 
     (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
@@ -343,16 +343,16 @@ OFFSET $2
 `
 
 type PaginatedFilesParams struct {
-	Limit      int32       `json:"limit"`
-	Offset     int32       `json:"offset"`
-	NameFilter interface{} `json:"name_filter"`
-	SlugFilter interface{} `json:"slug_filter"`
-	SortField  interface{} `json:"sort_field"`
-	SortOrder  interface{} `json:"sort_order"`
+	Limit      int32       `db:"limit" json:"limit"`
+	Offset     int32       `db:"offset" json:"offset"`
+	NameFilter interface{} `db:"name_filter" json:"name_filter"`
+	SlugFilter interface{} `db:"slug_filter" json:"slug_filter"`
+	SortField  interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder  interface{} `db:"sort_order" json:"sort_order"`
 }
 
 func (q *Queries) PaginatedFiles(ctx context.Context, arg PaginatedFilesParams) ([]File, error) {
-	rows, err := q.db.Query(ctx, paginatedFiles,
+	rows, err := q.db.Query(ctx, PaginatedFiles,
 		arg.Limit,
 		arg.Offset,
 		arg.NameFilter,
@@ -391,7 +391,7 @@ func (q *Queries) PaginatedFiles(ctx context.Context, arg PaginatedFilesParams) 
 	return items, nil
 }
 
-const paginatedFilesCount = `-- name: PaginatedFilesCount :one
+const PaginatedFilesCount = `-- name: PaginatedFilesCount :one
 SELECT COUNT(*) FROM files
 WHERE 
     (coalesce($1, '') = '' OR name ILIKE '%' || $1 || '%')
@@ -399,18 +399,18 @@ WHERE
 `
 
 type PaginatedFilesCountParams struct {
-	NameFilter interface{} `json:"name_filter"`
-	SlugFilter interface{} `json:"slug_filter"`
+	NameFilter interface{} `db:"name_filter" json:"name_filter"`
+	SlugFilter interface{} `db:"slug_filter" json:"slug_filter"`
 }
 
 func (q *Queries) PaginatedFilesCount(ctx context.Context, arg PaginatedFilesCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, paginatedFilesCount, arg.NameFilter, arg.SlugFilter)
+	row := q.db.QueryRow(ctx, PaginatedFilesCount, arg.NameFilter, arg.SlugFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const updateFile = `-- name: UpdateFile :one
+const UpdateFile = `-- name: UpdateFile :one
 UPDATE files
 SET name = $2, slug = $3, file_path = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
@@ -418,15 +418,15 @@ RETURNING id, name, slug, file_path, file_type, file_bytes, auto_download, folde
 `
 
 type UpdateFileParams struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Slug      string `json:"slug"`
-	FilePath  string `json:"file_path"`
-	UpdatedBy string `json:"updated_by"`
+	ID        int64  `db:"id" json:"id"`
+	Name      string `db:"name" json:"name"`
+	Slug      string `db:"slug" json:"slug"`
+	FilePath  string `db:"file_path" json:"file_path"`
+	UpdatedBy string `db:"updated_by" json:"updated_by"`
 }
 
 func (q *Queries) UpdateFile(ctx context.Context, arg UpdateFileParams) (File, error) {
-	row := q.db.QueryRow(ctx, updateFile,
+	row := q.db.QueryRow(ctx, UpdateFile,
 		arg.ID,
 		arg.Name,
 		arg.Slug,

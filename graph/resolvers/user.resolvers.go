@@ -36,8 +36,17 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx) // Ensure rollback if anything goes wrong
+
+	// Use the transaction as the DBTX argument
+	txQueries := r.DB.WithTx(tx)
+
 	// Call the generated CreateUser function with the params
-	user, err := r.DB.CreateUser(ctx, generated.CreateUserParams{
+	user, err := txQueries.CreateUser(ctx, generated.CreateUserParams{
 		FirstName: input.FirstName,
 		LastName:  input.LastName,
 		Email:     input.Email,
@@ -46,6 +55,10 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+	// Commit the transaction
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	// Return the newly created user

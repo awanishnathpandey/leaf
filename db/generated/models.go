@@ -9,142 +9,142 @@ import (
 )
 
 type EmailTemplate struct {
-	ID        int64    `json:"id"`
-	Name      string   `json:"name"`
-	Content   string   `json:"content"`
-	MailTo    []string `json:"mail_to"`
-	MailCc    []string `json:"mail_cc"`
-	MailBcc   []string `json:"mail_bcc"`
-	MailData  []byte   `json:"mail_data"`
-	CreatedAt int64    `json:"created_at"`
-	UpdatedAt int64    `json:"updated_at"`
+	ID        int64    `db:"id" json:"id"`
+	Name      string   `db:"name" json:"name"`
+	Content   string   `db:"content" json:"content"`
+	MailTo    []string `db:"mail_to" json:"mail_to"`
+	MailCc    []string `db:"mail_cc" json:"mail_cc"`
+	MailBcc   []string `db:"mail_bcc" json:"mail_bcc"`
+	MailData  []byte   `db:"mail_data" json:"mail_data"`
+	CreatedAt int64    `db:"created_at" json:"created_at"`
+	UpdatedAt int64    `db:"updated_at" json:"updated_at"`
 }
 
 type File struct {
-	ID           int64  `json:"id"`
-	Name         string `json:"name"`
-	Slug         string `json:"slug"`
-	FilePath     string `json:"file_path"`
-	FileType     string `json:"file_type"`
-	FileBytes    int64  `json:"file_bytes"`
-	AutoDownload bool   `json:"auto_download"`
-	FolderID     int64  `json:"folder_id"`
-	CreatedAt    int64  `json:"created_at"`
-	UpdatedAt    int64  `json:"updated_at"`
-	CreatedBy    string `json:"created_by"`
-	UpdatedBy    string `json:"updated_by"`
+	ID           int64  `db:"id" json:"id"`
+	Name         string `db:"name" json:"name"`
+	Slug         string `db:"slug" json:"slug"`
+	FilePath     string `db:"file_path" json:"file_path"`
+	FileType     string `db:"file_type" json:"file_type"`
+	FileBytes    int64  `db:"file_bytes" json:"file_bytes"`
+	AutoDownload bool   `db:"auto_download" json:"auto_download"`
+	FolderID     int64  `db:"folder_id" json:"folder_id"`
+	CreatedAt    int64  `db:"created_at" json:"created_at"`
+	UpdatedAt    int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy    string `db:"created_by" json:"created_by"`
+	UpdatedBy    string `db:"updated_by" json:"updated_by"`
 }
 
 type Folder struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Slug        string `db:"slug" json:"slug"`
+	Description string `db:"description" json:"description"`
+	CreatedAt   int64  `db:"created_at" json:"created_at"`
+	UpdatedAt   int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy   string `db:"created_by" json:"created_by"`
+	UpdatedBy   string `db:"updated_by" json:"updated_by"`
 }
 
 type Group struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	CreatedAt   int64  `db:"created_at" json:"created_at"`
+	UpdatedAt   int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy   string `db:"created_by" json:"created_by"`
+	UpdatedBy   string `db:"updated_by" json:"updated_by"`
 }
 
 type GroupFile struct {
-	GroupID   int64  `json:"group_id"`
-	FileID    int64  `json:"file_id"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
-	CreatedBy string `json:"created_by"`
-	UpdatedBy string `json:"updated_by"`
+	GroupID   int64  `db:"group_id" json:"group_id"`
+	FileID    int64  `db:"file_id" json:"file_id"`
+	CreatedAt int64  `db:"created_at" json:"created_at"`
+	UpdatedAt int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy string `db:"created_by" json:"created_by"`
+	UpdatedBy string `db:"updated_by" json:"updated_by"`
 }
 
 type GroupFolder struct {
-	GroupID   int64  `json:"group_id"`
-	FolderID  int64  `json:"folder_id"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
-	CreatedBy string `json:"created_by"`
-	UpdatedBy string `json:"updated_by"`
+	GroupID   int64  `db:"group_id" json:"group_id"`
+	FolderID  int64  `db:"folder_id" json:"folder_id"`
+	CreatedAt int64  `db:"created_at" json:"created_at"`
+	UpdatedAt int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy string `db:"created_by" json:"created_by"`
+	UpdatedBy string `db:"updated_by" json:"updated_by"`
 }
 
 type GroupUser struct {
-	GroupID   int64  `json:"group_id"`
-	UserID    int64  `json:"user_id"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
-	CreatedBy string `json:"created_by"`
-	UpdatedBy string `json:"updated_by"`
+	GroupID   int64  `db:"group_id" json:"group_id"`
+	UserID    int64  `db:"user_id" json:"user_id"`
+	CreatedAt int64  `db:"created_at" json:"created_at"`
+	UpdatedAt int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy string `db:"created_by" json:"created_by"`
+	UpdatedBy string `db:"updated_by" json:"updated_by"`
 }
 
 type PasswordReset struct {
-	ID         int64  `json:"id"`
-	UserID     int64  `json:"user_id"`
-	ResetToken string `json:"reset_token"`
-	CreatedAt  int64  `json:"created_at"`
-	UpdatedAt  int64  `json:"updated_at"`
-	CreatedBy  string `json:"created_by"`
-	UpdatedBy  string `json:"updated_by"`
+	ID         int64  `db:"id" json:"id"`
+	UserID     int64  `db:"user_id" json:"user_id"`
+	ResetToken string `db:"reset_token" json:"reset_token"`
+	CreatedAt  int64  `db:"created_at" json:"created_at"`
+	UpdatedAt  int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy  string `db:"created_by" json:"created_by"`
+	UpdatedBy  string `db:"updated_by" json:"updated_by"`
 }
 
 type Permission struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	CreatedAt   int64  `db:"created_at" json:"created_at"`
+	UpdatedAt   int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy   string `db:"created_by" json:"created_by"`
+	UpdatedBy   string `db:"updated_by" json:"updated_by"`
 }
 
 type Role struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	CreatedAt   int64  `db:"created_at" json:"created_at"`
+	UpdatedAt   int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy   string `db:"created_by" json:"created_by"`
+	UpdatedBy   string `db:"updated_by" json:"updated_by"`
 }
 
 type RolePermission struct {
-	RoleID       int64  `json:"role_id"`
-	PermissionID int64  `json:"permission_id"`
-	CreatedAt    int64  `json:"created_at"`
-	UpdatedAt    int64  `json:"updated_at"`
-	CreatedBy    string `json:"created_by"`
-	UpdatedBy    string `json:"updated_by"`
+	RoleID       int64  `db:"role_id" json:"role_id"`
+	PermissionID int64  `db:"permission_id" json:"permission_id"`
+	CreatedAt    int64  `db:"created_at" json:"created_at"`
+	UpdatedAt    int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy    string `db:"created_by" json:"created_by"`
+	UpdatedBy    string `db:"updated_by" json:"updated_by"`
 }
 
 type User struct {
-	ID              int64       `json:"id"`
-	FirstName       string      `json:"first_name"`
-	LastName        string      `json:"last_name"`
-	Email           string      `json:"email"`
-	Password        string      `json:"password"`
-	JobTitle        pgtype.Text `json:"job_title"`
-	LineOfBusiness  pgtype.Text `json:"line_of_business"`
-	LineManager     pgtype.Text `json:"line_manager"`
-	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
-	LastSeenAt      int64       `json:"last_seen_at"`
-	CreatedAt       int64       `json:"created_at"`
-	UpdatedAt       int64       `json:"updated_at"`
-	DeletedAt       pgtype.Int8 `json:"deleted_at"`
-	CreatedBy       string      `json:"created_by"`
-	UpdatedBy       string      `json:"updated_by"`
+	ID              int64       `db:"id" json:"id"`
+	FirstName       string      `db:"first_name" json:"first_name"`
+	LastName        string      `db:"last_name" json:"last_name"`
+	Email           string      `db:"email" json:"email"`
+	Password        string      `db:"password" json:"password"`
+	JobTitle        pgtype.Text `db:"job_title" json:"job_title"`
+	LineOfBusiness  pgtype.Text `db:"line_of_business" json:"line_of_business"`
+	LineManager     pgtype.Text `db:"line_manager" json:"line_manager"`
+	EmailVerifiedAt pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
+	LastSeenAt      int64       `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt       int64       `db:"created_at" json:"created_at"`
+	UpdatedAt       int64       `db:"updated_at" json:"updated_at"`
+	DeletedAt       pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
+	CreatedBy       string      `db:"created_by" json:"created_by"`
+	UpdatedBy       string      `db:"updated_by" json:"updated_by"`
 }
 
 type UserRole struct {
-	UserID    int64  `json:"user_id"`
-	RoleID    int64  `json:"role_id"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
-	CreatedBy string `json:"created_by"`
-	UpdatedBy string `json:"updated_by"`
+	UserID    int64  `db:"user_id" json:"user_id"`
+	RoleID    int64  `db:"role_id" json:"role_id"`
+	CreatedAt int64  `db:"created_at" json:"created_at"`
+	UpdatedAt int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy string `db:"created_by" json:"created_by"`
+	UpdatedBy string `db:"updated_by" json:"updated_by"`
 }

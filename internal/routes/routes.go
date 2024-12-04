@@ -18,11 +18,12 @@ import (
 	gqlprometheus "github.com/awanishnathpandey/leaf/internal/prometheus"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 )
 
 // SetupRoutes configures all routes for the application
-func SetupRoutes(app *fiber.App, queries *generated.Queries) {
+func SetupRoutes(app *fiber.App, queries *generated.Queries, Pool *pgxpool.Pool) {
 
 	// Custom logger middleware for Fiber using zerolog
 	app.Use(func(c *fiber.Ctx) error {
@@ -66,7 +67,7 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries) {
 	}
 
 	// GraphQL handler using gqlgen
-	graphqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries, MailService: mailService}}))
+	graphqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries, Pool: Pool, MailService: mailService}}))
 
 	// Add transports (e.g., POST method) if needed
 	graphqlHandler.AddTransport(transport.POST{})

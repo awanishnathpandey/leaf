@@ -11,68 +11,68 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addFileToGroup = `-- name: AddFileToGroup :exec
+const AddFileToGroup = `-- name: AddFileToGroup :exec
 INSERT INTO group_files (group_id, file_id, created_at, updated_at) 
 VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 
 ON CONFLICT DO NOTHING
 `
 
 type AddFileToGroupParams struct {
-	GroupID int64 `json:"group_id"`
-	FileID  int64 `json:"file_id"`
+	GroupID int64 `db:"group_id" json:"group_id"`
+	FileID  int64 `db:"file_id" json:"file_id"`
 }
 
 func (q *Queries) AddFileToGroup(ctx context.Context, arg AddFileToGroupParams) error {
-	_, err := q.db.Exec(ctx, addFileToGroup, arg.GroupID, arg.FileID)
+	_, err := q.db.Exec(ctx, AddFileToGroup, arg.GroupID, arg.FileID)
 	return err
 }
 
-const addFolderToGroup = `-- name: AddFolderToGroup :exec
+const AddFolderToGroup = `-- name: AddFolderToGroup :exec
 INSERT INTO group_folders (group_id, folder_id, created_at, updated_at) 
 VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 
 ON CONFLICT DO NOTHING
 `
 
 type AddFolderToGroupParams struct {
-	GroupID  int64 `json:"group_id"`
-	FolderID int64 `json:"folder_id"`
+	GroupID  int64 `db:"group_id" json:"group_id"`
+	FolderID int64 `db:"folder_id" json:"folder_id"`
 }
 
 func (q *Queries) AddFolderToGroup(ctx context.Context, arg AddFolderToGroupParams) error {
-	_, err := q.db.Exec(ctx, addFolderToGroup, arg.GroupID, arg.FolderID)
+	_, err := q.db.Exec(ctx, AddFolderToGroup, arg.GroupID, arg.FolderID)
 	return err
 }
 
-const addUserToGroup = `-- name: AddUserToGroup :exec
+const AddUserToGroup = `-- name: AddUserToGroup :exec
 INSERT INTO group_users (group_id, user_id, created_at, updated_at) 
 VALUES ($1, $2, EXTRACT(EPOCH FROM NOW()), EXTRACT(EPOCH FROM NOW())) 
 ON CONFLICT DO NOTHING
 `
 
 type AddUserToGroupParams struct {
-	GroupID int64 `json:"group_id"`
-	UserID  int64 `json:"user_id"`
+	GroupID int64 `db:"group_id" json:"group_id"`
+	UserID  int64 `db:"user_id" json:"user_id"`
 }
 
 func (q *Queries) AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error {
-	_, err := q.db.Exec(ctx, addUserToGroup, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, AddUserToGroup, arg.GroupID, arg.UserID)
 	return err
 }
 
-const createGroup = `-- name: CreateGroup :one
+const CreateGroup = `-- name: CreateGroup :one
 INSERT INTO groups (name, description, created_by, updated_by) 
 VALUES ($1, $2, $3, $3) 
 RETURNING id, name, description, created_at, updated_at, created_by, updated_by
 `
 
 type CreateGroupParams struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedBy   string `json:"created_by"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	CreatedBy   string `db:"created_by" json:"created_by"`
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
-	row := q.db.QueryRow(ctx, createGroup, arg.Name, arg.Description, arg.CreatedBy)
+	row := q.db.QueryRow(ctx, CreateGroup, arg.Name, arg.Description, arg.CreatedBy)
 	var i Group
 	err := row.Scan(
 		&i.ID,
@@ -86,27 +86,27 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 	return i, err
 }
 
-const deleteGroup = `-- name: DeleteGroup :exec
+const DeleteGroup = `-- name: DeleteGroup :exec
 DELETE FROM groups 
 WHERE id = $1
 `
 
 func (q *Queries) DeleteGroup(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteGroup, id)
+	_, err := q.db.Exec(ctx, DeleteGroup, id)
 	return err
 }
 
-const deleteGroupsByIDs = `-- name: DeleteGroupsByIDs :exec
+const DeleteGroupsByIDs = `-- name: DeleteGroupsByIDs :exec
 DELETE FROM groups
 WHERE id = ANY($1::bigint[])
 `
 
 func (q *Queries) DeleteGroupsByIDs(ctx context.Context, dollar_1 []int64) error {
-	_, err := q.db.Exec(ctx, deleteGroupsByIDs, dollar_1)
+	_, err := q.db.Exec(ctx, DeleteGroupsByIDs, dollar_1)
 	return err
 }
 
-const getFilesByGroupID = `-- name: GetFilesByGroupID :many
+const GetFilesByGroupID = `-- name: GetFilesByGroupID :many
 SELECT f.id, f.name, f.slug, f.file_path, f.file_type, f.file_bytes, f.auto_download, f.folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by
 FROM files f
 JOIN group_files gf ON f.id = gf.file_id
@@ -114,7 +114,7 @@ WHERE gf.group_id = $1
 `
 
 func (q *Queries) GetFilesByGroupID(ctx context.Context, groupID int64) ([]File, error) {
-	rows, err := q.db.Query(ctx, getFilesByGroupID, groupID)
+	rows, err := q.db.Query(ctx, GetFilesByGroupID, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (q *Queries) GetFilesByGroupID(ctx context.Context, groupID int64) ([]File,
 	return items, nil
 }
 
-const getFoldersByGroupID = `-- name: GetFoldersByGroupID :many
+const GetFoldersByGroupID = `-- name: GetFoldersByGroupID :many
 SELECT f.id, f.name, f.slug, f.description, f.created_at, f.updated_at, f.created_by, f.updated_by
 FROM folders f
 JOIN group_folders gf ON f.id = gf.folder_id
@@ -154,7 +154,7 @@ WHERE gf.group_id = $1
 `
 
 func (q *Queries) GetFoldersByGroupID(ctx context.Context, groupID int64) ([]Folder, error) {
-	rows, err := q.db.Query(ctx, getFoldersByGroupID, groupID)
+	rows, err := q.db.Query(ctx, GetFoldersByGroupID, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -182,22 +182,22 @@ func (q *Queries) GetFoldersByGroupID(ctx context.Context, groupID int64) ([]Fol
 	return items, nil
 }
 
-const getGroup = `-- name: GetGroup :one
+const GetGroup = `-- name: GetGroup :one
 SELECT id, name, description, created_at, updated_at 
 FROM groups 
 WHERE id = $1
 `
 
 type GetGroupRow struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	CreatedAt   int64  `db:"created_at" json:"created_at"`
+	UpdatedAt   int64  `db:"updated_at" json:"updated_at"`
 }
 
 func (q *Queries) GetGroup(ctx context.Context, id int64) (GetGroupRow, error) {
-	row := q.db.QueryRow(ctx, getGroup, id)
+	row := q.db.QueryRow(ctx, GetGroup, id)
 	var i GetGroupRow
 	err := row.Scan(
 		&i.ID,
@@ -209,7 +209,7 @@ func (q *Queries) GetGroup(ctx context.Context, id int64) (GetGroupRow, error) {
 	return i, err
 }
 
-const getGroupsByFileID = `-- name: GetGroupsByFileID :many
+const GetGroupsByFileID = `-- name: GetGroupsByFileID :many
 SELECT g.id, g.name, g.description, g.created_at, g.updated_at, g.created_by, g.updated_by
 FROM groups g
 JOIN group_files gf ON g.id = gf.group_id
@@ -217,7 +217,7 @@ WHERE gf.file_id = $1
 `
 
 func (q *Queries) GetGroupsByFileID(ctx context.Context, fileID int64) ([]Group, error) {
-	rows, err := q.db.Query(ctx, getGroupsByFileID, fileID)
+	rows, err := q.db.Query(ctx, GetGroupsByFileID, fileID)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func (q *Queries) GetGroupsByFileID(ctx context.Context, fileID int64) ([]Group,
 	return items, nil
 }
 
-const getGroupsByFolderID = `-- name: GetGroupsByFolderID :many
+const GetGroupsByFolderID = `-- name: GetGroupsByFolderID :many
 SELECT g.id, g.name, g.description, g.created_at, g.updated_at, g.created_by, g.updated_by
 FROM groups g
 JOIN group_folders gf ON g.id = gf.group_id
@@ -252,7 +252,7 @@ WHERE gf.folder_id = $1
 `
 
 func (q *Queries) GetGroupsByFolderID(ctx context.Context, folderID int64) ([]Group, error) {
-	rows, err := q.db.Query(ctx, getGroupsByFolderID, folderID)
+	rows, err := q.db.Query(ctx, GetGroupsByFolderID, folderID)
 	if err != nil {
 		return nil, err
 	}
@@ -279,13 +279,13 @@ func (q *Queries) GetGroupsByFolderID(ctx context.Context, folderID int64) ([]Gr
 	return items, nil
 }
 
-const getGroupsByIDs = `-- name: GetGroupsByIDs :many
+const GetGroupsByIDs = `-- name: GetGroupsByIDs :many
 SELECT id FROM groups
 WHERE id = ANY($1::bigint[])
 `
 
 func (q *Queries) GetGroupsByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
-	rows, err := q.db.Query(ctx, getGroupsByIDs, dollar_1)
+	rows, err := q.db.Query(ctx, GetGroupsByIDs, dollar_1)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (q *Queries) GetGroupsByIDs(ctx context.Context, dollar_1 []int64) ([]int64
 	return items, nil
 }
 
-const getGroupsByUserID = `-- name: GetGroupsByUserID :many
+const GetGroupsByUserID = `-- name: GetGroupsByUserID :many
 SELECT g.id, g.name, g.description, g.created_at, g.updated_at, g.created_by, g.updated_by
 FROM groups g
 JOIN group_users gu ON g.id = gu.group_id
@@ -312,7 +312,7 @@ WHERE gu.user_id = $1
 `
 
 func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group, error) {
-	rows, err := q.db.Query(ctx, getGroupsByUserID, userID)
+	rows, err := q.db.Query(ctx, GetGroupsByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +339,7 @@ func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group,
 	return items, nil
 }
 
-const getPaginatedFilesByGroupID = `-- name: GetPaginatedFilesByGroupID :many
+const GetPaginatedFilesByGroupID = `-- name: GetPaginatedFilesByGroupID :many
 SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by, group_id, file_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM files f
 JOIN group_files gf ON f.id = gf.file_id
 WHERE 
@@ -360,38 +360,38 @@ OFFSET $2
 `
 
 type GetPaginatedFilesByGroupIDParams struct {
-	Limit      int32       `json:"limit"`
-	Offset     int32       `json:"offset"`
-	GroupID    pgtype.Int8 `json:"group_id"`
-	NameFilter interface{} `json:"name_filter"`
-	SlugFilter interface{} `json:"slug_filter"`
-	SortField  interface{} `json:"sort_field"`
-	SortOrder  interface{} `json:"sort_order"`
+	Limit      int32       `db:"limit" json:"limit"`
+	Offset     int32       `db:"offset" json:"offset"`
+	GroupID    pgtype.Int8 `db:"group_id" json:"group_id"`
+	NameFilter interface{} `db:"name_filter" json:"name_filter"`
+	SlugFilter interface{} `db:"slug_filter" json:"slug_filter"`
+	SortField  interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder  interface{} `db:"sort_order" json:"sort_order"`
 }
 
 type GetPaginatedFilesByGroupIDRow struct {
-	ID           int64  `json:"id"`
-	Name         string `json:"name"`
-	Slug         string `json:"slug"`
-	FilePath     string `json:"file_path"`
-	FileType     string `json:"file_type"`
-	FileBytes    int64  `json:"file_bytes"`
-	AutoDownload bool   `json:"auto_download"`
-	FolderID     int64  `json:"folder_id"`
-	CreatedAt    int64  `json:"created_at"`
-	UpdatedAt    int64  `json:"updated_at"`
-	CreatedBy    string `json:"created_by"`
-	UpdatedBy    string `json:"updated_by"`
-	GroupID      int64  `json:"group_id"`
-	FileID       int64  `json:"file_id"`
-	CreatedAt_2  int64  `json:"created_at_2"`
-	UpdatedAt_2  int64  `json:"updated_at_2"`
-	CreatedBy_2  string `json:"created_by_2"`
-	UpdatedBy_2  string `json:"updated_by_2"`
+	ID           int64  `db:"id" json:"id"`
+	Name         string `db:"name" json:"name"`
+	Slug         string `db:"slug" json:"slug"`
+	FilePath     string `db:"file_path" json:"file_path"`
+	FileType     string `db:"file_type" json:"file_type"`
+	FileBytes    int64  `db:"file_bytes" json:"file_bytes"`
+	AutoDownload bool   `db:"auto_download" json:"auto_download"`
+	FolderID     int64  `db:"folder_id" json:"folder_id"`
+	CreatedAt    int64  `db:"created_at" json:"created_at"`
+	UpdatedAt    int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy    string `db:"created_by" json:"created_by"`
+	UpdatedBy    string `db:"updated_by" json:"updated_by"`
+	GroupID      int64  `db:"group_id" json:"group_id"`
+	FileID       int64  `db:"file_id" json:"file_id"`
+	CreatedAt_2  int64  `db:"created_at_2" json:"created_at_2"`
+	UpdatedAt_2  int64  `db:"updated_at_2" json:"updated_at_2"`
+	CreatedBy_2  string `db:"created_by_2" json:"created_by_2"`
+	UpdatedBy_2  string `db:"updated_by_2" json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginatedFilesByGroupIDParams) ([]GetPaginatedFilesByGroupIDRow, error) {
-	rows, err := q.db.Query(ctx, getPaginatedFilesByGroupID,
+	rows, err := q.db.Query(ctx, GetPaginatedFilesByGroupID,
 		arg.Limit,
 		arg.Offset,
 		arg.GroupID,
@@ -437,7 +437,7 @@ func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginat
 	return items, nil
 }
 
-const getPaginatedFilesByGroupIDCount = `-- name: GetPaginatedFilesByGroupIDCount :one
+const GetPaginatedFilesByGroupIDCount = `-- name: GetPaginatedFilesByGroupIDCount :one
 SELECT COUNT(*) FROM files f
 JOIN group_files gf ON f.id = gf.file_id
 WHERE 
@@ -447,19 +447,19 @@ WHERE
 `
 
 type GetPaginatedFilesByGroupIDCountParams struct {
-	GroupID    pgtype.Int8 `json:"group_id"`
-	NameFilter interface{} `json:"name_filter"`
-	SlugFilter interface{} `json:"slug_filter"`
+	GroupID    pgtype.Int8 `db:"group_id" json:"group_id"`
+	NameFilter interface{} `db:"name_filter" json:"name_filter"`
+	SlugFilter interface{} `db:"slug_filter" json:"slug_filter"`
 }
 
 func (q *Queries) GetPaginatedFilesByGroupIDCount(ctx context.Context, arg GetPaginatedFilesByGroupIDCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getPaginatedFilesByGroupIDCount, arg.GroupID, arg.NameFilter, arg.SlugFilter)
+	row := q.db.QueryRow(ctx, GetPaginatedFilesByGroupIDCount, arg.GroupID, arg.NameFilter, arg.SlugFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getPaginatedFoldersByGroupID = `-- name: GetPaginatedFoldersByGroupID :many
+const GetPaginatedFoldersByGroupID = `-- name: GetPaginatedFoldersByGroupID :many
 SELECT id, name, slug, description, f.created_at, f.updated_at, f.created_by, f.updated_by, group_id, folder_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM folders f
 JOIN group_folders gf ON f.id = gf.folder_id
 WHERE 
@@ -483,35 +483,35 @@ OFFSET $2
 `
 
 type GetPaginatedFoldersByGroupIDParams struct {
-	Limit             int32       `json:"limit"`
-	Offset            int32       `json:"offset"`
-	GroupID           pgtype.Int8 `json:"group_id"`
-	NameFilter        interface{} `json:"name_filter"`
-	SlugFilter        interface{} `json:"slug_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
-	SortField         interface{} `json:"sort_field"`
-	SortOrder         interface{} `json:"sort_order"`
+	Limit             int32       `db:"limit" json:"limit"`
+	Offset            int32       `db:"offset" json:"offset"`
+	GroupID           pgtype.Int8 `db:"group_id" json:"group_id"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	SlugFilter        interface{} `db:"slug_filter" json:"slug_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
+	SortField         interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder         interface{} `db:"sort_order" json:"sort_order"`
 }
 
 type GetPaginatedFoldersByGroupIDRow struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
-	GroupID     int64  `json:"group_id"`
-	FolderID    int64  `json:"folder_id"`
-	CreatedAt_2 int64  `json:"created_at_2"`
-	UpdatedAt_2 int64  `json:"updated_at_2"`
-	CreatedBy_2 string `json:"created_by_2"`
-	UpdatedBy_2 string `json:"updated_by_2"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Slug        string `db:"slug" json:"slug"`
+	Description string `db:"description" json:"description"`
+	CreatedAt   int64  `db:"created_at" json:"created_at"`
+	UpdatedAt   int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy   string `db:"created_by" json:"created_by"`
+	UpdatedBy   string `db:"updated_by" json:"updated_by"`
+	GroupID     int64  `db:"group_id" json:"group_id"`
+	FolderID    int64  `db:"folder_id" json:"folder_id"`
+	CreatedAt_2 int64  `db:"created_at_2" json:"created_at_2"`
+	UpdatedAt_2 int64  `db:"updated_at_2" json:"updated_at_2"`
+	CreatedBy_2 string `db:"created_by_2" json:"created_by_2"`
+	UpdatedBy_2 string `db:"updated_by_2" json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedFoldersByGroupID(ctx context.Context, arg GetPaginatedFoldersByGroupIDParams) ([]GetPaginatedFoldersByGroupIDRow, error) {
-	rows, err := q.db.Query(ctx, getPaginatedFoldersByGroupID,
+	rows, err := q.db.Query(ctx, GetPaginatedFoldersByGroupID,
 		arg.Limit,
 		arg.Offset,
 		arg.GroupID,
@@ -554,7 +554,7 @@ func (q *Queries) GetPaginatedFoldersByGroupID(ctx context.Context, arg GetPagin
 	return items, nil
 }
 
-const getPaginatedFoldersByGroupIDCount = `-- name: GetPaginatedFoldersByGroupIDCount :one
+const GetPaginatedFoldersByGroupIDCount = `-- name: GetPaginatedFoldersByGroupIDCount :one
 SELECT COUNT(*) FROM folders f
 JOIN group_folders gf ON f.id = gf.folder_id
 WHERE 
@@ -565,14 +565,14 @@ WHERE
 `
 
 type GetPaginatedFoldersByGroupIDCountParams struct {
-	GroupID           pgtype.Int8 `json:"group_id"`
-	NameFilter        interface{} `json:"name_filter"`
-	SlugFilter        interface{} `json:"slug_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
+	GroupID           pgtype.Int8 `db:"group_id" json:"group_id"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	SlugFilter        interface{} `db:"slug_filter" json:"slug_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
 }
 
 func (q *Queries) GetPaginatedFoldersByGroupIDCount(ctx context.Context, arg GetPaginatedFoldersByGroupIDCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getPaginatedFoldersByGroupIDCount,
+	row := q.db.QueryRow(ctx, GetPaginatedFoldersByGroupIDCount,
 		arg.GroupID,
 		arg.NameFilter,
 		arg.SlugFilter,
@@ -583,7 +583,7 @@ func (q *Queries) GetPaginatedFoldersByGroupIDCount(ctx context.Context, arg Get
 	return count, err
 }
 
-const getPaginatedGroupsByFileID = `-- name: GetPaginatedGroupsByFileID :many
+const GetPaginatedGroupsByFileID = `-- name: GetPaginatedGroupsByFileID :many
 SELECT id, name, description, g.created_at, g.updated_at, g.created_by, g.updated_by, group_id, file_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM groups g
 JOIN group_files gf ON g.id = gf.group_id
 WHERE 
@@ -604,33 +604,33 @@ OFFSET $2
 `
 
 type GetPaginatedGroupsByFileIDParams struct {
-	Limit             int32       `json:"limit"`
-	Offset            int32       `json:"offset"`
-	FileID            pgtype.Int8 `json:"file_id"`
-	NameFilter        interface{} `json:"name_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
-	SortField         interface{} `json:"sort_field"`
-	SortOrder         interface{} `json:"sort_order"`
+	Limit             int32       `db:"limit" json:"limit"`
+	Offset            int32       `db:"offset" json:"offset"`
+	FileID            pgtype.Int8 `db:"file_id" json:"file_id"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
+	SortField         interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder         interface{} `db:"sort_order" json:"sort_order"`
 }
 
 type GetPaginatedGroupsByFileIDRow struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
-	GroupID     int64  `json:"group_id"`
-	FileID      int64  `json:"file_id"`
-	CreatedAt_2 int64  `json:"created_at_2"`
-	UpdatedAt_2 int64  `json:"updated_at_2"`
-	CreatedBy_2 string `json:"created_by_2"`
-	UpdatedBy_2 string `json:"updated_by_2"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	CreatedAt   int64  `db:"created_at" json:"created_at"`
+	UpdatedAt   int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy   string `db:"created_by" json:"created_by"`
+	UpdatedBy   string `db:"updated_by" json:"updated_by"`
+	GroupID     int64  `db:"group_id" json:"group_id"`
+	FileID      int64  `db:"file_id" json:"file_id"`
+	CreatedAt_2 int64  `db:"created_at_2" json:"created_at_2"`
+	UpdatedAt_2 int64  `db:"updated_at_2" json:"updated_at_2"`
+	CreatedBy_2 string `db:"created_by_2" json:"created_by_2"`
+	UpdatedBy_2 string `db:"updated_by_2" json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedGroupsByFileID(ctx context.Context, arg GetPaginatedGroupsByFileIDParams) ([]GetPaginatedGroupsByFileIDRow, error) {
-	rows, err := q.db.Query(ctx, getPaginatedGroupsByFileID,
+	rows, err := q.db.Query(ctx, GetPaginatedGroupsByFileID,
 		arg.Limit,
 		arg.Offset,
 		arg.FileID,
@@ -671,7 +671,7 @@ func (q *Queries) GetPaginatedGroupsByFileID(ctx context.Context, arg GetPaginat
 	return items, nil
 }
 
-const getPaginatedGroupsByFileIDCount = `-- name: GetPaginatedGroupsByFileIDCount :one
+const GetPaginatedGroupsByFileIDCount = `-- name: GetPaginatedGroupsByFileIDCount :one
 SELECT COUNT(*) FROM groups g
 JOIN group_files gf ON g.id = gf.group_id
 WHERE 
@@ -681,19 +681,19 @@ WHERE
 `
 
 type GetPaginatedGroupsByFileIDCountParams struct {
-	FileID            pgtype.Int8 `json:"file_id"`
-	NameFilter        interface{} `json:"name_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
+	FileID            pgtype.Int8 `db:"file_id" json:"file_id"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
 }
 
 func (q *Queries) GetPaginatedGroupsByFileIDCount(ctx context.Context, arg GetPaginatedGroupsByFileIDCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getPaginatedGroupsByFileIDCount, arg.FileID, arg.NameFilter, arg.DescriptionFilter)
+	row := q.db.QueryRow(ctx, GetPaginatedGroupsByFileIDCount, arg.FileID, arg.NameFilter, arg.DescriptionFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getPaginatedGroupsByFolderID = `-- name: GetPaginatedGroupsByFolderID :many
+const GetPaginatedGroupsByFolderID = `-- name: GetPaginatedGroupsByFolderID :many
 SELECT id, name, description, g.created_at, g.updated_at, g.created_by, g.updated_by, group_id, folder_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM groups g
 JOIN group_folders gf ON g.id = gf.group_id
 WHERE 
@@ -714,33 +714,33 @@ OFFSET $2
 `
 
 type GetPaginatedGroupsByFolderIDParams struct {
-	Limit             int32       `json:"limit"`
-	Offset            int32       `json:"offset"`
-	FolderID          pgtype.Int8 `json:"folder_id"`
-	NameFilter        interface{} `json:"name_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
-	SortField         interface{} `json:"sort_field"`
-	SortOrder         interface{} `json:"sort_order"`
+	Limit             int32       `db:"limit" json:"limit"`
+	Offset            int32       `db:"offset" json:"offset"`
+	FolderID          pgtype.Int8 `db:"folder_id" json:"folder_id"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
+	SortField         interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder         interface{} `db:"sort_order" json:"sort_order"`
 }
 
 type GetPaginatedGroupsByFolderIDRow struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
-	GroupID     int64  `json:"group_id"`
-	FolderID    int64  `json:"folder_id"`
-	CreatedAt_2 int64  `json:"created_at_2"`
-	UpdatedAt_2 int64  `json:"updated_at_2"`
-	CreatedBy_2 string `json:"created_by_2"`
-	UpdatedBy_2 string `json:"updated_by_2"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	CreatedAt   int64  `db:"created_at" json:"created_at"`
+	UpdatedAt   int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy   string `db:"created_by" json:"created_by"`
+	UpdatedBy   string `db:"updated_by" json:"updated_by"`
+	GroupID     int64  `db:"group_id" json:"group_id"`
+	FolderID    int64  `db:"folder_id" json:"folder_id"`
+	CreatedAt_2 int64  `db:"created_at_2" json:"created_at_2"`
+	UpdatedAt_2 int64  `db:"updated_at_2" json:"updated_at_2"`
+	CreatedBy_2 string `db:"created_by_2" json:"created_by_2"`
+	UpdatedBy_2 string `db:"updated_by_2" json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedGroupsByFolderID(ctx context.Context, arg GetPaginatedGroupsByFolderIDParams) ([]GetPaginatedGroupsByFolderIDRow, error) {
-	rows, err := q.db.Query(ctx, getPaginatedGroupsByFolderID,
+	rows, err := q.db.Query(ctx, GetPaginatedGroupsByFolderID,
 		arg.Limit,
 		arg.Offset,
 		arg.FolderID,
@@ -781,7 +781,7 @@ func (q *Queries) GetPaginatedGroupsByFolderID(ctx context.Context, arg GetPagin
 	return items, nil
 }
 
-const getPaginatedGroupsByFolderIDCount = `-- name: GetPaginatedGroupsByFolderIDCount :one
+const GetPaginatedGroupsByFolderIDCount = `-- name: GetPaginatedGroupsByFolderIDCount :one
 SELECT COUNT(*) FROM groups g
 JOIN group_folders gf ON g.id = gf.group_id
 WHERE 
@@ -791,19 +791,19 @@ WHERE
 `
 
 type GetPaginatedGroupsByFolderIDCountParams struct {
-	FolderID          pgtype.Int8 `json:"folder_id"`
-	NameFilter        interface{} `json:"name_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
+	FolderID          pgtype.Int8 `db:"folder_id" json:"folder_id"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
 }
 
 func (q *Queries) GetPaginatedGroupsByFolderIDCount(ctx context.Context, arg GetPaginatedGroupsByFolderIDCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getPaginatedGroupsByFolderIDCount, arg.FolderID, arg.NameFilter, arg.DescriptionFilter)
+	row := q.db.QueryRow(ctx, GetPaginatedGroupsByFolderIDCount, arg.FolderID, arg.NameFilter, arg.DescriptionFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getPaginatedGroupsByUserID = `-- name: GetPaginatedGroupsByUserID :many
+const GetPaginatedGroupsByUserID = `-- name: GetPaginatedGroupsByUserID :many
 SELECT id, name, description, g.created_at, g.updated_at, g.created_by, g.updated_by, group_id, user_id, gu.created_at, gu.updated_at, gu.created_by, gu.updated_by FROM groups g
 JOIN group_users gu ON g.id = gu.group_id
 WHERE 
@@ -824,33 +824,33 @@ OFFSET $2
 `
 
 type GetPaginatedGroupsByUserIDParams struct {
-	Limit             int32       `json:"limit"`
-	Offset            int32       `json:"offset"`
-	UserID            pgtype.Int8 `json:"user_id"`
-	NameFilter        interface{} `json:"name_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
-	SortField         interface{} `json:"sort_field"`
-	SortOrder         interface{} `json:"sort_order"`
+	Limit             int32       `db:"limit" json:"limit"`
+	Offset            int32       `db:"offset" json:"offset"`
+	UserID            pgtype.Int8 `db:"user_id" json:"user_id"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
+	SortField         interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder         interface{} `db:"sort_order" json:"sort_order"`
 }
 
 type GetPaginatedGroupsByUserIDRow struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
-	GroupID     int64  `json:"group_id"`
-	UserID      int64  `json:"user_id"`
-	CreatedAt_2 int64  `json:"created_at_2"`
-	UpdatedAt_2 int64  `json:"updated_at_2"`
-	CreatedBy_2 string `json:"created_by_2"`
-	UpdatedBy_2 string `json:"updated_by_2"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	CreatedAt   int64  `db:"created_at" json:"created_at"`
+	UpdatedAt   int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy   string `db:"created_by" json:"created_by"`
+	UpdatedBy   string `db:"updated_by" json:"updated_by"`
+	GroupID     int64  `db:"group_id" json:"group_id"`
+	UserID      int64  `db:"user_id" json:"user_id"`
+	CreatedAt_2 int64  `db:"created_at_2" json:"created_at_2"`
+	UpdatedAt_2 int64  `db:"updated_at_2" json:"updated_at_2"`
+	CreatedBy_2 string `db:"created_by_2" json:"created_by_2"`
+	UpdatedBy_2 string `db:"updated_by_2" json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedGroupsByUserID(ctx context.Context, arg GetPaginatedGroupsByUserIDParams) ([]GetPaginatedGroupsByUserIDRow, error) {
-	rows, err := q.db.Query(ctx, getPaginatedGroupsByUserID,
+	rows, err := q.db.Query(ctx, GetPaginatedGroupsByUserID,
 		arg.Limit,
 		arg.Offset,
 		arg.UserID,
@@ -891,7 +891,7 @@ func (q *Queries) GetPaginatedGroupsByUserID(ctx context.Context, arg GetPaginat
 	return items, nil
 }
 
-const getPaginatedGroupsByUserIDCount = `-- name: GetPaginatedGroupsByUserIDCount :one
+const GetPaginatedGroupsByUserIDCount = `-- name: GetPaginatedGroupsByUserIDCount :one
 SELECT COUNT(*) FROM groups g
 JOIN group_users gu ON g.id = gu.group_id
 WHERE 
@@ -901,19 +901,19 @@ WHERE
 `
 
 type GetPaginatedGroupsByUserIDCountParams struct {
-	UserID            pgtype.Int8 `json:"user_id"`
-	NameFilter        interface{} `json:"name_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
+	UserID            pgtype.Int8 `db:"user_id" json:"user_id"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
 }
 
 func (q *Queries) GetPaginatedGroupsByUserIDCount(ctx context.Context, arg GetPaginatedGroupsByUserIDCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getPaginatedGroupsByUserIDCount, arg.UserID, arg.NameFilter, arg.DescriptionFilter)
+	row := q.db.QueryRow(ctx, GetPaginatedGroupsByUserIDCount, arg.UserID, arg.NameFilter, arg.DescriptionFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getPaginatedUsersByGroupID = `-- name: GetPaginatedUsersByGroupID :many
+const GetPaginatedUsersByGroupID = `-- name: GetPaginatedUsersByGroupID :many
 SELECT 
     u.id, 
     u.first_name,
@@ -949,34 +949,34 @@ OFFSET $2
 `
 
 type GetPaginatedUsersByGroupIDParams struct {
-	Limit       int32       `json:"limit"`
-	Offset      int32       `json:"offset"`
-	GroupID     pgtype.Int8 `json:"group_id"`
-	NameFilter  interface{} `json:"name_filter"`
-	EmailFilter interface{} `json:"email_filter"`
-	SortField   interface{} `json:"sort_field"`
-	SortOrder   interface{} `json:"sort_order"`
+	Limit       int32       `db:"limit" json:"limit"`
+	Offset      int32       `db:"offset" json:"offset"`
+	GroupID     pgtype.Int8 `db:"group_id" json:"group_id"`
+	NameFilter  interface{} `db:"name_filter" json:"name_filter"`
+	EmailFilter interface{} `db:"email_filter" json:"email_filter"`
+	SortField   interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder   interface{} `db:"sort_order" json:"sort_order"`
 }
 
 type GetPaginatedUsersByGroupIDRow struct {
-	ID              int64       `json:"id"`
-	FirstName       string      `json:"first_name"`
-	LastName        string      `json:"last_name"`
-	Email           string      `json:"email"`
-	JobTitle        pgtype.Text `json:"job_title"`
-	LineOfBusiness  pgtype.Text `json:"line_of_business"`
-	LineManager     pgtype.Text `json:"line_manager"`
-	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
-	LastSeenAt      int64       `json:"last_seen_at"`
-	CreatedAt       int64       `json:"created_at"`
-	UpdatedAt       int64       `json:"updated_at"`
-	DeletedAt       pgtype.Int8 `json:"deleted_at"`
-	CreatedBy       string      `json:"created_by"`
-	UpdatedBy       string      `json:"updated_by"`
+	ID              int64       `db:"id" json:"id"`
+	FirstName       string      `db:"first_name" json:"first_name"`
+	LastName        string      `db:"last_name" json:"last_name"`
+	Email           string      `db:"email" json:"email"`
+	JobTitle        pgtype.Text `db:"job_title" json:"job_title"`
+	LineOfBusiness  pgtype.Text `db:"line_of_business" json:"line_of_business"`
+	LineManager     pgtype.Text `db:"line_manager" json:"line_manager"`
+	EmailVerifiedAt pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
+	LastSeenAt      int64       `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt       int64       `db:"created_at" json:"created_at"`
+	UpdatedAt       int64       `db:"updated_at" json:"updated_at"`
+	DeletedAt       pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
+	CreatedBy       string      `db:"created_by" json:"created_by"`
+	UpdatedBy       string      `db:"updated_by" json:"updated_by"`
 }
 
 func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginatedUsersByGroupIDParams) ([]GetPaginatedUsersByGroupIDRow, error) {
-	rows, err := q.db.Query(ctx, getPaginatedUsersByGroupID,
+	rows, err := q.db.Query(ctx, GetPaginatedUsersByGroupID,
 		arg.Limit,
 		arg.Offset,
 		arg.GroupID,
@@ -1018,7 +1018,7 @@ func (q *Queries) GetPaginatedUsersByGroupID(ctx context.Context, arg GetPaginat
 	return items, nil
 }
 
-const getPaginatedUsersByGroupIDCount = `-- name: GetPaginatedUsersByGroupIDCount :one
+const GetPaginatedUsersByGroupIDCount = `-- name: GetPaginatedUsersByGroupIDCount :one
 SELECT COUNT(*) FROM users u
 JOIN group_users gu ON u.id = gu.user_id
 WHERE 
@@ -1028,19 +1028,19 @@ WHERE
 `
 
 type GetPaginatedUsersByGroupIDCountParams struct {
-	GroupID     pgtype.Int8 `json:"group_id"`
-	NameFilter  interface{} `json:"name_filter"`
-	EmailFilter interface{} `json:"email_filter"`
+	GroupID     pgtype.Int8 `db:"group_id" json:"group_id"`
+	NameFilter  interface{} `db:"name_filter" json:"name_filter"`
+	EmailFilter interface{} `db:"email_filter" json:"email_filter"`
 }
 
 func (q *Queries) GetPaginatedUsersByGroupIDCount(ctx context.Context, arg GetPaginatedUsersByGroupIDCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getPaginatedUsersByGroupIDCount, arg.GroupID, arg.NameFilter, arg.EmailFilter)
+	row := q.db.QueryRow(ctx, GetPaginatedUsersByGroupIDCount, arg.GroupID, arg.NameFilter, arg.EmailFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getUsersByGroupID = `-- name: GetUsersByGroupID :many
+const GetUsersByGroupID = `-- name: GetUsersByGroupID :many
 SELECT u.id, u.first_name, u.last_name, u.email, u.job_title, u.line_of_business, u.line_manager, u.email_verified_at, u.last_seen_at, u.created_at, u.updated_at, u.deleted_at
 FROM users u
 JOIN group_users gu ON u.id = gu.user_id
@@ -1048,22 +1048,22 @@ WHERE gu.group_id = $1
 `
 
 type GetUsersByGroupIDRow struct {
-	ID              int64       `json:"id"`
-	FirstName       string      `json:"first_name"`
-	LastName        string      `json:"last_name"`
-	Email           string      `json:"email"`
-	JobTitle        pgtype.Text `json:"job_title"`
-	LineOfBusiness  pgtype.Text `json:"line_of_business"`
-	LineManager     pgtype.Text `json:"line_manager"`
-	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
-	LastSeenAt      int64       `json:"last_seen_at"`
-	CreatedAt       int64       `json:"created_at"`
-	UpdatedAt       int64       `json:"updated_at"`
-	DeletedAt       pgtype.Int8 `json:"deleted_at"`
+	ID              int64       `db:"id" json:"id"`
+	FirstName       string      `db:"first_name" json:"first_name"`
+	LastName        string      `db:"last_name" json:"last_name"`
+	Email           string      `db:"email" json:"email"`
+	JobTitle        pgtype.Text `db:"job_title" json:"job_title"`
+	LineOfBusiness  pgtype.Text `db:"line_of_business" json:"line_of_business"`
+	LineManager     pgtype.Text `db:"line_manager" json:"line_manager"`
+	EmailVerifiedAt pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
+	LastSeenAt      int64       `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt       int64       `db:"created_at" json:"created_at"`
+	UpdatedAt       int64       `db:"updated_at" json:"updated_at"`
+	DeletedAt       pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
 }
 
 func (q *Queries) GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUsersByGroupIDRow, error) {
-	rows, err := q.db.Query(ctx, getUsersByGroupID, groupID)
+	rows, err := q.db.Query(ctx, GetUsersByGroupID, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -1095,13 +1095,13 @@ func (q *Queries) GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUs
 	return items, nil
 }
 
-const listGroups = `-- name: ListGroups :many
+const ListGroups = `-- name: ListGroups :many
 SELECT id, name, description, created_at, updated_at, created_by, updated_by FROM groups
 ORDER BY name
 `
 
 func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
-	rows, err := q.db.Query(ctx, listGroups)
+	rows, err := q.db.Query(ctx, ListGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -1128,7 +1128,7 @@ func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 	return items, nil
 }
 
-const paginatedGroups = `-- name: PaginatedGroups :many
+const PaginatedGroups = `-- name: PaginatedGroups :many
 SELECT id, name, description, created_at, updated_at, created_by, updated_by FROM groups
 WHERE 
     (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
@@ -1147,16 +1147,16 @@ OFFSET $2
 `
 
 type PaginatedGroupsParams struct {
-	Limit             int32       `json:"limit"`
-	Offset            int32       `json:"offset"`
-	NameFilter        interface{} `json:"name_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
-	SortField         interface{} `json:"sort_field"`
-	SortOrder         interface{} `json:"sort_order"`
+	Limit             int32       `db:"limit" json:"limit"`
+	Offset            int32       `db:"offset" json:"offset"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
+	SortField         interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder         interface{} `db:"sort_order" json:"sort_order"`
 }
 
 func (q *Queries) PaginatedGroups(ctx context.Context, arg PaginatedGroupsParams) ([]Group, error) {
-	rows, err := q.db.Query(ctx, paginatedGroups,
+	rows, err := q.db.Query(ctx, PaginatedGroups,
 		arg.Limit,
 		arg.Offset,
 		arg.NameFilter,
@@ -1190,7 +1190,7 @@ func (q *Queries) PaginatedGroups(ctx context.Context, arg PaginatedGroupsParams
 	return items, nil
 }
 
-const paginatedGroupsCount = `-- name: PaginatedGroupsCount :one
+const PaginatedGroupsCount = `-- name: PaginatedGroupsCount :one
 SELECT COUNT(*) FROM groups
 WHERE 
     (coalesce($1, '') = '' OR name ILIKE '%' || $1 || '%')
@@ -1198,63 +1198,63 @@ WHERE
 `
 
 type PaginatedGroupsCountParams struct {
-	NameFilter        interface{} `json:"name_filter"`
-	DescriptionFilter interface{} `json:"description_filter"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
 }
 
 func (q *Queries) PaginatedGroupsCount(ctx context.Context, arg PaginatedGroupsCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, paginatedGroupsCount, arg.NameFilter, arg.DescriptionFilter)
+	row := q.db.QueryRow(ctx, PaginatedGroupsCount, arg.NameFilter, arg.DescriptionFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const removeFileFromGroup = `-- name: RemoveFileFromGroup :exec
+const RemoveFileFromGroup = `-- name: RemoveFileFromGroup :exec
 DELETE FROM group_files 
 WHERE group_id = $1 AND file_id = $2
 `
 
 type RemoveFileFromGroupParams struct {
-	GroupID int64 `json:"group_id"`
-	FileID  int64 `json:"file_id"`
+	GroupID int64 `db:"group_id" json:"group_id"`
+	FileID  int64 `db:"file_id" json:"file_id"`
 }
 
 func (q *Queries) RemoveFileFromGroup(ctx context.Context, arg RemoveFileFromGroupParams) error {
-	_, err := q.db.Exec(ctx, removeFileFromGroup, arg.GroupID, arg.FileID)
+	_, err := q.db.Exec(ctx, RemoveFileFromGroup, arg.GroupID, arg.FileID)
 	return err
 }
 
-const removeFolderFromGroup = `-- name: RemoveFolderFromGroup :exec
+const RemoveFolderFromGroup = `-- name: RemoveFolderFromGroup :exec
 DELETE FROM group_folders 
 WHERE group_id = $1 AND folder_id = $2
 `
 
 type RemoveFolderFromGroupParams struct {
-	GroupID  int64 `json:"group_id"`
-	FolderID int64 `json:"folder_id"`
+	GroupID  int64 `db:"group_id" json:"group_id"`
+	FolderID int64 `db:"folder_id" json:"folder_id"`
 }
 
 func (q *Queries) RemoveFolderFromGroup(ctx context.Context, arg RemoveFolderFromGroupParams) error {
-	_, err := q.db.Exec(ctx, removeFolderFromGroup, arg.GroupID, arg.FolderID)
+	_, err := q.db.Exec(ctx, RemoveFolderFromGroup, arg.GroupID, arg.FolderID)
 	return err
 }
 
-const removeUserFromGroup = `-- name: RemoveUserFromGroup :exec
+const RemoveUserFromGroup = `-- name: RemoveUserFromGroup :exec
 DELETE FROM group_users 
 WHERE group_id = $1 AND user_id = $2
 `
 
 type RemoveUserFromGroupParams struct {
-	GroupID int64 `json:"group_id"`
-	UserID  int64 `json:"user_id"`
+	GroupID int64 `db:"group_id" json:"group_id"`
+	UserID  int64 `db:"user_id" json:"user_id"`
 }
 
 func (q *Queries) RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error {
-	_, err := q.db.Exec(ctx, removeUserFromGroup, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, RemoveUserFromGroup, arg.GroupID, arg.UserID)
 	return err
 }
 
-const updateGroup = `-- name: UpdateGroup :one
+const UpdateGroup = `-- name: UpdateGroup :one
 UPDATE groups 
 SET name = $2, description = $3, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $4
 WHERE id = $1
@@ -1262,14 +1262,14 @@ RETURNING id, name, description, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateGroupParams struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	UpdatedBy   string `json:"updated_by"`
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	UpdatedBy   string `db:"updated_by" json:"updated_by"`
 }
 
 func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error) {
-	row := q.db.QueryRow(ctx, updateGroup,
+	row := q.db.QueryRow(ctx, UpdateGroup,
 		arg.ID,
 		arg.Name,
 		arg.Description,

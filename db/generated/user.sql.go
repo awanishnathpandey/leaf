@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createUser = `-- name: CreateUser :one
+const CreateUser = `-- name: CreateUser :one
 INSERT INTO users (
   first_name, last_name, email, password, created_by, updated_by
 ) VALUES (
@@ -21,32 +21,32 @@ RETURNING id, first_name, last_name, email, job_title, line_of_business, line_ma
 `
 
 type CreateUserParams struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	CreatedBy string `json:"created_by"`
+	FirstName string `db:"first_name" json:"first_name"`
+	LastName  string `db:"last_name" json:"last_name"`
+	Email     string `db:"email" json:"email"`
+	Password  string `db:"password" json:"password"`
+	CreatedBy string `db:"created_by" json:"created_by"`
 }
 
 type CreateUserRow struct {
-	ID              int64       `json:"id"`
-	FirstName       string      `json:"first_name"`
-	LastName        string      `json:"last_name"`
-	Email           string      `json:"email"`
-	JobTitle        pgtype.Text `json:"job_title"`
-	LineOfBusiness  pgtype.Text `json:"line_of_business"`
-	LineManager     pgtype.Text `json:"line_manager"`
-	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
-	LastSeenAt      int64       `json:"last_seen_at"`
-	CreatedAt       int64       `json:"created_at"`
-	UpdatedAt       int64       `json:"updated_at"`
-	DeletedAt       pgtype.Int8 `json:"deleted_at"`
-	CreatedBy       string      `json:"created_by"`
-	UpdatedBy       string      `json:"updated_by"`
+	ID              int64       `db:"id" json:"id"`
+	FirstName       string      `db:"first_name" json:"first_name"`
+	LastName        string      `db:"last_name" json:"last_name"`
+	Email           string      `db:"email" json:"email"`
+	JobTitle        pgtype.Text `db:"job_title" json:"job_title"`
+	LineOfBusiness  pgtype.Text `db:"line_of_business" json:"line_of_business"`
+	LineManager     pgtype.Text `db:"line_manager" json:"line_manager"`
+	EmailVerifiedAt pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
+	LastSeenAt      int64       `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt       int64       `db:"created_at" json:"created_at"`
+	UpdatedAt       int64       `db:"updated_at" json:"updated_at"`
+	DeletedAt       pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
+	CreatedBy       string      `db:"created_by" json:"created_by"`
+	UpdatedBy       string      `db:"updated_by" json:"updated_by"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRow(ctx, createUser,
+	row := q.db.QueryRow(ctx, CreateUser,
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
@@ -73,33 +73,33 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
-const deleteUser = `-- name: DeleteUser :exec
+const DeleteUser = `-- name: DeleteUser :exec
 DELETE FROM users
 WHERE id = $1
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteUser, id)
+	_, err := q.db.Exec(ctx, DeleteUser, id)
 	return err
 }
 
-const deleteUsersByIDs = `-- name: DeleteUsersByIDs :exec
+const DeleteUsersByIDs = `-- name: DeleteUsersByIDs :exec
 DELETE FROM users
 WHERE id = ANY($1::bigint[])
 `
 
 func (q *Queries) DeleteUsersByIDs(ctx context.Context, dollar_1 []int64) error {
-	_, err := q.db.Exec(ctx, deleteUsersByIDs, dollar_1)
+	_, err := q.db.Exec(ctx, DeleteUsersByIDs, dollar_1)
 	return err
 }
 
-const getUser = `-- name: GetUser :one
+const GetUser = `-- name: GetUser :one
 SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
-	row := q.db.QueryRow(ctx, getUser, id)
+	row := q.db.QueryRow(ctx, GetUser, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -121,13 +121,13 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 	return i, err
 }
 
-const getUserByEmail = `-- name: GetUserByEmail :one
+const GetUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE email = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	row := q.db.QueryRow(ctx, GetUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -149,24 +149,24 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
-const getUserID = `-- name: GetUserID :one
+const GetUserID = `-- name: GetUserID :one
 SELECT id FROM users
 WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserID(ctx context.Context, id int64) (int64, error) {
-	row := q.db.QueryRow(ctx, getUserID, id)
+	row := q.db.QueryRow(ctx, GetUserID, id)
 	err := row.Scan(&id)
 	return id, err
 }
 
-const getUsersByIDs = `-- name: GetUsersByIDs :many
+const GetUsersByIDs = `-- name: GetUsersByIDs :many
 SELECT id FROM users
 WHERE id = ANY($1::bigint[])
 `
 
 func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
-	rows, err := q.db.Query(ctx, getUsersByIDs, dollar_1)
+	rows, err := q.db.Query(ctx, GetUsersByIDs, dollar_1)
 	if err != nil {
 		return nil, err
 	}
@@ -185,13 +185,13 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 	return items, nil
 }
 
-const listUsers = `-- name: ListUsers :many
+const ListUsers = `-- name: ListUsers :many
 SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 ORDER BY email
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers)
+	rows, err := q.db.Query(ctx, ListUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
-const paginatedUsers = `-- name: PaginatedUsers :many
+const PaginatedUsers = `-- name: PaginatedUsers :many
 SELECT 
     id, 
     first_name, 
@@ -261,16 +261,16 @@ OFFSET $2
 `
 
 type PaginatedUsersParams struct {
-	Limit       int32       `json:"limit"`
-	Offset      int32       `json:"offset"`
-	NameFilter  interface{} `json:"name_filter"`
-	EmailFilter interface{} `json:"email_filter"`
-	SortField   interface{} `json:"sort_field"`
-	SortOrder   interface{} `json:"sort_order"`
+	Limit       int32       `db:"limit" json:"limit"`
+	Offset      int32       `db:"offset" json:"offset"`
+	NameFilter  interface{} `db:"name_filter" json:"name_filter"`
+	EmailFilter interface{} `db:"email_filter" json:"email_filter"`
+	SortField   interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder   interface{} `db:"sort_order" json:"sort_order"`
 }
 
 func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, paginatedUsers,
+	rows, err := q.db.Query(ctx, PaginatedUsers,
 		arg.Limit,
 		arg.Offset,
 		arg.NameFilter,
@@ -312,7 +312,7 @@ func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) 
 	return items, nil
 }
 
-const paginatedUsersCount = `-- name: PaginatedUsersCount :one
+const PaginatedUsersCount = `-- name: PaginatedUsersCount :one
 SELECT COUNT(*)
 FROM users
 WHERE 
@@ -321,18 +321,18 @@ WHERE
 `
 
 type PaginatedUsersCountParams struct {
-	NameFilter  interface{} `json:"name_filter"`
-	EmailFilter interface{} `json:"email_filter"`
+	NameFilter  interface{} `db:"name_filter" json:"name_filter"`
+	EmailFilter interface{} `db:"email_filter" json:"email_filter"`
 }
 
 func (q *Queries) PaginatedUsersCount(ctx context.Context, arg PaginatedUsersCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, paginatedUsersCount, arg.NameFilter, arg.EmailFilter)
+	row := q.db.QueryRow(ctx, PaginatedUsersCount, arg.NameFilter, arg.EmailFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const updateUser = `-- name: UpdateUser :one
+const UpdateUser = `-- name: UpdateUser :one
 UPDATE users
   set first_name = $2, last_name = $3, email = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
@@ -340,32 +340,32 @@ RETURNING id, first_name, last_name, email, job_title, line_of_business, line_ma
 `
 
 type UpdateUserParams struct {
-	ID        int64  `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	UpdatedBy string `json:"updated_by"`
+	ID        int64  `db:"id" json:"id"`
+	FirstName string `db:"first_name" json:"first_name"`
+	LastName  string `db:"last_name" json:"last_name"`
+	Email     string `db:"email" json:"email"`
+	UpdatedBy string `db:"updated_by" json:"updated_by"`
 }
 
 type UpdateUserRow struct {
-	ID              int64       `json:"id"`
-	FirstName       string      `json:"first_name"`
-	LastName        string      `json:"last_name"`
-	Email           string      `json:"email"`
-	JobTitle        pgtype.Text `json:"job_title"`
-	LineOfBusiness  pgtype.Text `json:"line_of_business"`
-	LineManager     pgtype.Text `json:"line_manager"`
-	EmailVerifiedAt pgtype.Int8 `json:"email_verified_at"`
-	LastSeenAt      int64       `json:"last_seen_at"`
-	CreatedAt       int64       `json:"created_at"`
-	UpdatedAt       int64       `json:"updated_at"`
-	DeletedAt       pgtype.Int8 `json:"deleted_at"`
-	CreatedBy       string      `json:"created_by"`
-	UpdatedBy       string      `json:"updated_by"`
+	ID              int64       `db:"id" json:"id"`
+	FirstName       string      `db:"first_name" json:"first_name"`
+	LastName        string      `db:"last_name" json:"last_name"`
+	Email           string      `db:"email" json:"email"`
+	JobTitle        pgtype.Text `db:"job_title" json:"job_title"`
+	LineOfBusiness  pgtype.Text `db:"line_of_business" json:"line_of_business"`
+	LineManager     pgtype.Text `db:"line_manager" json:"line_manager"`
+	EmailVerifiedAt pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
+	LastSeenAt      int64       `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt       int64       `db:"created_at" json:"created_at"`
+	UpdatedAt       int64       `db:"updated_at" json:"updated_at"`
+	DeletedAt       pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
+	CreatedBy       string      `db:"created_by" json:"created_by"`
+	UpdatedBy       string      `db:"updated_by" json:"updated_by"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
-	row := q.db.QueryRow(ctx, updateUser,
+	row := q.db.QueryRow(ctx, UpdateUser,
 		arg.ID,
 		arg.FirstName,
 		arg.LastName,
@@ -392,35 +392,35 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 	return i, err
 }
 
-const updateUserEmailVerifiedAt = `-- name: UpdateUserEmailVerifiedAt :exec
+const UpdateUserEmailVerifiedAt = `-- name: UpdateUserEmailVerifiedAt :exec
 UPDATE users
   set email_verified_at = EXTRACT(EPOCH FROM NOW()), updated_at = EXTRACT(EPOCH FROM NOW())
 WHERE id = $1
 `
 
 func (q *Queries) UpdateUserEmailVerifiedAt(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, updateUserEmailVerifiedAt, id)
+	_, err := q.db.Exec(ctx, UpdateUserEmailVerifiedAt, id)
 	return err
 }
 
-const updateUserLastSeenAt = `-- name: UpdateUserLastSeenAt :exec
+const UpdateUserLastSeenAt = `-- name: UpdateUserLastSeenAt :exec
 UPDATE users
   set last_seen_at = EXTRACT(EPOCH FROM NOW())
 WHERE id = $1
 `
 
 func (q *Queries) UpdateUserLastSeenAt(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, updateUserLastSeenAt, id)
+	_, err := q.db.Exec(ctx, UpdateUserLastSeenAt, id)
 	return err
 }
 
-const updateUserLastSeenAtByEmail = `-- name: UpdateUserLastSeenAtByEmail :exec
+const UpdateUserLastSeenAtByEmail = `-- name: UpdateUserLastSeenAtByEmail :exec
 UPDATE users
   set last_seen_at = EXTRACT(EPOCH FROM NOW())
 WHERE email = $1
 `
 
 func (q *Queries) UpdateUserLastSeenAtByEmail(ctx context.Context, email string) error {
-	_, err := q.db.Exec(ctx, updateUserLastSeenAtByEmail, email)
+	_, err := q.db.Exec(ctx, UpdateUserLastSeenAtByEmail, email)
 	return err
 }

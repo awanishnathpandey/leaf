@@ -9,7 +9,7 @@ import (
 	"context"
 )
 
-const getDashboardKPICount = `-- name: GetDashboardKPICount :one
+const GetDashboardKPICount = `-- name: GetDashboardKPICount :one
 SELECT
   (SELECT COUNT(*) FROM users) AS users,
   (SELECT COUNT(*) FROM roles) AS roles,
@@ -20,16 +20,16 @@ SELECT
 `
 
 type GetDashboardKPICountRow struct {
-	Users       int64 `json:"users"`
-	Roles       int64 `json:"roles"`
-	Permissions int64 `json:"permissions"`
-	Groups      int64 `json:"groups"`
-	Folders     int64 `json:"folders"`
-	Files       int64 `json:"files"`
+	Users       int64 `db:"users" json:"users"`
+	Roles       int64 `db:"roles" json:"roles"`
+	Permissions int64 `db:"permissions" json:"permissions"`
+	Groups      int64 `db:"groups" json:"groups"`
+	Folders     int64 `db:"folders" json:"folders"`
+	Files       int64 `db:"files" json:"files"`
 }
 
 func (q *Queries) GetDashboardKPICount(ctx context.Context) (GetDashboardKPICountRow, error) {
-	row := q.db.QueryRow(ctx, getDashboardKPICount)
+	row := q.db.QueryRow(ctx, GetDashboardKPICount)
 	var i GetDashboardKPICountRow
 	err := row.Scan(
 		&i.Users,

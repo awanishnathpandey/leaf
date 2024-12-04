@@ -37,7 +37,7 @@ func main() {
 	app := fiber.New(fiber.Config{})
 
 	// Setup routes using the routes package
-	routes.SetupRoutes(app, queries)
+	routes.SetupRoutes(app, queries, dbPool)
 
 	// Graceful shutdown
 	c := make(chan os.Signal, 1)

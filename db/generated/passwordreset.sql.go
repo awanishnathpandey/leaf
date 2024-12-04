@@ -9,20 +9,20 @@ import (
 	"context"
 )
 
-const createPasswordReset = `-- name: CreatePasswordReset :one
+const CreatePasswordReset = `-- name: CreatePasswordReset :one
 INSERT INTO password_resets (user_id, reset_token, created_by, updated_by) 
 VALUES ($1, $2, $3, $3) 
 RETURNING id, user_id, reset_token, created_at, updated_at, created_by, updated_by
 `
 
 type CreatePasswordResetParams struct {
-	UserID     int64  `json:"user_id"`
-	ResetToken string `json:"reset_token"`
-	CreatedBy  string `json:"created_by"`
+	UserID     int64  `db:"user_id" json:"user_id"`
+	ResetToken string `db:"reset_token" json:"reset_token"`
+	CreatedBy  string `db:"created_by" json:"created_by"`
 }
 
 func (q *Queries) CreatePasswordReset(ctx context.Context, arg CreatePasswordResetParams) (PasswordReset, error) {
-	row := q.db.QueryRow(ctx, createPasswordReset, arg.UserID, arg.ResetToken, arg.CreatedBy)
+	row := q.db.QueryRow(ctx, CreatePasswordReset, arg.UserID, arg.ResetToken, arg.CreatedBy)
 	var i PasswordReset
 	err := row.Scan(
 		&i.ID,
@@ -36,23 +36,23 @@ func (q *Queries) CreatePasswordReset(ctx context.Context, arg CreatePasswordRes
 	return i, err
 }
 
-const deletePasswordResetbyUserID = `-- name: DeletePasswordResetbyUserID :exec
+const DeletePasswordResetbyUserID = `-- name: DeletePasswordResetbyUserID :exec
 DELETE FROM password_resets 
 WHERE user_id = $1
 `
 
 func (q *Queries) DeletePasswordResetbyUserID(ctx context.Context, userID int64) error {
-	_, err := q.db.Exec(ctx, deletePasswordResetbyUserID, userID)
+	_, err := q.db.Exec(ctx, DeletePasswordResetbyUserID, userID)
 	return err
 }
 
-const getPasswordResetbyUserID = `-- name: GetPasswordResetbyUserID :one
+const GetPasswordResetbyUserID = `-- name: GetPasswordResetbyUserID :one
 SELECT id, user_id, reset_token, created_at, updated_at, created_by, updated_by FROM password_resets
 WHERE user_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetPasswordResetbyUserID(ctx context.Context, userID int64) (PasswordReset, error) {
-	row := q.db.QueryRow(ctx, getPasswordResetbyUserID, userID)
+	row := q.db.QueryRow(ctx, GetPasswordResetbyUserID, userID)
 	var i PasswordReset
 	err := row.Scan(
 		&i.ID,

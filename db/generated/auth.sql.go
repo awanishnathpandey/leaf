@@ -9,7 +9,7 @@ import (
 	"context"
 )
 
-const registerUser = `-- name: RegisterUser :one
+const RegisterUser = `-- name: RegisterUser :one
 INSERT INTO users (
   first_name, last_name, email, password
 ) VALUES (
@@ -19,14 +19,14 @@ RETURNING id, first_name, last_name, email, password, job_title, line_of_busines
 `
 
 type RegisterUserParams struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
+	FirstName string `db:"first_name" json:"first_name"`
+	LastName  string `db:"last_name" json:"last_name"`
+	Email     string `db:"email" json:"email"`
+	Password  string `db:"password" json:"password"`
 }
 
 func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, registerUser,
+	row := q.db.QueryRow(ctx, RegisterUser,
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
@@ -53,18 +53,18 @@ func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (Use
 	return i, err
 }
 
-const updateUserPassword = `-- name: UpdateUserPassword :exec
+const UpdateUserPassword = `-- name: UpdateUserPassword :exec
 UPDATE users
   set password = $2, updated_at = EXTRACT(EPOCH FROM NOW())
 WHERE email = $1
 `
 
 type UpdateUserPasswordParams struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `db:"email" json:"email"`
+	Password string `db:"password" json:"password"`
 }
 
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
-	_, err := q.db.Exec(ctx, updateUserPassword, arg.Email, arg.Password)
+	_, err := q.db.Exec(ctx, UpdateUserPassword, arg.Email, arg.Password)
 	return err
 }
