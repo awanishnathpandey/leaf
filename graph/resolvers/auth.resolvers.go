@@ -312,16 +312,7 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	// Retrieve userID from context
 	// userID := ctx.Value("userID").(int64) // Access the user ID from the context
 	// Safely retrieve values from the context with error handling
-	userEmail, ok := ctx.Value("userEmail").(string)
-	if !ok || userEmail == "" {
-		return nil, fmt.Errorf("userEmail not found in context")
-	}
-
-	userIpAddress, ok := ctx.Value("userIpAddress").(string)
-	if !ok || userIpAddress == "" {
-		return nil, fmt.Errorf("userIpAddress not found in context")
-	}
-
+	userEmail := ctx.Value("userEmail").(string)
 	logEntry := middleware.AuditLogEntry{
 		TableName:   "users",
 		Description: "Fetched auth user details",
