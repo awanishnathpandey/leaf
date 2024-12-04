@@ -8,6 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AuditLog struct {
+	ID          int32  `db:"id" json:"id"`
+	TableName   string `db:"table_name" json:"table_name"`
+	Actor       string `db:"actor" json:"actor"`
+	Action      string `db:"action" json:"action"`
+	IpAddress   string `db:"ip_address" json:"ip_address"`
+	RecordKey   string `db:"record_key" json:"record_key"`
+	Description string `db:"description" json:"description"`
+	Timestamp   int64  `db:"timestamp" json:"timestamp"`
+}
+
 type EmailTemplate struct {
 	ID        int64    `db:"id" json:"id"`
 	Name      string   `db:"name" json:"name"`

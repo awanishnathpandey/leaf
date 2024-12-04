@@ -16,6 +16,7 @@ import (
 	"github.com/awanishnathpandey/leaf/external/mail"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 )
 
@@ -310,7 +311,29 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input *model.Refres
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	// Retrieve userID from context
 	// userID := ctx.Value("userID").(int64) // Access the user ID from the context
-	userEmail := ctx.Value("userEmail").(string)
+	// Safely retrieve values from the context with error handling
+	userEmail, ok := ctx.Value("userEmail").(string)
+	if !ok || userEmail == "" {
+		return nil, fmt.Errorf("userEmail not found in context")
+	}
+
+	userIpAddress, ok := ctx.Value("userIpAddress").(string)
+	if !ok || userIpAddress == "" {
+		return nil, fmt.Errorf("userIpAddress not found in context")
+	}
+
+	logEntry := middleware.AuditLogEntry{
+		TableName:   "users",
+		Description: "Fetched auth user details",
+		Action:      "READ",
+		RecordKey:   userEmail,
+	}
+
+	// Call the insertAuditLog function and pass the context along
+	err := middleware.InsertAuditLog(ctx, logEntry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert audit log: %v", err)
+	}
 
 	// Fetch user from DB based on the userID
 	user, err := r.DB.GetUserByEmail(ctx, userEmail)

@@ -80,7 +80,7 @@ func StartWorkerPool() {
 		wg.Add(1)
 		go worker()
 	}
-	log.Info().Msgf("%d workers started", numWorkers)
+	log.Info().Msgf("%d user cacheworkers started", numWorkers)
 	// Periodic cache cleanup
 	go startCacheCleanup()
 }
@@ -89,7 +89,7 @@ func StartWorkerPool() {
 func StopWorkerPool() {
 	close(stopWorkers)
 	wg.Wait()
-	log.Info().Msg("All workers stopped")
+	log.Info().Msg("All user cache workers stopped")
 }
 
 // Worker goroutine processes tasks in the queue
@@ -175,6 +175,8 @@ func evictIfNeeded() {
 // JWTMiddleware is a custom middleware to authenticate requests using JWT
 func JWTMiddleware(queries *generated.Queries) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		userIpAddress := c.IP()
+		c.Locals("userIpAddress", userIpAddress)
 		// Get the JWT_SECRET from the environment
 		secretKey := []byte(os.Getenv("JWT_SECRET"))
 		body := c.Body()

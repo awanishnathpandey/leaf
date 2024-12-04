@@ -109,6 +109,19 @@ func GetWorkerPoolSize() int {
 	return poolSize
 }
 
+func GetAuditWorkerPoolSize() int {
+	poolSize := 10
+	// fmt.Println("AUDIT_LOG_WORKER_POOL_SIZE:", os.Getenv("AUDIT_LOG_WORKER_POOL_SIZE"))
+	if maxSizeStr := os.Getenv("AUDIT_LOG_WORKER_POOL_SIZE"); maxSizeStr != "" {
+		var err error
+		poolSize, err = strconv.Atoi(maxSizeStr)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Invalid WORKER_POOL_SIZE_AUDIT_LOG value")
+		}
+	}
+	return poolSize
+}
+
 // GetWorkerPoolSize returns the maximum worker pool size of the cache from the environment variable
 func GetAuthLastSeenQueueSize() int {
 	queueSize := 100
@@ -118,6 +131,19 @@ func GetAuthLastSeenQueueSize() int {
 		queueSize, err = strconv.Atoi(maxSizeStr)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Invalid AUTH_LAST_SEEN_QUEUE_SIZE value")
+		}
+	}
+	return queueSize
+}
+
+func GetAuditLogQueueSize() int {
+	queueSize := 100
+	// fmt.Println("AUDIT_LOG_QUEUE_SIZE:", os.Getenv("AUDIT_LOG_QUEUE_SIZE"))
+	if maxSizeStr := os.Getenv("AUDIT_LOG_QUEUE_SIZE"); maxSizeStr != "" {
+		var err error
+		queueSize, err = strconv.Atoi(maxSizeStr)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Invalid AUDIT_LOG_QUEUE_SIZE value")
 		}
 	}
 	return queueSize
