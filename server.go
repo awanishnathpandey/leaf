@@ -5,6 +5,7 @@ import (
 	"os/signal"
 
 	"github.com/awanishnathpandey/leaf/db/generated"
+	"github.com/awanishnathpandey/leaf/internal/cronmanager"
 	"github.com/awanishnathpandey/leaf/internal/database"
 	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/routes"
@@ -35,6 +36,12 @@ func main() {
 	middleware.StartAuditWorkerPool()
 	middleware.InitializePermissionCache()
 
+	// Initialize the CronManager
+	cm := cronmanager.NewCronManager(queries)
+
+	// Start cron jobs
+	go cm.Start() // Run cron manager in a separate goroutine
+
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{})
 
@@ -47,6 +54,9 @@ func main() {
 	go func() {
 		<-c
 		log.Info().Msg("Gracefully shutting down...")
+		// Stop cron manager gracefully
+		cm.Stop()
+
 		// Stop worker pool
 		middleware.StopWorkerPool()
 		middleware.StopAuditWorkerPool()

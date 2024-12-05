@@ -19,6 +19,30 @@ type AuditLog struct {
 	Timestamp   int64  `db:"timestamp" json:"timestamp"`
 }
 
+type CronJob struct {
+	ID          int64       `db:"id" json:"id"`
+	Slug        string      `db:"slug" json:"slug"`
+	Name        string      `db:"name" json:"name"`
+	Schedule    string      `db:"schedule" json:"schedule"`
+	Active      pgtype.Bool `db:"active" json:"active"`
+	Description pgtype.Text `db:"description" json:"description"`
+	LastRunAt   pgtype.Int8 `db:"last_run_at" json:"last_run_at"`
+	CreatedAt   int64       `db:"created_at" json:"created_at"`
+	UpdatedAt   int64       `db:"updated_at" json:"updated_at"`
+	CreatedBy   string      `db:"created_by" json:"created_by"`
+	UpdatedBy   string      `db:"updated_by" json:"updated_by"`
+}
+
+type CronJobLog struct {
+	ID              int64       `db:"id" json:"id"`
+	CronSlug        pgtype.Text `db:"cron_slug" json:"cron_slug"`
+	Status          pgtype.Text `db:"status" json:"status"`
+	Message         pgtype.Text `db:"message" json:"message"`
+	StartTime       int64       `db:"start_time" json:"start_time"`
+	EndTime         pgtype.Int8 `db:"end_time" json:"end_time"`
+	AffectedRecords pgtype.Int8 `db:"affected_records" json:"affected_records"`
+}
+
 type EmailTemplate struct {
 	ID        int64    `db:"id" json:"id"`
 	Name      string   `db:"name" json:"name"`

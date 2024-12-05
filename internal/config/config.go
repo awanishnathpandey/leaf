@@ -148,3 +148,18 @@ func GetAuditLogQueueSize() int {
 	}
 	return queueSize
 }
+
+// GetCacheCleanupInterval retrieves the cache cleanup interval duration from an environment variable.
+func GetCronJobMonitorInterval() time.Duration {
+	monitorInterval := 1 * time.Minute // Default value
+	// fmt.Println("CACHE_EXPIRY_INTERVAL:", os.Getenv("CACHE_EXPIRY_INTERVAL"))
+	if monitorIntervalStr := os.Getenv("CRON_MONITOR_INTERVAL"); monitorIntervalStr != "" {
+		parsedValue, err := time.ParseDuration(monitorIntervalStr)
+		if err != nil {
+			log.Warn().Err(err).Msgf("Invalid value for CACHE_EXPIRY_INTERVAL, using default: %v", monitorInterval)
+		} else {
+			monitorInterval = parsedValue
+		}
+	}
+	return monitorInterval
+}
