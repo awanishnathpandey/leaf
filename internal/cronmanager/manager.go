@@ -135,13 +135,27 @@ func (cm *CronManager) isScheduleUpdated(entryID cron.EntryID, newSchedule strin
 
 	// Retrieve the existing entry from the cron scheduler
 	entry := cm.CronScheduler.Entry(entryID)
+	if entry.Schedule == nil {
+		log.Error().Msgf("Invalid entry schedule for ID: %v", entryID)
+		return true // Force update if the entry is invalid
+	}
 
-	// Compare the next scheduled run time of both schedules
-	oldNextRun := entry.Schedule.Next(time.Now())
-	newNextRun := parsedSchedule.Next(time.Now())
+	fixedTime := time.Now()
+	oldNextRun := entry.Schedule.Next(fixedTime)
+	newNextRun := parsedSchedule.Next(fixedTime)
+	// Define a time tolerance (e.g., 1 second)
+	tolerance := time.Second
 
-	// If the next run times are different, then the schedules are different
-	return oldNextRun != newNextRun
+	// Calculate the absolute difference between the next run times
+	timeDiff := oldNextRun.Sub(newNextRun)
+	if timeDiff < 0 {
+		timeDiff = -timeDiff
+	}
+
+	// log.Debug().Msgf("Old Next Run: %v, New Next Run: %v, Time Difference: %v", oldNextRun, newNextRun, timeDiff)
+
+	// If the difference exceeds the tolerance, the schedules are considered different
+	return timeDiff > tolerance
 }
 
 // Add a new cron job to the scheduler
