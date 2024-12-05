@@ -11,6 +11,7 @@ import (
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -21,7 +22,7 @@ func (r *mutationResolver) CreateRole(ctx context.Context, input model.CreateRol
 	requiredPermissions := []string{"all", "create_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Validate input
@@ -58,7 +59,7 @@ func (r *mutationResolver) UpdateRole(ctx context.Context, input model.UpdateRol
 	requiredPermissions := []string{"all", "update_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Check if the role exists
@@ -94,7 +95,7 @@ func (r *mutationResolver) DeleteRole(ctx context.Context, id int64) (bool, erro
 	requiredPermissions := []string{"all", "delete_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the role exists (optional)
@@ -117,7 +118,7 @@ func (r *mutationResolver) DeleteRoles(ctx context.Context, ids []int64) (bool, 
 	requiredPermissions := []string{"all", "delete_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Validate that all IDs exist
@@ -145,7 +146,7 @@ func (r *mutationResolver) CreatePermission(ctx context.Context, input model.Cre
 	requiredPermissions := []string{"all", "create_permission"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Validate input
@@ -182,7 +183,7 @@ func (r *mutationResolver) UpdatePermission(ctx context.Context, input model.Upd
 	requiredPermissions := []string{"all", "update_permission"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Check if the permission exists
@@ -220,7 +221,7 @@ func (r *mutationResolver) DeletePermission(ctx context.Context, id int64) (bool
 	requiredPermissions := []string{"all", "delete_permission"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the permission exists (optional)
@@ -243,7 +244,7 @@ func (r *mutationResolver) DeletePermissions(ctx context.Context, ids []int64) (
 	requiredPermissions := []string{"all", "delete_permission"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Validate that all IDs exist
@@ -271,7 +272,7 @@ func (r *mutationResolver) AddRoleToUser(ctx context.Context, roleID int64, user
 	requiredPermissions := []string{"all", "update_user"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the role exists
@@ -302,7 +303,7 @@ func (r *mutationResolver) RemoveRoleFromUser(ctx context.Context, roleID int64,
 	requiredPermissions := []string{"all", "update_user"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the role exists
@@ -333,7 +334,7 @@ func (r *mutationResolver) AddPermissionToRole(ctx context.Context, roleID int64
 	requiredPermissions := []string{"all", "update_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the role exists
@@ -364,7 +365,7 @@ func (r *mutationResolver) RemovePermissionFromRole(ctx context.Context, roleID 
 	requiredPermissions := []string{"all", "update_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the role exists
@@ -395,7 +396,7 @@ func (r *permissionResolver) Roles(ctx context.Context, obj *model.Permission, f
 	requiredPermissions := []string{"all", "read_role", "read_permission"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -477,7 +478,7 @@ func (r *queryResolver) Roles(ctx context.Context, first int64, after *int64, fi
 	requiredPermissions := []string{"all", "read_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -556,7 +557,7 @@ func (r *queryResolver) Permissions(ctx context.Context, first int64, after *int
 	requiredPermissions := []string{"all", "read_permission"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -635,7 +636,7 @@ func (r *queryResolver) GetRole(ctx context.Context, id int64) (*model.Role, err
 	requiredPermissions := []string{"all", "read_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Call the generated GetRole query
@@ -660,7 +661,7 @@ func (r *queryResolver) GetPermission(ctx context.Context, id int64) (*model.Per
 	requiredPermissions := []string{"all", "read_permission"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Call the generated GetPermission query
@@ -685,7 +686,7 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role, first i
 	requiredPermissions := []string{"all", "read_permission", "read_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -767,7 +768,7 @@ func (r *roleResolver) Users(ctx context.Context, obj *model.Role, first int64, 
 	requiredPermissions := []string{"all", "read_user", "read_role"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 

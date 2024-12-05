@@ -11,6 +11,7 @@ import (
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -21,7 +22,7 @@ func (r *folderResolver) Groups(ctx context.Context, obj *model.Folder, first in
 	requiredPermissions := []string{"all", "read_group", "read_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +104,7 @@ func (r *folderResolver) Files(ctx context.Context, obj *model.Folder, first int
 	requiredPermissions := []string{"all", "read_file", "read_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -189,7 +190,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, input model.CreateF
 	requiredPermissions := []string{"all", "create_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Validate input
@@ -228,7 +229,7 @@ func (r *mutationResolver) UpdateFolder(ctx context.Context, input model.UpdateF
 	requiredPermissions := []string{"all", "update_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Check if the folder exists
@@ -268,7 +269,7 @@ func (r *mutationResolver) DeleteFolder(ctx context.Context, id int64) (bool, er
 	requiredPermissions := []string{"all", "delete_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the folder exists (optional)
@@ -291,7 +292,7 @@ func (r *mutationResolver) DeleteFolders(ctx context.Context, ids []int64) (bool
 	requiredPermissions := []string{"all", "delete_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Validate that all IDs exist
@@ -319,7 +320,7 @@ func (r *queryResolver) Folders(ctx context.Context, first int64, after *int64, 
 	requiredPermissions := []string{"all", "read_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -402,7 +403,7 @@ func (r *queryResolver) GetFolder(ctx context.Context, id int64) (*model.Folder,
 	requiredPermissions := []string{"all", "read_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Call the generated GetFolder query

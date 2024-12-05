@@ -11,6 +11,7 @@ import (
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -21,7 +22,7 @@ func (r *fileResolver) Folder(ctx context.Context, obj *model.File) (*model.Fold
 	requiredPermissions := []string{"all", "read_folder", "read_file"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Fetch the folder by folderID
@@ -49,7 +50,7 @@ func (r *fileResolver) Groups(ctx context.Context, obj *model.File, first int64,
 	requiredPermissions := []string{"all", "read_group", "read_file"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -130,7 +131,7 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFil
 	requiredPermissions := []string{"all", "create_file"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Validate input
@@ -173,7 +174,7 @@ func (r *mutationResolver) UpdateFile(ctx context.Context, input model.UpdateFil
 	requiredPermissions := []string{"all", "update_file"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Check if the file exists
@@ -215,7 +216,7 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, id int64) (bool, erro
 	requiredPermissions := []string{"all", "delete_file"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the file exists (optional)
@@ -238,7 +239,7 @@ func (r *mutationResolver) DeleteFiles(ctx context.Context, ids []int64) (bool, 
 	requiredPermissions := []string{"all", "delete_file"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 
@@ -267,7 +268,7 @@ func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, fi
 	requiredPermissions := []string{"all", "read_file"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -350,7 +351,7 @@ func (r *queryResolver) GetFile(ctx context.Context, id int64) (*model.File, err
 	requiredPermissions := []string{"all", "read_file"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Call the generated GetFile query
@@ -379,7 +380,7 @@ func (r *queryResolver) GetFilesByFolder(ctx context.Context, folderID int64) ([
 	requiredPermissions := []string{"all", "read_file", "read_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	files, err := r.DB.GetFilesByFolder(ctx, folderID)

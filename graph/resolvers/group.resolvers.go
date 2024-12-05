@@ -11,6 +11,7 @@ import (
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/utils"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -21,7 +22,7 @@ func (r *groupResolver) Users(ctx context.Context, obj *model.Group, first int64
 	requiredPermissions := []string{"all", "read_user"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -110,7 +111,7 @@ func (r *groupResolver) Folders(ctx context.Context, obj *model.Group, first int
 	requiredPermissions := []string{"all", "read_folder"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -196,7 +197,7 @@ func (r *groupResolver) Files(ctx context.Context, obj *model.Group, first int64
 	requiredPermissions := []string{"all", "read_file"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -282,7 +283,7 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, input model.CreateGr
 	requiredPermissions := []string{"all", "create_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Validate input
@@ -319,7 +320,7 @@ func (r *mutationResolver) UpdateGroup(ctx context.Context, input model.UpdateGr
 	requiredPermissions := []string{"all", "update_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Check if the group exists
@@ -357,7 +358,7 @@ func (r *mutationResolver) DeleteGroup(ctx context.Context, id int64) (bool, err
 	requiredPermissions := []string{"all", "delete_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the group exists (optional)
@@ -380,7 +381,7 @@ func (r *mutationResolver) DeleteGroups(ctx context.Context, ids []int64) (bool,
 	requiredPermissions := []string{"all", "delete_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Validate that all IDs exist
@@ -408,7 +409,7 @@ func (r *mutationResolver) AddUserToGroup(ctx context.Context, groupID int64, us
 	requiredPermissions := []string{"all", "update_user", "update_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the group exists
@@ -439,7 +440,7 @@ func (r *mutationResolver) RemoveUserFromGroup(ctx context.Context, groupID int6
 	requiredPermissions := []string{"all", "update_user", "update_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the group exists
@@ -470,7 +471,7 @@ func (r *mutationResolver) AddFolderToGroup(ctx context.Context, groupID int64, 
 	requiredPermissions := []string{"all", "update_folder", "update_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the group exists
@@ -501,7 +502,7 @@ func (r *mutationResolver) RemoveFolderFromGroup(ctx context.Context, groupID in
 	requiredPermissions := []string{"all", "update_folder", "update_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the group exists
@@ -532,7 +533,7 @@ func (r *mutationResolver) AddFileToGroup(ctx context.Context, groupID int64, fi
 	requiredPermissions := []string{"all", "update_file", "update_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the group exists
@@ -563,7 +564,7 @@ func (r *mutationResolver) RemoveFileFromGroup(ctx context.Context, groupID int6
 	requiredPermissions := []string{"all", "update_file", "update_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return false, err
 	}
 	// Check if the group exists
@@ -594,7 +595,7 @@ func (r *queryResolver) Groups(ctx context.Context, first int64, after *int64, f
 	requiredPermissions := []string{"all", "read_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 
@@ -673,7 +674,7 @@ func (r *queryResolver) GetGroup(ctx context.Context, id int64) (*model.Group, e
 	requiredPermissions := []string{"all", "read_group"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Call the generated GetGroup query

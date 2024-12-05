@@ -1,4 +1,4 @@
-package utils
+package middleware
 
 import (
 	"context"
@@ -18,9 +18,9 @@ var (
 	permissionsTimestamps = make(map[int64]time.Time) // Map to store the timestamp of when permissions were last fetched
 	cacheMutex            = &sync.RWMutex{}
 	cacheExpiry           time.Duration // Cache expiration time, to be set in init
-	cacheMaxSize          int           // Max size of the cache, to be set in init
-	cacheCleanupInterval  time.Duration // Cache cleanup interval, to be set in init
-	cleanupCancelChan     = make(chan struct{})
+	// cacheMaxSize          int           // Max size of the cache, to be set in init
+	// cacheCleanupInterval  time.Duration // Cache cleanup interval, to be set in init
+	cleanupCancelChan = make(chan struct{})
 )
 
 func InitializePermissionCache() {

@@ -80,7 +80,7 @@ func StartWorkerPool() {
 		wg.Add(1)
 		go worker()
 	}
-	log.Info().Msgf("%d user cacheworkers started", numWorkers)
+	log.Info().Msgf("%d worker(s) started for processing user last seen", numWorkers)
 	// Periodic cache cleanup
 	go startCacheCleanup()
 }

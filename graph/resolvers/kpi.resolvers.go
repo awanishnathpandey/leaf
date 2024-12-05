@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"github.com/awanishnathpandey/leaf/graph/model"
-	"github.com/awanishnathpandey/leaf/internal/utils"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
 )
 
 // GetDashboardKPICount is the resolver for the getDashboardKPICount field.
@@ -18,7 +18,7 @@ func (r *queryResolver) GetDashboardKPICount(ctx context.Context) (*model.Dashbo
 	requiredPermissions := []string{"all", "admin_access"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Fetch the counts from the database

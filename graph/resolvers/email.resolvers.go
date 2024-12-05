@@ -10,7 +10,7 @@ import (
 
 	"github.com/awanishnathpandey/leaf/external/mail"
 	"github.com/awanishnathpandey/leaf/graph/model"
-	"github.com/awanishnathpandey/leaf/internal/utils"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
 )
 
 // SendEmail is the resolver for the sendEmail field.
@@ -19,7 +19,7 @@ func (r *mutationResolver) SendEmail(ctx context.Context, input model.SendEmailI
 	requiredPermissions := []string{"all"}
 
 	// Check if the user has the required permissions
-	if err := utils.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
 		return nil, err
 	}
 	// Step 1: Validate template name
