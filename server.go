@@ -8,6 +8,7 @@ import (
 	"github.com/awanishnathpandey/leaf/internal/database"
 	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/routes"
+	"github.com/awanishnathpandey/leaf/internal/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -33,6 +34,7 @@ func main() {
 	middleware.InitializeQueries(queries)
 	middleware.StartWorkerPool()
 	middleware.StartAuditWorkerPool()
+	utils.InitializePermissionCache()
 
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{})

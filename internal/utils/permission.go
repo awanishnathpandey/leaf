@@ -9,6 +9,7 @@ import (
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/internal/config"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -18,12 +19,17 @@ var (
 	cacheMutex            = &sync.RWMutex{}
 	cacheExpiry           time.Duration // Cache expiration time, to be set in init
 	cacheMaxSize          int           // Max size of the cache, to be set in init
+	cacheCleanupInterval  time.Duration // Cache cleanup interval, to be set in init
 )
 
-func init() {
+func InitializePermissionCache() {
+	log.Info().Msg("Initializing permissions cache in utils package")
 	// Initialize cache settings at runtime
 	cacheExpiry = config.GetCacheExpiry()   // Cache expiration time
 	cacheMaxSize = config.GetCacheMaxSize() // Max size of the cache
+	cacheCleanupInterval = config.GetCacheCleanupInterval()
+	// Start the automatic cleanup scheduler
+	startCacheCleanupScheduler()
 }
 
 // CheckUserPermissions verifies if the user has the required permissions for an action,
@@ -97,6 +103,9 @@ func cachePermissions(userID int64, permissions []string) {
 
 // evictExpiredCacheEntries removes expired entries from the cache.
 func evictExpiredCacheEntries() {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+
 	for userID, timestamp := range permissionsTimestamps {
 		if time.Since(timestamp) > cacheExpiry {
 			// Remove the expired entry from both cache maps
@@ -104,6 +113,7 @@ func evictExpiredCacheEntries() {
 			delete(permissionsTimestamps, userID)
 		}
 	}
+	log.Info().Msg("Permission Cache cleanup complete")
 
 	// If the cache still exceeds the max size, we can perform additional logic here.
 	// This could be either random eviction or eviction based on some custom policy (e.g., LRU).
@@ -134,4 +144,16 @@ func hasRequiredPermissions(userPermissions, requiredPermissions []string) bool 
 	}
 
 	return false
+}
+
+// startCacheCleanupScheduler starts a background goroutine to enforce periodic cache cleanup.
+func startCacheCleanupScheduler() {
+	go func() {
+		ticker := time.NewTicker(cacheCleanupInterval)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			evictExpiredCacheEntries()
+		}
+	}()
 }
