@@ -52,6 +52,8 @@ func (cm *CronManager) Stop() {
 	cm.CronScheduler.Stop()
 
 	// Optionally, you can remove jobs if you want a complete shutdown
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
 	for _, entryID := range cm.Jobs {
 		cm.CronScheduler.Remove(entryID)
 	}
@@ -72,12 +74,11 @@ func (cm *CronManager) monitorCronJobs() {
 	}
 }
 
-// checkAndUpdateCronJobs queries the database for cron jobs with status "active" or changes in schedule
 func (cm *CronManager) checkAndUpdateCronJobs() {
 	log.Debug().Msgf("Jobs in the map at the start of monitoring: %v", cm.Jobs)
 	ctx := context.Background()
 
-	// Fetch active cron jobs
+	// Fetch active cron jobs from the database
 	cronJobs, err := cm.DB.ListActiveCronJobs(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to fetch active cron jobs")
@@ -86,30 +87,61 @@ func (cm *CronManager) checkAndUpdateCronJobs() {
 
 	log.Debug().Msgf("Fetched cron jobs: %v", cronJobs) // Debugging step
 
-	// Iterate over cron jobs and manage them
+	// Mutex to lock the Jobs map and prevent race conditions
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+
+	// Iterate over the fetched cron jobs to manage them
 	for _, job := range cronJobs {
 		// Check if the job is active and the value is valid
 		if job.Active.Valid && job.Active.Bool {
-			// Check if the job exists in the map
+			// The job is active, check if it's already in the map
 			if entryID, exists := cm.Jobs[job.Slug]; exists {
-				// The job exists, so we just need to check if the schedule changed
+				// The job exists, check if the schedule has changed
 				log.Debug().Msgf("Job %s exists, checking schedule update", job.Slug)
-				cm.updateJob(entryID, job.Schedule)
+				if cm.isScheduleUpdated(entryID, job.Schedule) {
+					log.Debug().Msgf("Schedule for job %s has changed, updating job", job.Slug)
+					cm.updateJob(entryID, job.Schedule)
+				} else {
+					log.Debug().Msgf("Schedule for job %s has not changed, no update required", job.Slug)
+				}
 			} else {
 				// New job, add it to the scheduler
 				log.Debug().Msgf("Adding new job with Slug: %s", job.Slug)
 				cm.addCronJob(job)
 			}
 		} else {
-			// If the job is no longer active, remove it
+			// The job is no longer active, remove it from the scheduler if it exists
 			if entryID, exists := cm.Jobs[job.Slug]; exists {
+				log.Debug().Msgf("Stopping cron job with Slug: %s as it is no longer active", job.Slug)
 				cm.CronScheduler.Remove(entryID)
 				delete(cm.Jobs, job.Slug)
 				log.Debug().Msgf("Stopped cron job with Slug: %s", job.Slug)
 			}
 		}
 	}
+
 	log.Debug().Msgf("Jobs in the map after processing: %v", cm.Jobs)
+}
+
+// Helper function to check if the schedule has changed for an existing job
+func (cm *CronManager) isScheduleUpdated(entryID cron.EntryID, newSchedule string) bool {
+	// Parse the new schedule string into a cron.Schedule using robfig/cron package
+	parsedSchedule, err := cron.ParseStandard(newSchedule)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to parse new schedule: %s", newSchedule)
+		return false // If parsing fails, do not update the schedule
+	}
+
+	// Retrieve the existing entry from the cron scheduler
+	entry := cm.CronScheduler.Entry(entryID)
+
+	// Compare the next scheduled run time of both schedules
+	oldNextRun := entry.Schedule.Next(time.Now())
+	newNextRun := parsedSchedule.Next(time.Now())
+
+	// If the next run times are different, then the schedules are different
+	return oldNextRun != newNextRun
 }
 
 // Add a new cron job to the scheduler
@@ -128,7 +160,6 @@ func (cm *CronManager) addCronJob(job generated.CronJob) {
 	cm.Jobs[job.Slug] = entryID
 	log.Info().Msgf("Started cron job with Slug: %s", job.Slug)
 	log.Debug().Msgf("Jobs in the map after adding: %v", cm.Jobs) // Debugging step
-
 }
 
 // Update an existing cron job
