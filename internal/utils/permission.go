@@ -20,16 +20,17 @@ var (
 	cacheExpiry           time.Duration // Cache expiration time, to be set in init
 	cacheMaxSize          int           // Max size of the cache, to be set in init
 	cacheCleanupInterval  time.Duration // Cache cleanup interval, to be set in init
+	cleanupCancelChan     = make(chan struct{})
 )
 
 func InitializePermissionCache() {
-	log.Info().Msg("Initializing permissions cache in utils package")
 	// Initialize cache settings at runtime
 	cacheExpiry = config.GetCacheExpiry()   // Cache expiration time
 	cacheMaxSize = config.GetCacheMaxSize() // Max size of the cache
 	cacheCleanupInterval = config.GetCacheCleanupInterval()
 	// Start the automatic cleanup scheduler
 	startCacheCleanupScheduler()
+	log.Info().Msg("Started permissions cache with cleanup scheduler")
 }
 
 // CheckUserPermissions verifies if the user has the required permissions for an action,
@@ -152,8 +153,21 @@ func startCacheCleanupScheduler() {
 		ticker := time.NewTicker(cacheCleanupInterval)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			evictExpiredCacheEntries()
+		for {
+			select {
+			case <-cleanupCancelChan: // Listen for stop signal
+				log.Info().Msg("Permission cache cleanup scheduler stopped")
+				return
+			case <-ticker.C:
+				evictExpiredCacheEntries() // Perform cleanup
+			}
 		}
 	}()
+}
+
+// StopPermissionCacheCleanup sends a signal to stop the cleanup process.
+func StopPermissionCacheCleanup() {
+	if cleanupCancelChan != nil {
+		close(cleanupCancelChan) // This will stop the cleanup goroutine
+	}
 }

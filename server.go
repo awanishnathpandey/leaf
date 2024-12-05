@@ -51,6 +51,7 @@ func main() {
 		// Stop worker pool
 		middleware.StopWorkerPool()
 		middleware.StopAuditWorkerPool()
+		utils.StopPermissionCacheCleanup()
 		_ = app.Shutdown()
 	}()
 
