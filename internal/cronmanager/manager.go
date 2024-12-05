@@ -66,7 +66,7 @@ func (cm *CronManager) monitorCronJobs() {
 	defer ticker.Stop()
 
 	// Log the state of cm.Jobs at the start of each tick
-	log.Debug().Msgf("Jobs in the map at the start of monitoring: %v", cm.Jobs)
+	// log.Debug().Msgf("Jobs in the map at the start of monitoring: %v", cm.Jobs)
 
 	// Use for range to read from the ticker channel
 	for range ticker.C {
@@ -75,7 +75,7 @@ func (cm *CronManager) monitorCronJobs() {
 }
 
 func (cm *CronManager) checkAndUpdateCronJobs() {
-	log.Debug().Msgf("Jobs in the map at the start of monitoring: %v", cm.Jobs)
+	// log.Debug().Msgf("Jobs in the map at the start of monitoring: %v", cm.Jobs)
 	ctx := context.Background()
 
 	// Fetch active cron jobs from the database
@@ -85,7 +85,7 @@ func (cm *CronManager) checkAndUpdateCronJobs() {
 		return
 	}
 
-	log.Debug().Msgf("Fetched cron jobs: %v", cronJobs) // Debugging step
+	// log.Debug().Msgf("Fetched cron jobs: %v", cronJobs) // Debugging step
 
 	// Mutex to lock the Jobs map and prevent race conditions
 	cm.mu.Lock()
@@ -98,22 +98,22 @@ func (cm *CronManager) checkAndUpdateCronJobs() {
 			// The job is active, check if it's already in the map
 			if entryID, exists := cm.Jobs[job.Slug]; exists {
 				// The job exists, check if the schedule has changed
-				log.Debug().Msgf("Job %s exists, checking schedule update", job.Slug)
+				// log.Debug().Msgf("Job %s exists, checking schedule update", job.Slug)
 				if cm.isScheduleUpdated(entryID, job.Schedule) {
-					log.Debug().Msgf("Schedule for job %s has changed, updating job", job.Slug)
+					// log.Debug().Msgf("Schedule for job %s has changed, updating job", job.Slug)
 					cm.updateJob(entryID, job.Schedule)
 				} else {
-					log.Debug().Msgf("Schedule for job %s has not changed, no update required", job.Slug)
+					// log.Debug().Msgf("Schedule for job %s has not changed, no update required", job.Slug)
 				}
 			} else {
 				// New job, add it to the scheduler
-				log.Debug().Msgf("Adding new job with Slug: %s", job.Slug)
+				// log.Debug().Msgf("Adding new job with Slug: %s", job.Slug)
 				cm.addCronJob(job)
 			}
 		} else {
 			// The job is no longer active, remove it from the scheduler if it exists
 			if entryID, exists := cm.Jobs[job.Slug]; exists {
-				log.Debug().Msgf("Stopping cron job with Slug: %s as it is no longer active", job.Slug)
+				// log.Debug().Msgf("Stopping cron job with Slug: %s as it is no longer active", job.Slug)
 				cm.CronScheduler.Remove(entryID)
 				delete(cm.Jobs, job.Slug)
 				log.Debug().Msgf("Stopped cron job with Slug: %s", job.Slug)
@@ -121,7 +121,7 @@ func (cm *CronManager) checkAndUpdateCronJobs() {
 		}
 	}
 
-	log.Debug().Msgf("Jobs in the map after processing: %v", cm.Jobs)
+	// log.Debug().Msgf("Jobs in the map after processing: %v", cm.Jobs)
 }
 
 // Helper function to check if the schedule has changed for an existing job
@@ -146,9 +146,9 @@ func (cm *CronManager) isScheduleUpdated(entryID cron.EntryID, newSchedule strin
 
 // Add a new cron job to the scheduler
 func (cm *CronManager) addCronJob(job generated.CronJob) {
-	log.Debug().Msgf("Jobs in the map before update: %v", cm.Jobs)
+	// log.Debug().Msgf("Jobs in the map before update: %v", cm.Jobs)
 	entryID, err := cm.CronScheduler.AddFunc(job.Schedule, func() {
-		log.Debug().Msgf("Running cron job with Slug: %s", job.Slug)
+		// log.Debug().Msgf("Running cron job with Slug: %s", job.Slug)
 		cm.runCronJob(job)
 	})
 	if err != nil {
@@ -156,15 +156,15 @@ func (cm *CronManager) addCronJob(job generated.CronJob) {
 		return
 	}
 	// Store the cron job in the map
-	log.Debug().Msgf("Adding cron job with Slug: %s", job.Slug)
+	// log.Debug().Msgf("Adding cron job with Slug: %s", job.Slug)
 	cm.Jobs[job.Slug] = entryID
 	log.Info().Msgf("Started cron job with Slug: %s", job.Slug)
-	log.Debug().Msgf("Jobs in the map after adding: %v", cm.Jobs) // Debugging step
+	// log.Debug().Msgf("Jobs in the map after adding: %v", cm.Jobs) // Debugging step
 }
 
 // Update an existing cron job
 func (cm *CronManager) updateJob(entryID cron.EntryID, schedule string) {
-	log.Debug().Msgf("Jobs in the map before update: %v", cm.Jobs)
+	// log.Debug().Msgf("Jobs in the map before update: %v", cm.Jobs)
 	// Remove the old job
 	cm.CronScheduler.Remove(entryID)
 
