@@ -1,3 +1,2 @@
--- name: ListActiveCronJobs :many
-SELECT * FROM cron_jobs
-WHERE active = true;
+-- name: ListCronJobs :many
+SELECT * FROM cron_jobs;

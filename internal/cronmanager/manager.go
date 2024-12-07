@@ -79,7 +79,7 @@ func (cm *CronManager) checkAndUpdateCronJobs() {
 	ctx := context.Background()
 
 	// Fetch active cron jobs from the database
-	cronJobs, err := cm.DB.ListActiveCronJobs(ctx)
+	cronJobs, err := cm.DB.ListCronJobs(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to fetch active cron jobs")
 		return
@@ -93,30 +93,38 @@ func (cm *CronManager) checkAndUpdateCronJobs() {
 
 	// Iterate over the fetched cron jobs to manage them
 	for _, job := range cronJobs {
-		// Check if the job is active and the value is valid
+		// log.Debug().Msgf("Processing job - Slug: %s, Active.Valid: %v, Active.Bool: %v", job.Slug, job.Active.Valid, job.Active.Bool)
+
 		if job.Active.Valid && job.Active.Bool {
-			// The job is active, check if it's already in the map
+			// log.Debug().Msgf("Active job detected: %s", job.Slug)
+
 			if entryID, exists := cm.Jobs[job.Slug]; exists {
-				// The job exists, check if the schedule has changed
-				// log.Debug().Msgf("Job %s exists, checking schedule update", job.Slug)
 				if cm.isScheduleUpdated(entryID, job.Schedule) {
-					// log.Debug().Msgf("Schedule for job %s has changed, updating job", job.Slug)
-					cm.updateJob(entryID, job.Schedule)
+					log.Debug().Msgf("Updating job: %s", job.Slug)
+					cm.updateJob(entryID, job)
 				} else {
-					// log.Debug().Msgf("Schedule for job %s has not changed, no update required", job.Slug)
+					// log.Debug().Msgf("No update needed for job: %s", job.Slug)
 				}
 			} else {
-				// New job, add it to the scheduler
-				// log.Debug().Msgf("Adding new job with Slug: %s", job.Slug)
+				// log.Info().Msgf("Adding new job: %s", job.Slug)
 				cm.addCronJob(job)
 			}
 		} else {
-			// The job is no longer active, remove it from the scheduler if it exists
-			if entryID, exists := cm.Jobs[job.Slug]; exists {
-				// log.Debug().Msgf("Stopping cron job with Slug: %s as it is no longer active", job.Slug)
+			// log.Debug().Msgf("Inactive or invalid job detected: Slug=%s", job.Slug)
+
+			if job.Slug == "" {
+				log.Error().Msg("Encountered job with empty Slug, skipping removal")
+				continue
+			}
+
+			entryID, exists := cm.Jobs[job.Slug]
+			if exists {
+				// log.Debug().Msgf("Removing job: %s", job.Slug)
 				cm.CronScheduler.Remove(entryID)
 				delete(cm.Jobs, job.Slug)
-				log.Debug().Msgf("Stopped cron job with Slug: %s", job.Slug)
+				log.Info().Msgf("Removed job: %s", job.Slug)
+			} else {
+				// log.Warn().Msgf("Job not found in active jobs map: %s", job.Slug)
 			}
 		}
 	}
@@ -177,19 +185,23 @@ func (cm *CronManager) addCronJob(job generated.CronJob) {
 }
 
 // Update an existing cron job
-func (cm *CronManager) updateJob(entryID cron.EntryID, schedule string) {
+func (cm *CronManager) updateJob(entryID cron.EntryID, job generated.CronJob) {
 	// log.Debug().Msgf("Jobs in the map before update: %v", cm.Jobs)
 	// Remove the old job
 	cm.CronScheduler.Remove(entryID)
 
 	// Add the updated job with the new schedule
-	_, err := cm.CronScheduler.AddFunc(schedule, func() {
-		// Placeholder for real job data; adapt as needed
-		cm.runCronJob(generated.CronJob{ID: 1, Schedule: schedule})
+	entryID, err := cm.CronScheduler.AddFunc(job.Schedule, func() {
+		cm.runCronJob(job)
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Error updating cron job")
+		return
 	}
+
+	// Update the Jobs map with the new entry ID
+	cm.Jobs[job.Slug] = entryID
+	log.Info().Msgf("Updated cron job with Slug: %s", job.Slug)
 }
 
 // Run the cron job based on slug

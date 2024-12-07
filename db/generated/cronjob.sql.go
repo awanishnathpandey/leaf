@@ -9,13 +9,12 @@ import (
 	"context"
 )
 
-const ListActiveCronJobs = `-- name: ListActiveCronJobs :many
+const ListCronJobs = `-- name: ListCronJobs :many
 SELECT id, slug, name, schedule, active, description, last_run_at, created_at, updated_at, created_by, updated_by FROM cron_jobs
-WHERE active = true
 `
 
-func (q *Queries) ListActiveCronJobs(ctx context.Context) ([]CronJob, error) {
-	rows, err := q.db.Query(ctx, ListActiveCronJobs)
+func (q *Queries) ListCronJobs(ctx context.Context) ([]CronJob, error) {
+	rows, err := q.db.Query(ctx, ListCronJobs)
 	if err != nil {
 		return nil, err
 	}

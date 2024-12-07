@@ -88,7 +88,7 @@ type Querier interface {
 	GetUsersByGroupID(ctx context.Context, groupID int64) ([]GetUsersByGroupIDRow, error)
 	GetUsersByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error)
 	GetUsersByRoleID(ctx context.Context, roleID int64) ([]GetUsersByRoleIDRow, error)
-	ListActiveCronJobs(ctx context.Context) ([]CronJob, error)
+	ListCronJobs(ctx context.Context) ([]CronJob, error)
 	ListFiles(ctx context.Context) ([]File, error)
 	ListFolders(ctx context.Context) ([]Folder, error)
 	ListGroups(ctx context.Context) ([]Group, error)
