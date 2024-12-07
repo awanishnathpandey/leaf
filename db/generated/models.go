@@ -35,12 +35,12 @@ type CronJob struct {
 
 type CronJobLog struct {
 	ID              int64       `db:"id" json:"id"`
-	CronSlug        pgtype.Text `db:"cron_slug" json:"cron_slug"`
+	CronSlug        string      `db:"cron_slug" json:"cron_slug"`
 	Status          pgtype.Text `db:"status" json:"status"`
-	Message         pgtype.Text `db:"message" json:"message"`
+	Message         string      `db:"message" json:"message"`
 	StartTime       int64       `db:"start_time" json:"start_time"`
 	EndTime         pgtype.Int8 `db:"end_time" json:"end_time"`
-	AffectedRecords pgtype.Int8 `db:"affected_records" json:"affected_records"`
+	AffectedRecords int64       `db:"affected_records" json:"affected_records"`
 }
 
 type EmailTemplate struct {

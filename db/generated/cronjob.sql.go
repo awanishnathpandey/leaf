@@ -9,6 +9,25 @@ import (
 	"context"
 )
 
+const CreateCronJobLog = `-- name: CreateCronJobLog :one
+INSERT INTO cron_job_logs (
+    cron_slug,
+    status,
+    start_time
+) VALUES (
+    $1, -- cron_slug
+    'started', -- status
+    EXTRACT(EPOCH FROM NOW()) -- start_time
+) RETURNING id
+`
+
+func (q *Queries) CreateCronJobLog(ctx context.Context, cronSlug string) (int64, error) {
+	row := q.db.QueryRow(ctx, CreateCronJobLog, cronSlug)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const ListCronJobs = `-- name: ListCronJobs :many
 SELECT id, slug, name, schedule, active, description, last_run_at, created_at, updated_at, created_by, updated_by FROM cron_jobs
 `
@@ -43,4 +62,42 @@ func (q *Queries) ListCronJobs(ctx context.Context) ([]CronJob, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const UpdateCronJobLogFailed = `-- name: UpdateCronJobLogFailed :exec
+UPDATE cron_job_logs
+SET 
+    status = 'failed',
+    message = $2, -- error message
+    end_time = EXTRACT(EPOCH FROM NOW())
+WHERE id = $1
+`
+
+type UpdateCronJobLogFailedParams struct {
+	ID      int64  `db:"id" json:"id"`
+	Message string `db:"message" json:"message"`
+}
+
+func (q *Queries) UpdateCronJobLogFailed(ctx context.Context, arg UpdateCronJobLogFailedParams) error {
+	_, err := q.db.Exec(ctx, UpdateCronJobLogFailed, arg.ID, arg.Message)
+	return err
+}
+
+const UpdateCronJobLogSuccess = `-- name: UpdateCronJobLogSuccess :exec
+UPDATE cron_job_logs
+SET 
+    status = 'success',
+    end_time = EXTRACT(EPOCH FROM NOW()),
+    affected_records = $2 -- affected_records
+WHERE id = $1
+`
+
+type UpdateCronJobLogSuccessParams struct {
+	ID              int64 `db:"id" json:"id"`
+	AffectedRecords int64 `db:"affected_records" json:"affected_records"`
+}
+
+func (q *Queries) UpdateCronJobLogSuccess(ctx context.Context, arg UpdateCronJobLogSuccessParams) error {
+	_, err := q.db.Exec(ctx, UpdateCronJobLogSuccess, arg.ID, arg.AffectedRecords)
+	return err
 }

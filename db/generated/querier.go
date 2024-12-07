@@ -16,6 +16,7 @@ type Querier interface {
 	AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error
 	CheckHealth(ctx context.Context) error
 	CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) error
+	CreateCronJobLog(ctx context.Context, cronSlug string) (int64, error)
 	CreateFile(ctx context.Context, arg CreateFileParams) (File, error)
 	CreateFolder(ctx context.Context, arg CreateFolderParams) (Folder, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
@@ -113,6 +114,8 @@ type Querier interface {
 	RemovePermissionFromRole(ctx context.Context, arg RemovePermissionFromRoleParams) error
 	RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUserParams) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
+	UpdateCronJobLogFailed(ctx context.Context, arg UpdateCronJobLogFailedParams) error
+	UpdateCronJobLogSuccess(ctx context.Context, arg UpdateCronJobLogSuccessParams) error
 	UpdateFile(ctx context.Context, arg UpdateFileParams) (File, error)
 	UpdateFolder(ctx context.Context, arg UpdateFolderParams) (Folder, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)

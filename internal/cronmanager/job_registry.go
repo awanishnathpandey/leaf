@@ -1,8 +1,11 @@
 package cronmanager
 
 import (
+	"context"
+
 	"github.com/rs/zerolog/log"
 
+	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/internal/cronmanager/jobs"
 )
 
@@ -12,12 +15,21 @@ type JobRegistry struct {
 }
 
 // NewJobRegistry initializes the job registry with predefined jobs
-func NewJobRegistry() *JobRegistry {
+func NewJobRegistry(queries *generated.Queries) *JobRegistry {
 	return &JobRegistry{
 		Jobs: map[string]func(){
-			"sync_users":         jobs.SyncUsers,
-			"clean_audit_logs":   jobs.CleanAuditLogs,
-			"push_notifications": jobs.PushNotifications,
+			"sync_users": func() {
+				ctx := context.Background()  // Create a background context
+				jobs.SyncUsers(ctx, queries) // Call job function
+			},
+			"clean_audit_logs": func() {
+				ctx := context.Background()       // Create a background context
+				jobs.CleanAuditLogs(ctx, queries) // Pass context and db queries to CleanAuditLogs
+			},
+			"push_notifications": func() {
+				ctx := context.Background()          // Create a background context
+				jobs.PushNotifications(ctx, queries) // Call job function
+			},
 		},
 	}
 }

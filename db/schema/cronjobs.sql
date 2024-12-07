@@ -15,10 +15,10 @@ CREATE TABLE cron_jobs (
 
 CREATE TABLE cron_job_logs (
     id BIGSERIAL PRIMARY KEY,
-    cron_slug VARCHAR(255),
+    cron_slug TEXT UNIQUE NOT NULL,
     status VARCHAR(50),
-    message TEXT,
+    message TEXT NOT NULL DEFAULT '-',
     start_time BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
     end_time BIGINT,
-    affected_records BIGINT
+    affected_records BIGINT NOT NULL DEFAULT 0
 );

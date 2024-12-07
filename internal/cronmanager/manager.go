@@ -26,7 +26,7 @@ func NewCronManager(db *generated.Queries) *CronManager {
 		CronScheduler: cron.New(),
 		DB:            db,
 		Jobs:          make(map[string]cron.EntryID),
-		JobRegistry:   NewJobRegistry(),
+		JobRegistry:   NewJobRegistry(db),
 	}
 }
 
