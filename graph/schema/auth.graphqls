@@ -56,6 +56,9 @@ input changePassword {
 
 extend type Query {
   me: User!
+  getMyFilesAndFolders: [MyFolder!]!
+  getMyVideos: [MyFile!]!
+  getMySupportDocuments: [MyFile!]!
 }
 
 extend type Mutation {

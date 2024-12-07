@@ -177,6 +177,32 @@ type LoginResponse struct {
 type Mutation struct {
 }
 
+type MyFile struct {
+	ID           int64   `json:"id"`
+	Name         string  `json:"name"`
+	Slug         string  `json:"slug"`
+	FilePath     string  `json:"filePath"`
+	FileType     string  `json:"fileType"`
+	FileBytes    int64   `json:"fileBytes"`
+	AutoDownload bool    `json:"autoDownload"`
+	IsNew        bool    `json:"isNew"`
+	FolderID     int64   `json:"folderId"`
+	Folder       *Folder `json:"folder"`
+	CreatedAt    int64   `json:"createdAt"`
+	UpdatedAt    int64   `json:"updatedAt"`
+}
+
+type MyFolder struct {
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	Slug        string    `json:"slug"`
+	Description string    `json:"description"`
+	HasNewFile  bool      `json:"hasNewFile"`
+	CreatedAt   int64     `json:"createdAt"`
+	UpdatedAt   int64     `json:"updatedAt"`
+	MyFiles     []*MyFile `json:"myFiles"`
+}
+
 type PageInfo struct {
 	HasNextPage     bool `json:"hasNextPage"`
 	HasPreviousPage bool `json:"hasPreviousPage"`

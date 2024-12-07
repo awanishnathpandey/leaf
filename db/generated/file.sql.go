@@ -96,6 +96,219 @@ func (q *Queries) GetFile(ctx context.Context, id int64) (File, error) {
 	return i, err
 }
 
+const GetFilesAndFoldersByUser = `-- name: GetFilesAndFoldersByUser :many
+WITH epoch_7_days_ago AS (
+    SELECT NOW() - INTERVAL '7 days' AS threshold
+)
+SELECT
+    folder.id AS folder_id,
+    folder.name AS folder_name,
+    folder.slug AS folder_slug,
+    folder.description AS folder_description,
+    folder.created_at AS folder_created_at,
+    folder.updated_at AS folder_updated_at,
+    -- Adding "hasNewFile" based on files updated in the last 7 days
+    CASE 
+        WHEN EXISTS (
+            SELECT 1
+            FROM files f, epoch_7_days_ago e
+            WHERE f.folder_id = folder.id
+            AND f.file_type = $2  -- File type condition
+            AND to_timestamp(f.updated_at) > e.threshold  -- Convert bigint to timestamp
+        ) THEN true
+        ELSE false
+    END AS hasNewFile,
+    f.id AS file_id,
+    f.name AS file_name,
+    f.slug AS file_slug,
+    f.file_path AS file_path,
+    f.file_type AS file_type,
+    f.file_bytes AS file_bytes,
+    f.auto_download AS file_auto_download,
+    f.folder_id AS file_folder_id,
+    f.created_at AS file_created_at,
+    f.updated_at AS file_updated_at,
+    -- Adding "isNew" based on file update within the last 7 days
+    CASE 
+        WHEN to_timestamp(f.updated_at) > (SELECT threshold FROM epoch_7_days_ago) THEN true
+        ELSE false
+    END AS isNew
+FROM files f
+JOIN folders folder ON folder.id = f.folder_id
+JOIN group_users gu ON gu.group_id IN (
+    SELECT group_id FROM group_users WHERE group_users.user_id = $1
+)
+LEFT JOIN group_files gf ON gf.file_id = f.id
+LEFT JOIN group_folders gfo ON gfo.folder_id = folder.id
+WHERE gu.user_id = $1  -- The user ID is passed as the first parameter
+AND f.file_type = $2  -- The file type (e.g., 'document') is passed as the second parameter
+ORDER BY folder.name, f.name
+`
+
+type GetFilesAndFoldersByUserParams struct {
+	UserID   int64  `db:"user_id" json:"user_id"`
+	FileType string `db:"file_type" json:"file_type"`
+}
+
+type GetFilesAndFoldersByUserRow struct {
+	FolderID          int64  `db:"folder_id" json:"folder_id"`
+	FolderName        string `db:"folder_name" json:"folder_name"`
+	FolderSlug        string `db:"folder_slug" json:"folder_slug"`
+	FolderDescription string `db:"folder_description" json:"folder_description"`
+	FolderCreatedAt   int64  `db:"folder_created_at" json:"folder_created_at"`
+	FolderUpdatedAt   int64  `db:"folder_updated_at" json:"folder_updated_at"`
+	Hasnewfile        bool   `db:"hasnewfile" json:"hasnewfile"`
+	FileID            int64  `db:"file_id" json:"file_id"`
+	FileName          string `db:"file_name" json:"file_name"`
+	FileSlug          string `db:"file_slug" json:"file_slug"`
+	FilePath          string `db:"file_path" json:"file_path"`
+	FileType          string `db:"file_type" json:"file_type"`
+	FileBytes         int64  `db:"file_bytes" json:"file_bytes"`
+	FileAutoDownload  bool   `db:"file_auto_download" json:"file_auto_download"`
+	FileFolderID      int64  `db:"file_folder_id" json:"file_folder_id"`
+	FileCreatedAt     int64  `db:"file_created_at" json:"file_created_at"`
+	FileUpdatedAt     int64  `db:"file_updated_at" json:"file_updated_at"`
+	Isnew             bool   `db:"isnew" json:"isnew"`
+}
+
+// Join the folders table to get folder details
+// Join group_users to get the groups the user belongs to
+// Join group_files to get the files directly associated with the user's groups
+// Join group_folders to get the folders associated with the user's groups via the pivot table
+func (q *Queries) GetFilesAndFoldersByUser(ctx context.Context, arg GetFilesAndFoldersByUserParams) ([]GetFilesAndFoldersByUserRow, error) {
+	rows, err := q.db.Query(ctx, GetFilesAndFoldersByUser, arg.UserID, arg.FileType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetFilesAndFoldersByUserRow{}
+	for rows.Next() {
+		var i GetFilesAndFoldersByUserRow
+		if err := rows.Scan(
+			&i.FolderID,
+			&i.FolderName,
+			&i.FolderSlug,
+			&i.FolderDescription,
+			&i.FolderCreatedAt,
+			&i.FolderUpdatedAt,
+			&i.Hasnewfile,
+			&i.FileID,
+			&i.FileName,
+			&i.FileSlug,
+			&i.FilePath,
+			&i.FileType,
+			&i.FileBytes,
+			&i.FileAutoDownload,
+			&i.FileFolderID,
+			&i.FileCreatedAt,
+			&i.FileUpdatedAt,
+			&i.Isnew,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const GetFilesAndFoldersByUserBB = `-- name: GetFilesAndFoldersByUserBB :many
+SELECT
+    folder.id AS folder_id,
+    folder.name AS folder_name,
+    folder.slug AS folder_slug,
+    folder.description AS folder_description,
+    folder.created_at AS folder_created_at,
+    folder.updated_at AS folder_updated_at,
+    f.id AS file_id,
+    f.name AS file_name,
+    f.slug AS file_slug,
+    f.file_path AS file_path,
+    f.file_type AS file_type,
+    f.file_bytes AS file_bytes,
+    f.auto_download AS file_auto_download,
+    f.folder_id AS file_folder_id,
+    f.created_at AS file_created_at,
+    f.updated_at AS file_updated_at
+FROM files f
+JOIN folders folder ON folder.id = f.folder_id
+JOIN group_users gu ON gu.group_id IN (
+    SELECT group_id FROM group_users WHERE group_users.user_id = $1
+)
+LEFT JOIN group_files gf ON gf.file_id = f.id
+LEFT JOIN group_folders gfo ON gfo.folder_id = folder.id
+WHERE gu.user_id = $1  -- The user ID is passed as the first parameter
+AND f.file_type = $2  -- The file type (e.g., 'document') is passed as the second parameter
+ORDER BY folder.name, f.name
+`
+
+type GetFilesAndFoldersByUserBBParams struct {
+	UserID   int64  `db:"user_id" json:"user_id"`
+	FileType string `db:"file_type" json:"file_type"`
+}
+
+type GetFilesAndFoldersByUserBBRow struct {
+	FolderID          int64  `db:"folder_id" json:"folder_id"`
+	FolderName        string `db:"folder_name" json:"folder_name"`
+	FolderSlug        string `db:"folder_slug" json:"folder_slug"`
+	FolderDescription string `db:"folder_description" json:"folder_description"`
+	FolderCreatedAt   int64  `db:"folder_created_at" json:"folder_created_at"`
+	FolderUpdatedAt   int64  `db:"folder_updated_at" json:"folder_updated_at"`
+	FileID            int64  `db:"file_id" json:"file_id"`
+	FileName          string `db:"file_name" json:"file_name"`
+	FileSlug          string `db:"file_slug" json:"file_slug"`
+	FilePath          string `db:"file_path" json:"file_path"`
+	FileType          string `db:"file_type" json:"file_type"`
+	FileBytes         int64  `db:"file_bytes" json:"file_bytes"`
+	FileAutoDownload  bool   `db:"file_auto_download" json:"file_auto_download"`
+	FileFolderID      int64  `db:"file_folder_id" json:"file_folder_id"`
+	FileCreatedAt     int64  `db:"file_created_at" json:"file_created_at"`
+	FileUpdatedAt     int64  `db:"file_updated_at" json:"file_updated_at"`
+}
+
+// Join the folders table to get folder details
+// Join group_users to get the groups the user belongs to
+// Join group_files to get the files directly associated with the user's groups
+// Join group_folders to get the folders associated with the user's groups via the pivot table
+func (q *Queries) GetFilesAndFoldersByUserBB(ctx context.Context, arg GetFilesAndFoldersByUserBBParams) ([]GetFilesAndFoldersByUserBBRow, error) {
+	rows, err := q.db.Query(ctx, GetFilesAndFoldersByUserBB, arg.UserID, arg.FileType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetFilesAndFoldersByUserBBRow{}
+	for rows.Next() {
+		var i GetFilesAndFoldersByUserBBRow
+		if err := rows.Scan(
+			&i.FolderID,
+			&i.FolderName,
+			&i.FolderSlug,
+			&i.FolderDescription,
+			&i.FolderCreatedAt,
+			&i.FolderUpdatedAt,
+			&i.FileID,
+			&i.FileName,
+			&i.FileSlug,
+			&i.FilePath,
+			&i.FileType,
+			&i.FileBytes,
+			&i.FileAutoDownload,
+			&i.FileFolderID,
+			&i.FileCreatedAt,
+			&i.FileUpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const GetFilesByFolder = `-- name: GetFilesByFolder :many
 SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE folder_id = $1

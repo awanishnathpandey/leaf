@@ -40,6 +40,16 @@ type Querier interface {
 	GetDashboardKPICount(ctx context.Context) (GetDashboardKPICountRow, error)
 	GetEmailTemplateByName(ctx context.Context, name string) (EmailTemplate, error)
 	GetFile(ctx context.Context, id int64) (File, error)
+	// Join the folders table to get folder details
+	// Join group_users to get the groups the user belongs to
+	// Join group_files to get the files directly associated with the user's groups
+	// Join group_folders to get the folders associated with the user's groups via the pivot table
+	GetFilesAndFoldersByUser(ctx context.Context, arg GetFilesAndFoldersByUserParams) ([]GetFilesAndFoldersByUserRow, error)
+	// Join the folders table to get folder details
+	// Join group_users to get the groups the user belongs to
+	// Join group_files to get the files directly associated with the user's groups
+	// Join group_folders to get the folders associated with the user's groups via the pivot table
+	GetFilesAndFoldersByUserBB(ctx context.Context, arg GetFilesAndFoldersByUserBBParams) ([]GetFilesAndFoldersByUserBBRow, error)
 	GetFilesByFolder(ctx context.Context, folderID int64) ([]File, error)
 	GetFilesByFolderID(ctx context.Context, folderID int64) ([]File, error)
 	GetFilesByGroupID(ctx context.Context, groupID int64) ([]File, error)

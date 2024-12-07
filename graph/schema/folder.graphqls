@@ -15,6 +15,17 @@ type Folder {
   files(first: Int!, after: Int, filter: FileFilter, sort: FileSort): FileConnection!
 }
 
+type MyFolder {
+  id: ID!
+  name: String!
+  slug: String!
+  description: String!
+  hasNewFile: Boolean!
+  createdAt: Int!
+  updatedAt: Int!
+  myFiles: [MyFile!]!
+}
+
 input CreateFolder {
   name: String!
   slug: String!

@@ -349,6 +349,106 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	return modelUser, nil
 }
 
+// GetMyFilesAndFolders is the resolver for the getMyFilesAndFolders field.
+func (r *queryResolver) GetMyFilesAndFolders(ctx context.Context) ([]*model.MyFolder, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+
+	// Fetch all folders and files associated with the user and filtered by file type
+	userID, ok := ctx.Value("userID").(int64) // Ensure correct type assertion
+	if !ok {
+		return nil, fmt.Errorf("invalid userID in context")
+	}
+
+	rows, err := r.DB.GetFilesAndFoldersByUser(ctx, generated.GetFilesAndFoldersByUserParams{
+		UserID:   userID,
+		FileType: "document",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetching files and folders: %w", err)
+	}
+
+	// Assuming `rows` contains the data from the query
+	folderMap := make(map[int64]*model.MyFolder)
+
+	for _, row := range rows {
+		// Ensure that folder is added only once
+		folder, exists := folderMap[row.FolderID]
+		if !exists {
+			folder = &model.MyFolder{
+				ID:          row.FolderID,
+				Name:        row.FolderName,
+				Slug:        row.FolderSlug,
+				Description: row.FolderDescription,
+				CreatedAt:   row.FolderCreatedAt,
+				UpdatedAt:   row.FolderUpdatedAt,
+			}
+			folderMap[row.FolderID] = folder
+		}
+
+		// Ensure files are added only once per folder by checking for file uniqueness
+		fileExists := false
+		for _, existingFile := range folder.MyFiles {
+			if existingFile.ID == row.FileID {
+				fileExists = true
+				break
+			}
+		}
+
+		if !fileExists {
+			folder.MyFiles = append(folder.MyFiles, &model.MyFile{
+				ID:           row.FileID,
+				Name:         row.FileName,
+				Slug:         row.FileSlug,
+				FilePath:     row.FilePath,
+				FileType:     row.FileType,
+				FileBytes:    row.FileBytes,
+				FolderID:     row.FileFolderID,
+				AutoDownload: row.FileAutoDownload,
+				CreatedAt:    row.FileCreatedAt,
+				UpdatedAt:    row.FileUpdatedAt,
+			})
+		}
+	}
+
+	// Convert map to slice
+	var folders []*model.MyFolder
+	for _, folder := range folderMap {
+		folders = append(folders, folder)
+	}
+
+	// Add logic to set `isNew` for each file and `hasNewFile` for each folder
+	for i := range folders {
+		hasNewFile := false
+		for j := range folders[i].MyFiles {
+			// Check if file is new and set the flag
+			if utils.IsFileNew(folders[i].MyFiles[j].UpdatedAt, 7) { // 7 days
+				folders[i].MyFiles[j].IsNew = true
+				hasNewFile = true
+			}
+		}
+		// Set the folder's `hasNewFile` flag based on its files
+		folders[i].HasNewFile = hasNewFile
+	}
+
+	return folders, nil
+}
+
+// GetMyVideos is the resolver for the getMyVideos field.
+func (r *queryResolver) GetMyVideos(ctx context.Context) ([]*model.MyFile, error) {
+	panic(fmt.Errorf("not implemented: GetMyVideos - getMyVideos"))
+}
+
+// GetMySupportDocuments is the resolver for the getMySupportDocuments field.
+func (r *queryResolver) GetMySupportDocuments(ctx context.Context) ([]*model.MyFile, error) {
+	panic(fmt.Errorf("not implemented: GetMySupportDocuments - getMySupportDocuments"))
+}
+
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
 
