@@ -8,6 +8,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/external/mail"
@@ -19,6 +21,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
 // SetupRoutes configures all routes for the application
@@ -66,11 +69,20 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries, Pool *pgxpool.Pool)
 	}
 
 	// GraphQL handler using gqlgen
-	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries, Pool: Pool, MailService: mailService}}))
-
-	// Add transports (e.g., POST method) if NewDefaultServer is not needed
-	// graphqlHandler.AddTransport(transport.Options{})
-	// graphqlHandler.AddTransport(transport.POST{})
+	graphqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries, Pool: Pool, MailService: mailService}}))
+	//Configurations
+	graphqlHandler.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+	})
+	graphqlHandler.AddTransport(transport.Options{})
+	// graphqlHandler.AddTransport(transport.GET{})
+	graphqlHandler.AddTransport(transport.POST{})
+	graphqlHandler.AddTransport(transport.MultipartForm{})
+	graphqlHandler.SetQueryCache(lru.New[*ast.QueryDocument](1000))
+	// graphqlHandler.Use(extension.Introspection{})
+	graphqlHandler.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New[string](100),
+	})
 	graphqlHandler.Use(gqlprometheus.NewTracer()) // Use as extension here
 
 	// Conditionally enable introspection based on environment
