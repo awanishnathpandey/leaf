@@ -15,6 +15,7 @@ import (
 	"github.com/awanishnathpandey/leaf/external/mail"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/resolvers"
+	"github.com/awanishnathpandey/leaf/internal/config"
 	"github.com/awanishnathpandey/leaf/internal/middleware"
 	gqlprometheus "github.com/awanishnathpandey/leaf/internal/prometheus"
 	"github.com/gofiber/fiber/v2"
@@ -68,6 +69,10 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries, Pool *pgxpool.Pool)
 		log.Fatal().Err(err).Msg("Failed to inititalize mail service")
 	}
 
+	// Get upload max memory and size from environment variables
+	maxMemoryMB := config.GetUploadFileMaxMemoryMB()
+	maxUploadSizeMB := config.GetUploadFileMaxSizeMB()
+
 	// GraphQL handler using gqlgen
 	graphqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries, Pool: Pool, MailService: mailService}}))
 	//Configurations
@@ -77,7 +82,10 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries, Pool *pgxpool.Pool)
 	graphqlHandler.AddTransport(transport.Options{})
 	// graphqlHandler.AddTransport(transport.GET{})
 	graphqlHandler.AddTransport(transport.POST{})
-	graphqlHandler.AddTransport(transport.MultipartForm{})
+	graphqlHandler.AddTransport(transport.MultipartForm{
+		MaxMemory:     int64(maxMemoryMB * 1024 * 1024),     // 50 MB
+		MaxUploadSize: int64(maxUploadSizeMB * 1024 * 1024), // 500 MB
+	})
 	graphqlHandler.SetQueryCache(lru.New[*ast.QueryDocument](1000))
 	// graphqlHandler.Use(extension.Introspection{})
 	graphqlHandler.Use(extension.AutomaticPersistedQuery{

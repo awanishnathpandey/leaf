@@ -163,3 +163,29 @@ func GetCronJobMonitorInterval() time.Duration {
 	}
 	return monitorInterval
 }
+
+func GetUploadFileMaxMemoryMB() int {
+	maxMemoryMB := 50
+	// fmt.Println("UPLOAD_MAX_MEMORY_MB:", os.Getenv("UPLOAD_MAX_MEMORY_MB"))
+	if maxSizeStr := os.Getenv("UPLOAD_MAX_MEMORY_MB"); maxSizeStr != "" {
+		var err error
+		maxMemoryMB, err = strconv.Atoi(maxSizeStr)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Invalid UPLOAD_MAX_MEMORY_MB value")
+		}
+	}
+	return maxMemoryMB
+}
+
+func GetUploadFileMaxSizeMB() int {
+	maxUploadSizeMB := 100
+	// fmt.Println("UPLOAD_MAX_SIZE_MB:", os.Getenv("UPLOAD_MAX_SIZE_MB"))
+	if maxSizeStr := os.Getenv("UPLOAD_MAX_SIZE_MB"); maxSizeStr != "" {
+		var err error
+		maxUploadSizeMB, err = strconv.Atoi(maxSizeStr)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Invalid UPLOAD_MAX_SIZE_MB value")
+		}
+	}
+	return maxUploadSizeMB
+}
