@@ -97,6 +97,36 @@ go run github.com/99designs/gqlgen generate
 
 ---
 
+# File Uploads
+
+The project uses gqlgen Upload Scalar type for graphql.
+Example of Single File upload
+```
+curl --location 'http://127.0.0.1:3000/graphql' \
+--header 'Authorization: Bearer Token' \
+--form 'operations="{
+  \"query\": \"mutation SingleUpload(\$file: Upload\!, \$folderId: Int\!) { singleUpload(file: \$file, folderId: \$folderId) { id name slug filePath fileType fileBytes fileContentType autoDownload folderId createdAt updatedAt createdBy updatedBy } }\",
+  \"variables\": { \"file\": null, \"folderId\": 3 }
+}"' \
+--form 'map="{ \"0\": [\"variables.file\"] }"' \
+--form '0=@"/D:/samplefile.txt"'
+```
+
+
+Example of Multiple File upload
+```
+curl --location 'http://127.0.0.1:3000/graphql' \
+--header 'Authorization: Bearer Token' \
+--form 'operations="{
+  \"query\": \"mutation (\$files: [Upload\!]\!, \$folderId: Int\!) { multipleUpload(files: \$files, folderId: \$folderId) { id name slug filePath fileType fileBytes fileContentType autoDownload folderId createdAt updatedAt createdBy updatedBy } }\",
+  \"variables\": { \"files\": [null,null], \"folderId\": 3 }
+}"' \
+--form 'map=" { \"0\": [\"variables.files.0\"], \"1\": [\"variables.files.1\"] }"' \
+--form '0=@"/D:/samplefile1.txt"' \
+--form '1=@"/D:/samplefile2.txt"'
+```
+---
+
 ## Additional Notes
 
 - Environment Variables: You can use a `.env` file to store and manage your environment variables securely.
