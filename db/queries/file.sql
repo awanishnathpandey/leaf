@@ -1,6 +1,6 @@
 -- name: CreateFile :one
-INSERT INTO files (name, slug, file_path, folder_id, created_by, updated_by)
-VALUES ($1, $2, $3, $4, $5, $5)
+INSERT INTO files (name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_by, updated_by)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
 RETURNING *;
 
 -- name: GetFile :one
@@ -17,7 +17,7 @@ WHERE folder_id = $1;
 
 -- name: UpdateFile :one
 UPDATE files
-SET name = $2, slug = $3, file_path = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
+SET name = $2, slug = $3, file_path = $4, file_bytes = $6, file_content_type = $7, auto_download = $8, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
 RETURNING *;
 
@@ -97,6 +97,7 @@ SELECT
     f.file_path AS file_path,
     f.file_type AS file_type,
     f.file_bytes AS file_bytes,
+    f.file_content_type AS file_content_type,
     f.auto_download AS file_auto_download,
     f.folder_id AS file_folder_id,
     f.created_at AS file_created_at,
@@ -146,6 +147,7 @@ SELECT
     f.file_path AS file_path,
     f.file_type AS file_type,
     f.file_bytes AS file_bytes,
+    f.file_content_type AS file_content_type,
     f.auto_download AS file_auto_download,
     f.folder_id AS file_folder_id,
     f.created_at AS file_created_at,

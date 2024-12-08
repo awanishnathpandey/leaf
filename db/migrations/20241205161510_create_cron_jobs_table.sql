@@ -14,9 +14,9 @@ CREATE TABLE cron_jobs (
 );
 -- +goose StatementBegin
 INSERT INTO cron_jobs (slug, name, schedule, active, description) VALUES
-('sync_users', 'Sync Users', '0 0 * * *', true, 'Runs every day at midnight'),
-('clean_audit_logs', 'Clean Audit Logs', '0 0 * * *', true, 'Runs every day at midnight'),
-('push_notifications', 'Push Notifications', '@every 10s', true, 'Sends notifications every 5 minutes');
+('sync_users', 'Sync Users', '0 0 * * *', false, 'Runs every day at midnight'),
+('clean_audit_logs', 'Clean Audit Logs', '0 0 * * *', false, 'Runs every day at midnight'),
+('push_notifications', 'Push Notifications', '@every 10s', false, 'Sends notifications every 5 minutes');
 -- +goose StatementEnd
 
 -- +goose Down

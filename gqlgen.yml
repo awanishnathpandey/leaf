@@ -98,6 +98,8 @@ models:
   UUID:
     model:
       - github.com/99designs/gqlgen/graphql.UUID
+  Upload:
+    model: github.com/99designs/gqlgen/graphql.Upload
   File:
     fields:
       folder:

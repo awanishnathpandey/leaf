@@ -8,7 +8,6 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/external/mail"
@@ -67,10 +66,11 @@ func SetupRoutes(app *fiber.App, queries *generated.Queries, Pool *pgxpool.Pool)
 	}
 
 	// GraphQL handler using gqlgen
-	graphqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries, Pool: Pool, MailService: mailService}}))
+	graphqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &resolvers.Resolver{DB: queries, Pool: Pool, MailService: mailService}}))
 
-	// Add transports (e.g., POST method) if needed
-	graphqlHandler.AddTransport(transport.POST{})
+	// Add transports (e.g., POST method) if NewDefaultServer is not needed
+	// graphqlHandler.AddTransport(transport.Options{})
+	// graphqlHandler.AddTransport(transport.POST{})
 	graphqlHandler.Use(gqlprometheus.NewTracer()) // Use as extension here
 
 	// Conditionally enable introspection based on environment

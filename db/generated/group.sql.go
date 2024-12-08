@@ -107,7 +107,7 @@ func (q *Queries) DeleteGroupsByIDs(ctx context.Context, dollar_1 []int64) error
 }
 
 const GetFilesByGroupID = `-- name: GetFilesByGroupID :many
-SELECT f.id, f.name, f.slug, f.file_path, f.file_type, f.file_bytes, f.auto_download, f.folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by
+SELECT f.id, f.name, f.slug, f.file_path, f.file_type, f.file_bytes, f.file_content_type, f.auto_download, f.folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by
 FROM files f
 JOIN group_files gf ON f.id = gf.file_id
 WHERE gf.group_id = $1
@@ -129,6 +129,7 @@ func (q *Queries) GetFilesByGroupID(ctx context.Context, groupID int64) ([]File,
 			&i.FilePath,
 			&i.FileType,
 			&i.FileBytes,
+			&i.FileContentType,
 			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
@@ -340,7 +341,7 @@ func (q *Queries) GetGroupsByUserID(ctx context.Context, userID int64) ([]Group,
 }
 
 const GetPaginatedFilesByGroupID = `-- name: GetPaginatedFilesByGroupID :many
-SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by, group_id, file_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM files f
+SELECT id, name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, f.created_at, f.updated_at, f.created_by, f.updated_by, group_id, file_id, gf.created_at, gf.updated_at, gf.created_by, gf.updated_by FROM files f
 JOIN group_files gf ON f.id = gf.file_id
 WHERE 
     gf.group_id = $3  -- Filter by group_id
@@ -370,24 +371,25 @@ type GetPaginatedFilesByGroupIDParams struct {
 }
 
 type GetPaginatedFilesByGroupIDRow struct {
-	ID           int64  `db:"id" json:"id"`
-	Name         string `db:"name" json:"name"`
-	Slug         string `db:"slug" json:"slug"`
-	FilePath     string `db:"file_path" json:"file_path"`
-	FileType     string `db:"file_type" json:"file_type"`
-	FileBytes    int64  `db:"file_bytes" json:"file_bytes"`
-	AutoDownload bool   `db:"auto_download" json:"auto_download"`
-	FolderID     int64  `db:"folder_id" json:"folder_id"`
-	CreatedAt    int64  `db:"created_at" json:"created_at"`
-	UpdatedAt    int64  `db:"updated_at" json:"updated_at"`
-	CreatedBy    string `db:"created_by" json:"created_by"`
-	UpdatedBy    string `db:"updated_by" json:"updated_by"`
-	GroupID      int64  `db:"group_id" json:"group_id"`
-	FileID       int64  `db:"file_id" json:"file_id"`
-	CreatedAt_2  int64  `db:"created_at_2" json:"created_at_2"`
-	UpdatedAt_2  int64  `db:"updated_at_2" json:"updated_at_2"`
-	CreatedBy_2  string `db:"created_by_2" json:"created_by_2"`
-	UpdatedBy_2  string `db:"updated_by_2" json:"updated_by_2"`
+	ID              int64  `db:"id" json:"id"`
+	Name            string `db:"name" json:"name"`
+	Slug            string `db:"slug" json:"slug"`
+	FilePath        string `db:"file_path" json:"file_path"`
+	FileType        string `db:"file_type" json:"file_type"`
+	FileBytes       int64  `db:"file_bytes" json:"file_bytes"`
+	FileContentType string `db:"file_content_type" json:"file_content_type"`
+	AutoDownload    bool   `db:"auto_download" json:"auto_download"`
+	FolderID        int64  `db:"folder_id" json:"folder_id"`
+	CreatedAt       int64  `db:"created_at" json:"created_at"`
+	UpdatedAt       int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy       string `db:"created_by" json:"created_by"`
+	UpdatedBy       string `db:"updated_by" json:"updated_by"`
+	GroupID         int64  `db:"group_id" json:"group_id"`
+	FileID          int64  `db:"file_id" json:"file_id"`
+	CreatedAt_2     int64  `db:"created_at_2" json:"created_at_2"`
+	UpdatedAt_2     int64  `db:"updated_at_2" json:"updated_at_2"`
+	CreatedBy_2     string `db:"created_by_2" json:"created_by_2"`
+	UpdatedBy_2     string `db:"updated_by_2" json:"updated_by_2"`
 }
 
 func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginatedFilesByGroupIDParams) ([]GetPaginatedFilesByGroupIDRow, error) {
@@ -414,6 +416,7 @@ func (q *Queries) GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginat
 			&i.FilePath,
 			&i.FileType,
 			&i.FileBytes,
+			&i.FileContentType,
 			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,

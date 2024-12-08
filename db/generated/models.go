@@ -56,18 +56,19 @@ type EmailTemplate struct {
 }
 
 type File struct {
-	ID           int64  `db:"id" json:"id"`
-	Name         string `db:"name" json:"name"`
-	Slug         string `db:"slug" json:"slug"`
-	FilePath     string `db:"file_path" json:"file_path"`
-	FileType     string `db:"file_type" json:"file_type"`
-	FileBytes    int64  `db:"file_bytes" json:"file_bytes"`
-	AutoDownload bool   `db:"auto_download" json:"auto_download"`
-	FolderID     int64  `db:"folder_id" json:"folder_id"`
-	CreatedAt    int64  `db:"created_at" json:"created_at"`
-	UpdatedAt    int64  `db:"updated_at" json:"updated_at"`
-	CreatedBy    string `db:"created_by" json:"created_by"`
-	UpdatedBy    string `db:"updated_by" json:"updated_by"`
+	ID              int64  `db:"id" json:"id"`
+	Name            string `db:"name" json:"name"`
+	Slug            string `db:"slug" json:"slug"`
+	FilePath        string `db:"file_path" json:"file_path"`
+	FileType        string `db:"file_type" json:"file_type"`
+	FileBytes       int64  `db:"file_bytes" json:"file_bytes"`
+	FileContentType string `db:"file_content_type" json:"file_content_type"`
+	AutoDownload    bool   `db:"auto_download" json:"auto_download"`
+	FolderID        int64  `db:"folder_id" json:"folder_id"`
+	CreatedAt       int64  `db:"created_at" json:"created_at"`
+	UpdatedAt       int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy       string `db:"created_by" json:"created_by"`
+	UpdatedBy       string `db:"updated_by" json:"updated_by"`
 }
 
 type Folder struct {

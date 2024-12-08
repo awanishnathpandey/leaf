@@ -12,17 +12,21 @@ import (
 )
 
 const CreateFile = `-- name: CreateFile :one
-INSERT INTO files (name, slug, file_path, folder_id, created_by, updated_by)
-VALUES ($1, $2, $3, $4, $5, $5)
-RETURNING id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by
+INSERT INTO files (name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_by, updated_by)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
+RETURNING id, name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_at, updated_at, created_by, updated_by
 `
 
 type CreateFileParams struct {
-	Name      string `db:"name" json:"name"`
-	Slug      string `db:"slug" json:"slug"`
-	FilePath  string `db:"file_path" json:"file_path"`
-	FolderID  int64  `db:"folder_id" json:"folder_id"`
-	CreatedBy string `db:"created_by" json:"created_by"`
+	Name            string `db:"name" json:"name"`
+	Slug            string `db:"slug" json:"slug"`
+	FilePath        string `db:"file_path" json:"file_path"`
+	FileType        string `db:"file_type" json:"file_type"`
+	FileBytes       int64  `db:"file_bytes" json:"file_bytes"`
+	FileContentType string `db:"file_content_type" json:"file_content_type"`
+	AutoDownload    bool   `db:"auto_download" json:"auto_download"`
+	FolderID        int64  `db:"folder_id" json:"folder_id"`
+	CreatedBy       string `db:"created_by" json:"created_by"`
 }
 
 func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, error) {
@@ -30,6 +34,10 @@ func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, e
 		arg.Name,
 		arg.Slug,
 		arg.FilePath,
+		arg.FileType,
+		arg.FileBytes,
+		arg.FileContentType,
+		arg.AutoDownload,
 		arg.FolderID,
 		arg.CreatedBy,
 	)
@@ -41,6 +49,7 @@ func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, e
 		&i.FilePath,
 		&i.FileType,
 		&i.FileBytes,
+		&i.FileContentType,
 		&i.AutoDownload,
 		&i.FolderID,
 		&i.CreatedAt,
@@ -72,7 +81,7 @@ func (q *Queries) DeleteFilesByIDs(ctx context.Context, dollar_1 []int64) error 
 }
 
 const GetFile = `-- name: GetFile :one
-SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE id = $1
 `
 
@@ -86,6 +95,7 @@ func (q *Queries) GetFile(ctx context.Context, id int64) (File, error) {
 		&i.FilePath,
 		&i.FileType,
 		&i.FileBytes,
+		&i.FileContentType,
 		&i.AutoDownload,
 		&i.FolderID,
 		&i.CreatedAt,
@@ -124,6 +134,7 @@ SELECT
     f.file_path AS file_path,
     f.file_type AS file_type,
     f.file_bytes AS file_bytes,
+    f.file_content_type AS file_content_type,
     f.auto_download AS file_auto_download,
     f.folder_id AS file_folder_id,
     f.created_at AS file_created_at,
@@ -164,6 +175,7 @@ type GetFilesAndFoldersByUserRow struct {
 	FilePath          string `db:"file_path" json:"file_path"`
 	FileType          string `db:"file_type" json:"file_type"`
 	FileBytes         int64  `db:"file_bytes" json:"file_bytes"`
+	FileContentType   string `db:"file_content_type" json:"file_content_type"`
 	FileAutoDownload  bool   `db:"file_auto_download" json:"file_auto_download"`
 	FileFolderID      int64  `db:"file_folder_id" json:"file_folder_id"`
 	FileCreatedAt     int64  `db:"file_created_at" json:"file_created_at"`
@@ -198,6 +210,7 @@ func (q *Queries) GetFilesAndFoldersByUser(ctx context.Context, arg GetFilesAndF
 			&i.FilePath,
 			&i.FileType,
 			&i.FileBytes,
+			&i.FileContentType,
 			&i.FileAutoDownload,
 			&i.FileFolderID,
 			&i.FileCreatedAt,
@@ -228,6 +241,7 @@ SELECT
     f.file_path AS file_path,
     f.file_type AS file_type,
     f.file_bytes AS file_bytes,
+    f.file_content_type AS file_content_type,
     f.auto_download AS file_auto_download,
     f.folder_id AS file_folder_id,
     f.created_at AS file_created_at,
@@ -262,6 +276,7 @@ type GetFilesAndFoldersByUserBBRow struct {
 	FilePath          string `db:"file_path" json:"file_path"`
 	FileType          string `db:"file_type" json:"file_type"`
 	FileBytes         int64  `db:"file_bytes" json:"file_bytes"`
+	FileContentType   string `db:"file_content_type" json:"file_content_type"`
 	FileAutoDownload  bool   `db:"file_auto_download" json:"file_auto_download"`
 	FileFolderID      int64  `db:"file_folder_id" json:"file_folder_id"`
 	FileCreatedAt     int64  `db:"file_created_at" json:"file_created_at"`
@@ -294,6 +309,7 @@ func (q *Queries) GetFilesAndFoldersByUserBB(ctx context.Context, arg GetFilesAn
 			&i.FilePath,
 			&i.FileType,
 			&i.FileBytes,
+			&i.FileContentType,
 			&i.FileAutoDownload,
 			&i.FileFolderID,
 			&i.FileCreatedAt,
@@ -310,7 +326,7 @@ func (q *Queries) GetFilesAndFoldersByUserBB(ctx context.Context, arg GetFilesAn
 }
 
 const GetFilesByFolder = `-- name: GetFilesByFolder :many
-SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE folder_id = $1
 `
 
@@ -330,6 +346,7 @@ func (q *Queries) GetFilesByFolder(ctx context.Context, folderID int64) ([]File,
 			&i.FilePath,
 			&i.FileType,
 			&i.FileBytes,
+			&i.FileContentType,
 			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
@@ -348,7 +365,7 @@ func (q *Queries) GetFilesByFolder(ctx context.Context, folderID int64) ([]File,
 }
 
 const GetFilesByFolderID = `-- name: GetFilesByFolderID :many
-SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE folder_id = $1
 `
 
@@ -368,6 +385,7 @@ func (q *Queries) GetFilesByFolderID(ctx context.Context, folderID int64) ([]Fil
 			&i.FilePath,
 			&i.FileType,
 			&i.FileBytes,
+			&i.FileContentType,
 			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
@@ -411,7 +429,7 @@ func (q *Queries) GetFilesByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 }
 
 const GetPaginatedFilesByFolderID = `-- name: GetPaginatedFilesByFolderID :many
-SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files WHERE 
+SELECT id, name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files WHERE 
     folder_id = $3  -- Filter by folder_id
     AND (coalesce($4, '') = '' OR name ILIKE '%' || $4 || '%')
     AND (coalesce($5, '') = '' OR slug ILIKE '%' || $5 || '%')
@@ -462,6 +480,7 @@ func (q *Queries) GetPaginatedFilesByFolderID(ctx context.Context, arg GetPagina
 			&i.FilePath,
 			&i.FileType,
 			&i.FileBytes,
+			&i.FileContentType,
 			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
@@ -500,7 +519,7 @@ func (q *Queries) GetPaginatedFilesByFolderIDCount(ctx context.Context, arg GetP
 }
 
 const ListFiles = `-- name: ListFiles :many
-SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 ORDER BY name
 `
 
@@ -520,6 +539,7 @@ func (q *Queries) ListFiles(ctx context.Context) ([]File, error) {
 			&i.FilePath,
 			&i.FileType,
 			&i.FileBytes,
+			&i.FileContentType,
 			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
@@ -538,7 +558,7 @@ func (q *Queries) ListFiles(ctx context.Context) ([]File, error) {
 }
 
 const PaginatedFiles = `-- name: PaginatedFiles :many
-SELECT id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
+SELECT id, name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_at, updated_at, created_by, updated_by FROM files
 WHERE 
     (coalesce($3, '') = '' OR name ILIKE '%' || $3 || '%')
     AND (coalesce($4, '') = '' OR slug ILIKE '%' || $4 || '%')
@@ -587,6 +607,7 @@ func (q *Queries) PaginatedFiles(ctx context.Context, arg PaginatedFilesParams) 
 			&i.FilePath,
 			&i.FileType,
 			&i.FileBytes,
+			&i.FileContentType,
 			&i.AutoDownload,
 			&i.FolderID,
 			&i.CreatedAt,
@@ -625,17 +646,20 @@ func (q *Queries) PaginatedFilesCount(ctx context.Context, arg PaginatedFilesCou
 
 const UpdateFile = `-- name: UpdateFile :one
 UPDATE files
-SET name = $2, slug = $3, file_path = $4, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
+SET name = $2, slug = $3, file_path = $4, file_bytes = $6, file_content_type = $7, auto_download = $8, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $5
 WHERE id = $1
-RETURNING id, name, slug, file_path, file_type, file_bytes, auto_download, folder_id, created_at, updated_at, created_by, updated_by
+RETURNING id, name, slug, file_path, file_type, file_bytes, file_content_type, auto_download, folder_id, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateFileParams struct {
-	ID        int64  `db:"id" json:"id"`
-	Name      string `db:"name" json:"name"`
-	Slug      string `db:"slug" json:"slug"`
-	FilePath  string `db:"file_path" json:"file_path"`
-	UpdatedBy string `db:"updated_by" json:"updated_by"`
+	ID              int64  `db:"id" json:"id"`
+	Name            string `db:"name" json:"name"`
+	Slug            string `db:"slug" json:"slug"`
+	FilePath        string `db:"file_path" json:"file_path"`
+	UpdatedBy       string `db:"updated_by" json:"updated_by"`
+	FileBytes       int64  `db:"file_bytes" json:"file_bytes"`
+	FileContentType string `db:"file_content_type" json:"file_content_type"`
+	AutoDownload    bool   `db:"auto_download" json:"auto_download"`
 }
 
 func (q *Queries) UpdateFile(ctx context.Context, arg UpdateFileParams) (File, error) {
@@ -645,6 +669,9 @@ func (q *Queries) UpdateFile(ctx context.Context, arg UpdateFileParams) (File, e
 		arg.Slug,
 		arg.FilePath,
 		arg.UpdatedBy,
+		arg.FileBytes,
+		arg.FileContentType,
+		arg.AutoDownload,
 	)
 	var i File
 	err := row.Scan(
@@ -654,6 +681,7 @@ func (q *Queries) UpdateFile(ctx context.Context, arg UpdateFileParams) (File, e
 		&i.FilePath,
 		&i.FileType,
 		&i.FileBytes,
+		&i.FileContentType,
 		&i.AutoDownload,
 		&i.FolderID,
 		&i.CreatedAt,

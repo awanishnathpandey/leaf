@@ -22,10 +22,13 @@ type AuthUser struct {
 }
 
 type CreateFile struct {
-	Name     string `json:"name"`
-	Slug     string `json:"slug"`
-	FilePath string `json:"filePath"`
-	FolderID int64  `json:"folderId"`
+	Name            string `json:"name"`
+	Slug            string `json:"slug"`
+	FilePath        string `json:"filePath"`
+	FileType        string `json:"fileType"`
+	FileBytes       int64  `json:"fileBytes"`
+	FileContentType string `json:"fileContentType"`
+	FolderID        int64  `json:"folderId"`
 }
 
 type CreateFolder struct {
@@ -61,20 +64,21 @@ type EmailResponse struct {
 }
 
 type File struct {
-	ID           int64            `json:"id"`
-	Name         string           `json:"name"`
-	Slug         string           `json:"slug"`
-	FilePath     string           `json:"filePath"`
-	FileType     string           `json:"fileType"`
-	FileBytes    int64            `json:"fileBytes"`
-	AutoDownload bool             `json:"autoDownload"`
-	FolderID     int64            `json:"folderId"`
-	Folder       *Folder          `json:"folder"`
-	CreatedAt    int64            `json:"createdAt"`
-	UpdatedAt    int64            `json:"updatedAt"`
-	CreatedBy    string           `json:"createdBy"`
-	UpdatedBy    string           `json:"updatedBy"`
-	Groups       *GroupConnection `json:"groups"`
+	ID              int64            `json:"id"`
+	Name            string           `json:"name"`
+	Slug            string           `json:"slug"`
+	FilePath        string           `json:"filePath"`
+	FileType        string           `json:"fileType"`
+	FileBytes       int64            `json:"fileBytes"`
+	FileContentType string           `json:"fileContentType"`
+	AutoDownload    bool             `json:"autoDownload"`
+	FolderID        int64            `json:"folderId"`
+	Folder          *Folder          `json:"folder"`
+	CreatedAt       int64            `json:"createdAt"`
+	UpdatedAt       int64            `json:"updatedAt"`
+	CreatedBy       string           `json:"createdBy"`
+	UpdatedBy       string           `json:"updatedBy"`
+	Groups          *GroupConnection `json:"groups"`
 }
 
 type FileConnection struct {
@@ -178,18 +182,19 @@ type Mutation struct {
 }
 
 type MyFile struct {
-	ID           int64   `json:"id"`
-	Name         string  `json:"name"`
-	Slug         string  `json:"slug"`
-	FilePath     string  `json:"filePath"`
-	FileType     string  `json:"fileType"`
-	FileBytes    int64   `json:"fileBytes"`
-	AutoDownload bool    `json:"autoDownload"`
-	IsNew        bool    `json:"isNew"`
-	FolderID     int64   `json:"folderId"`
-	Folder       *Folder `json:"folder"`
-	CreatedAt    int64   `json:"createdAt"`
-	UpdatedAt    int64   `json:"updatedAt"`
+	ID              int64   `json:"id"`
+	Name            string  `json:"name"`
+	Slug            string  `json:"slug"`
+	FilePath        string  `json:"filePath"`
+	FileType        string  `json:"fileType"`
+	FileBytes       int64   `json:"fileBytes"`
+	FileContentType string  `json:"fileContentType"`
+	AutoDownload    bool    `json:"autoDownload"`
+	IsNew           bool    `json:"isNew"`
+	FolderID        int64   `json:"folderId"`
+	Folder          *Folder `json:"folder"`
+	CreatedAt       int64   `json:"createdAt"`
+	UpdatedAt       int64   `json:"updatedAt"`
 }
 
 type MyFolder struct {

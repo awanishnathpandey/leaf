@@ -81,20 +81,21 @@ type ComplexityRoot struct {
 	}
 
 	File struct {
-		AutoDownload func(childComplexity int) int
-		CreatedAt    func(childComplexity int) int
-		CreatedBy    func(childComplexity int) int
-		FileBytes    func(childComplexity int) int
-		FilePath     func(childComplexity int) int
-		FileType     func(childComplexity int) int
-		Folder       func(childComplexity int) int
-		FolderID     func(childComplexity int) int
-		Groups       func(childComplexity int, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) int
-		ID           func(childComplexity int) int
-		Name         func(childComplexity int) int
-		Slug         func(childComplexity int) int
-		UpdatedAt    func(childComplexity int) int
-		UpdatedBy    func(childComplexity int) int
+		AutoDownload    func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		CreatedBy       func(childComplexity int) int
+		FileBytes       func(childComplexity int) int
+		FileContentType func(childComplexity int) int
+		FilePath        func(childComplexity int) int
+		FileType        func(childComplexity int) int
+		Folder          func(childComplexity int) int
+		FolderID        func(childComplexity int) int
+		Groups          func(childComplexity int, first int64, after *int64, filter *model.GroupFilter, sort *model.GroupSort) int
+		ID              func(childComplexity int) int
+		Name            func(childComplexity int) int
+		Slug            func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		UpdatedBy       func(childComplexity int) int
 	}
 
 	FileConnection struct {
@@ -190,6 +191,7 @@ type ComplexityRoot struct {
 		DeleteUsers               func(childComplexity int, ids []int64) int
 		ForgotPassword            func(childComplexity int, input model.ForgotPassword) int
 		Login                     func(childComplexity int, input model.Login) int
+		MultipleUpload            func(childComplexity int, files []*graphql.Upload, folderID int64) int
 		RefreshToken              func(childComplexity int, input *model.RefreshToken) int
 		Register                  func(childComplexity int, input model.Register) int
 		RemoveFileFromGroup       func(childComplexity int, groupID int64, fileID int64) int
@@ -199,6 +201,7 @@ type ComplexityRoot struct {
 		RemoveUserFromGroup       func(childComplexity int, groupID int64, userID int64) int
 		ResetPassword             func(childComplexity int, input model.ResetPassword) int
 		SendEmail                 func(childComplexity int, input model.SendEmailInput) int
+		SingleUpload              func(childComplexity int, file graphql.Upload, folderID int64) int
 		UpdateFile                func(childComplexity int, input model.UpdateFile) int
 		UpdateFolder              func(childComplexity int, input model.UpdateFolder) int
 		UpdateGroup               func(childComplexity int, input model.UpdateGroup) int
@@ -209,18 +212,19 @@ type ComplexityRoot struct {
 	}
 
 	MyFile struct {
-		AutoDownload func(childComplexity int) int
-		CreatedAt    func(childComplexity int) int
-		FileBytes    func(childComplexity int) int
-		FilePath     func(childComplexity int) int
-		FileType     func(childComplexity int) int
-		Folder       func(childComplexity int) int
-		FolderID     func(childComplexity int) int
-		ID           func(childComplexity int) int
-		IsNew        func(childComplexity int) int
-		Name         func(childComplexity int) int
-		Slug         func(childComplexity int) int
-		UpdatedAt    func(childComplexity int) int
+		AutoDownload    func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		FileBytes       func(childComplexity int) int
+		FileContentType func(childComplexity int) int
+		FilePath        func(childComplexity int) int
+		FileType        func(childComplexity int) int
+		Folder          func(childComplexity int) int
+		FolderID        func(childComplexity int) int
+		ID              func(childComplexity int) int
+		IsNew           func(childComplexity int) int
+		Name            func(childComplexity int) int
+		Slug            func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
 	}
 
 	MyFolder struct {
@@ -364,6 +368,8 @@ type MutationResolver interface {
 	UpdateFile(ctx context.Context, input model.UpdateFile) (*model.File, error)
 	DeleteFile(ctx context.Context, id int64) (bool, error)
 	DeleteFiles(ctx context.Context, ids []int64) (bool, error)
+	SingleUpload(ctx context.Context, file graphql.Upload, folderID int64) (*model.File, error)
+	MultipleUpload(ctx context.Context, files []*graphql.Upload, folderID int64) ([]*model.File, error)
 	CreateFolder(ctx context.Context, input model.CreateFolder) (*model.Folder, error)
 	UpdateFolder(ctx context.Context, input model.UpdateFolder) (*model.Folder, error)
 	DeleteFolder(ctx context.Context, id int64) (bool, error)
@@ -601,6 +607,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.File.FileBytes(childComplexity), true
+
+	case "File.fileContentType":
+		if e.complexity.File.FileContentType == nil {
+			break
+		}
+
+		return e.complexity.File.FileContentType(childComplexity), true
 
 	case "File.filePath":
 		if e.complexity.File.FilePath == nil {
@@ -1287,6 +1300,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Login(childComplexity, args["input"].(model.Login)), true
 
+	case "Mutation.multipleUpload":
+		if e.complexity.Mutation.MultipleUpload == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_multipleUpload_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.MultipleUpload(childComplexity, args["files"].([]*graphql.Upload), args["folderId"].(int64)), true
+
 	case "Mutation.refreshToken":
 		if e.complexity.Mutation.RefreshToken == nil {
 			break
@@ -1395,6 +1420,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SendEmail(childComplexity, args["input"].(model.SendEmailInput)), true
 
+	case "Mutation.singleUpload":
+		if e.complexity.Mutation.SingleUpload == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_singleUpload_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SingleUpload(childComplexity, args["file"].(graphql.Upload), args["folderId"].(int64)), true
+
 	case "Mutation.updateFile":
 		if e.complexity.Mutation.UpdateFile == nil {
 			break
@@ -1499,6 +1536,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MyFile.FileBytes(childComplexity), true
+
+	case "MyFile.fileContentType":
+		if e.complexity.MyFile.FileContentType == nil {
+			break
+		}
+
+		return e.complexity.MyFile.FileContentType(childComplexity), true
 
 	case "MyFile.filePath":
 		if e.complexity.MyFile.FilePath == nil {
@@ -3539,6 +3583,47 @@ func (ec *executionContext) field_Mutation_login_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_multipleUpload_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_multipleUpload_argsFiles(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["files"] = arg0
+	arg1, err := ec.field_Mutation_multipleUpload_argsFolderID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["folderId"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_multipleUpload_argsFiles(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*graphql.Upload, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("files"))
+	if tmp, ok := rawArgs["files"]; ok {
+		return ec.unmarshalNUpload2ᚕᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUploadᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*graphql.Upload
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_multipleUpload_argsFolderID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (int64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("folderId"))
+	if tmp, ok := rawArgs["folderId"]; ok {
+		return ec.unmarshalNInt2int64(ctx, tmp)
+	}
+
+	var zeroVal int64
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_refreshToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3833,6 +3918,47 @@ func (ec *executionContext) field_Mutation_sendEmail_argsInput(
 	}
 
 	var zeroVal model.SendEmailInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_singleUpload_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_singleUpload_argsFile(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["file"] = arg0
+	arg1, err := ec.field_Mutation_singleUpload_argsFolderID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["folderId"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_singleUpload_argsFile(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (graphql.Upload, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+	if tmp, ok := rawArgs["file"]; ok {
+		return ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
+	}
+
+	var zeroVal graphql.Upload
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_singleUpload_argsFolderID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (int64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("folderId"))
+	if tmp, ok := rawArgs["folderId"]; ok {
+		return ec.unmarshalNInt2int64(ctx, tmp)
+	}
+
+	var zeroVal int64
 	return zeroVal, nil
 }
 
@@ -6129,6 +6255,50 @@ func (ec *executionContext) fieldContext_File_fileBytes(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _File_fileContentType(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_File_fileContentType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FileContentType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_File_fileContentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "File",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _File_autoDownload(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_autoDownload(ctx, field)
 	if err != nil {
@@ -6761,6 +6931,8 @@ func (ec *executionContext) fieldContext_FileEdge_node(_ context.Context, field 
 				return ec.fieldContext_File_fileType(ctx, field)
 			case "fileBytes":
 				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_File_fileContentType(ctx, field)
 			case "autoDownload":
 				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
@@ -8963,6 +9135,8 @@ func (ec *executionContext) fieldContext_Mutation_createFile(ctx context.Context
 				return ec.fieldContext_File_fileType(ctx, field)
 			case "fileBytes":
 				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_File_fileContentType(ctx, field)
 			case "autoDownload":
 				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
@@ -9048,6 +9222,8 @@ func (ec *executionContext) fieldContext_Mutation_updateFile(ctx context.Context
 				return ec.fieldContext_File_fileType(ctx, field)
 			case "fileBytes":
 				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_File_fileContentType(ctx, field)
 			case "autoDownload":
 				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
@@ -9186,6 +9362,180 @@ func (ec *executionContext) fieldContext_Mutation_deleteFiles(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteFiles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_singleUpload(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_singleUpload(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SingleUpload(rctx, fc.Args["file"].(graphql.Upload), fc.Args["folderId"].(int64))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.File)
+	fc.Result = res
+	return ec.marshalNFile2ᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_singleUpload(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_File_id(ctx, field)
+			case "name":
+				return ec.fieldContext_File_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_File_slug(ctx, field)
+			case "filePath":
+				return ec.fieldContext_File_filePath(ctx, field)
+			case "fileType":
+				return ec.fieldContext_File_fileType(ctx, field)
+			case "fileBytes":
+				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_File_fileContentType(ctx, field)
+			case "autoDownload":
+				return ec.fieldContext_File_autoDownload(ctx, field)
+			case "folderId":
+				return ec.fieldContext_File_folderId(ctx, field)
+			case "folder":
+				return ec.fieldContext_File_folder(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_File_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_File_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_File_createdBy(ctx, field)
+			case "updatedBy":
+				return ec.fieldContext_File_updatedBy(ctx, field)
+			case "groups":
+				return ec.fieldContext_File_groups(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_singleUpload_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_multipleUpload(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_multipleUpload(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().MultipleUpload(rctx, fc.Args["files"].([]*graphql.Upload), fc.Args["folderId"].(int64))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.File)
+	fc.Result = res
+	return ec.marshalNFile2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐFileᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_multipleUpload(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_File_id(ctx, field)
+			case "name":
+				return ec.fieldContext_File_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_File_slug(ctx, field)
+			case "filePath":
+				return ec.fieldContext_File_filePath(ctx, field)
+			case "fileType":
+				return ec.fieldContext_File_fileType(ctx, field)
+			case "fileBytes":
+				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_File_fileContentType(ctx, field)
+			case "autoDownload":
+				return ec.fieldContext_File_autoDownload(ctx, field)
+			case "folderId":
+				return ec.fieldContext_File_folderId(ctx, field)
+			case "folder":
+				return ec.fieldContext_File_folder(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_File_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_File_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_File_createdBy(ctx, field)
+			case "updatedBy":
+				return ec.fieldContext_File_updatedBy(ctx, field)
+			case "groups":
+				return ec.fieldContext_File_groups(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_multipleUpload_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11397,6 +11747,50 @@ func (ec *executionContext) fieldContext_MyFile_fileBytes(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _MyFile_fileContentType(ctx context.Context, field graphql.CollectedField, obj *model.MyFile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MyFile_fileContentType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FileContentType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MyFile_fileContentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MyFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MyFile_autoDownload(ctx context.Context, field graphql.CollectedField, obj *model.MyFile) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_MyFile_autoDownload(ctx, field)
 	if err != nil {
@@ -12042,6 +12436,8 @@ func (ec *executionContext) fieldContext_MyFolder_myFiles(_ context.Context, fie
 				return ec.fieldContext_MyFile_fileType(ctx, field)
 			case "fileBytes":
 				return ec.fieldContext_MyFile_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_MyFile_fileContentType(ctx, field)
 			case "autoDownload":
 				return ec.fieldContext_MyFile_autoDownload(ctx, field)
 			case "isNew":
@@ -12963,6 +13359,8 @@ func (ec *executionContext) fieldContext_Query_getMyVideos(_ context.Context, fi
 				return ec.fieldContext_MyFile_fileType(ctx, field)
 			case "fileBytes":
 				return ec.fieldContext_MyFile_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_MyFile_fileContentType(ctx, field)
 			case "autoDownload":
 				return ec.fieldContext_MyFile_autoDownload(ctx, field)
 			case "isNew":
@@ -13033,6 +13431,8 @@ func (ec *executionContext) fieldContext_Query_getMySupportDocuments(_ context.C
 				return ec.fieldContext_MyFile_fileType(ctx, field)
 			case "fileBytes":
 				return ec.fieldContext_MyFile_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_MyFile_fileContentType(ctx, field)
 			case "autoDownload":
 				return ec.fieldContext_MyFile_autoDownload(ctx, field)
 			case "isNew":
@@ -13166,6 +13566,8 @@ func (ec *executionContext) fieldContext_Query_getFile(ctx context.Context, fiel
 				return ec.fieldContext_File_fileType(ctx, field)
 			case "fileBytes":
 				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_File_fileContentType(ctx, field)
 			case "autoDownload":
 				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
@@ -13251,6 +13653,8 @@ func (ec *executionContext) fieldContext_Query_getFilesByFolder(ctx context.Cont
 				return ec.fieldContext_File_fileType(ctx, field)
 			case "fileBytes":
 				return ec.fieldContext_File_fileBytes(ctx, field)
+			case "fileContentType":
+				return ec.fieldContext_File_fileContentType(ctx, field)
 			case "autoDownload":
 				return ec.fieldContext_File_autoDownload(ctx, field)
 			case "folderId":
@@ -17776,7 +18180,7 @@ func (ec *executionContext) unmarshalInputCreateFile(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "slug", "filePath", "folderId"}
+	fieldsInOrder := [...]string{"name", "slug", "filePath", "fileType", "fileBytes", "fileContentType", "folderId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17804,6 +18208,27 @@ func (ec *executionContext) unmarshalInputCreateFile(ctx context.Context, obj in
 				return it, err
 			}
 			it.FilePath = data
+		case "fileType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FileType = data
+		case "fileBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileBytes"))
+			data, err := ec.unmarshalNInt2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FileBytes = data
+		case "fileContentType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileContentType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FileContentType = data
 		case "folderId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("folderId"))
 			data, err := ec.unmarshalNID2int64(ctx, v)
@@ -19160,6 +19585,11 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "fileContentType":
+			out.Values[i] = ec._File_fileContentType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "autoDownload":
 			out.Values[i] = ec._File_autoDownload(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -20037,6 +20467,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "singleUpload":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_singleUpload(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "multipleUpload":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_multipleUpload(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createFolder":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createFolder(ctx, field)
@@ -20315,6 +20759,11 @@ func (ec *executionContext) _MyFile(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "fileBytes":
 			out.Values[i] = ec._MyFile_fileBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fileContentType":
+			out.Values[i] = ec._MyFile_fileContentType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -22813,6 +23262,74 @@ func (ec *executionContext) unmarshalNUpdateRole2githubᚗcomᚋawanishnathpande
 func (ec *executionContext) unmarshalNUpdateUser2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐUpdateUser(ctx context.Context, v interface{}) (model.UpdateUser, error) {
 	res, err := ec.unmarshalInputUpdateUser(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	res := graphql.MarshalUpload(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUpload2ᚕᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUploadᚄ(ctx context.Context, v interface{}) ([]*graphql.Upload, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*graphql.Upload, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNUpload2ᚕᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUploadᚄ(ctx context.Context, sel ast.SelectionSet, v []*graphql.Upload) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (*graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalUpload(*v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {

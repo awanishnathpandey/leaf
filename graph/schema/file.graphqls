@@ -1,6 +1,7 @@
 # GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
+scalar Upload
 
 type File {
   id: ID!
@@ -9,6 +10,7 @@ type File {
   filePath: String!
   fileType: String!
   fileBytes: Int!
+  fileContentType: String!
   autoDownload: Boolean!
   folderId: Int!
   folder: Folder!
@@ -26,6 +28,7 @@ type MyFile {
   filePath: String!
   fileType: String!
   fileBytes: Int!
+  fileContentType: String!
   autoDownload: Boolean!
   isNew: Boolean!
   folderId: Int!
@@ -38,6 +41,9 @@ input CreateFile {
   name: String!
   slug: String!
   filePath: String!
+  fileType: String!
+  fileBytes: Int!
+  fileContentType: String!
   folderId: ID!       # The folder to which the file belongs
 }
 
@@ -93,4 +99,6 @@ extend type Mutation {
   updateFile(input: UpdateFile!): File!
   deleteFile(id: ID!): Boolean!
   deleteFiles(ids: [ID!]!): Boolean!
+  singleUpload(file: Upload!, folderId: Int!): File!
+  multipleUpload(files: [Upload!]!, , folderId: Int!): [File!]!
 }

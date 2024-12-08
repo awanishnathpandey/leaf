@@ -7,7 +7,11 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
@@ -142,11 +146,14 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFil
 
 	// Call the sqlc generated query to insert the file into the database
 	file, err := r.DB.CreateFile(ctx, generated.CreateFileParams{
-		Name:      input.Name,
-		Slug:      input.Slug,
-		FilePath:  input.FilePath,
-		FolderID:  input.FolderID, // Ensure the Folder ID is passed correctly
-		CreatedBy: ctx.Value("userEmail").(string),
+		Name:            input.Name,
+		Slug:            input.Slug,
+		FilePath:        input.FilePath,
+		FileType:        input.FileType,
+		FileBytes:       input.FileBytes,
+		FileContentType: input.FileContentType,
+		FolderID:        input.FolderID, // Ensure the Folder ID is passed correctly
+		CreatedBy:       ctx.Value("userEmail").(string),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file: %w", err)
@@ -154,17 +161,19 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.CreateFil
 
 	// Map the result from sqlc to the GraphQL model
 	return &model.File{
-		ID:           file.ID,
-		Name:         file.Name,
-		Slug:         file.Slug,
-		FilePath:     file.FilePath,
-		FileBytes:    file.FileBytes,
-		AutoDownload: file.AutoDownload,
-		FolderID:     file.FolderID,
-		CreatedAt:    file.CreatedAt,
-		UpdatedAt:    file.UpdatedAt,
-		CreatedBy:    file.CreatedBy,
-		UpdatedBy:    file.UpdatedBy,
+		ID:              file.ID,
+		Name:            file.Name,
+		Slug:            file.Slug,
+		FilePath:        file.FilePath,
+		FileType:        file.FileType,
+		FileBytes:       file.FileBytes,
+		FileContentType: file.FileContentType,
+		AutoDownload:    file.AutoDownload,
+		FolderID:        file.FolderID,
+		CreatedAt:       file.CreatedAt,
+		UpdatedAt:       file.UpdatedAt,
+		CreatedBy:       file.CreatedBy,
+		UpdatedBy:       file.UpdatedBy,
 	}, nil
 }
 
@@ -196,17 +205,19 @@ func (r *mutationResolver) UpdateFile(ctx context.Context, input model.UpdateFil
 
 	// Map the result from sqlc to the GraphQL model
 	return &model.File{
-		ID:           file.ID,
-		Name:         file.Name,
-		Slug:         file.Slug,
-		FilePath:     file.FilePath,
-		FileBytes:    file.FileBytes,
-		AutoDownload: file.AutoDownload,
-		FolderID:     file.FolderID,
-		CreatedAt:    file.CreatedAt,
-		UpdatedAt:    file.UpdatedAt,
-		CreatedBy:    file.CreatedBy,
-		UpdatedBy:    file.UpdatedBy,
+		ID:              file.ID,
+		Name:            file.Name,
+		Slug:            file.Slug,
+		FilePath:        file.FilePath,
+		FileType:        file.FileType,
+		FileBytes:       file.FileBytes,
+		FileContentType: file.FileContentType,
+		AutoDownload:    file.AutoDownload,
+		FolderID:        file.FolderID,
+		CreatedAt:       file.CreatedAt,
+		UpdatedAt:       file.UpdatedAt,
+		CreatedBy:       file.CreatedBy,
+		UpdatedBy:       file.UpdatedBy,
 	}, nil
 }
 
@@ -260,6 +271,124 @@ func (r *mutationResolver) DeleteFiles(ctx context.Context, ids []int64) (bool, 
 
 	// All files successfully deleted
 	return true, nil
+}
+
+// SingleUpload is the resolver for the singleUpload field.
+func (r *mutationResolver) SingleUpload(ctx context.Context, file graphql.Upload, folderID int64) (*model.File, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "create_file"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+
+	// Save the file to disk
+	destPath := filepath.Join("internal/storage/upload", file.Filename)
+	out, err := os.Create(destPath)
+	if err != nil {
+		return nil, err
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, file.File); err != nil {
+		return nil, err
+	}
+
+	// Call the sqlc generated query to insert the file into the database
+	newfile, err := r.DB.CreateFile(ctx, generated.CreateFileParams{
+		Name:            file.Filename,
+		Slug:            file.Filename,
+		FilePath:        destPath,
+		FileType:        "document",
+		FileBytes:       file.Size,
+		FileContentType: file.ContentType,
+		FolderID:        folderID, // Ensure the Folder ID is passed correctly
+		CreatedBy:       ctx.Value("userEmail").(string),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file: %w", err)
+	}
+
+	return &model.File{
+		ID:              newfile.ID,
+		Name:            newfile.Name,
+		Slug:            newfile.Slug,
+		FilePath:        newfile.FilePath,
+		FileType:        newfile.FileType,
+		FileBytes:       newfile.FileBytes,
+		FileContentType: newfile.FileContentType,
+		AutoDownload:    newfile.AutoDownload,
+		FolderID:        newfile.FolderID,
+		CreatedAt:       newfile.CreatedAt,
+		UpdatedAt:       newfile.UpdatedAt,
+		CreatedBy:       newfile.CreatedBy,
+		UpdatedBy:       newfile.UpdatedBy,
+	}, nil
+}
+
+// MultipleUpload is the resolver for the multipleUpload field.
+func (r *mutationResolver) MultipleUpload(ctx context.Context, files []*graphql.Upload, folderID int64) ([]*model.File, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "create_file"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+	fmt.Println(" trigger multipleUpload folderID:", folderID)
+
+	var uploadedFiles []*model.File
+
+	// Loop through each file in the input list
+	for _, file := range files {
+		// Save each file to disk
+		destPath := filepath.Join("internal/storage/upload", file.Filename)
+		out, err := os.Create(destPath)
+		if err != nil {
+			return nil, err
+		}
+		defer out.Close()
+
+		if _, err := io.Copy(out, file.File); err != nil {
+			return nil, err
+		}
+
+		// Call the sqlc generated query to insert the file into the database
+		newfile, err := r.DB.CreateFile(ctx, generated.CreateFileParams{
+			Name:            file.Filename,
+			Slug:            file.Filename,
+			FilePath:        destPath,
+			FileType:        "document",
+			FileBytes:       file.Size,
+			FileContentType: file.ContentType,
+			FolderID:        folderID, // Ensure the Folder ID is passed correctly
+			CreatedBy:       ctx.Value("userEmail").(string),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create file: %w", err)
+		}
+
+		// Add the uploaded file to the result list
+		uploadedFiles = append(uploadedFiles, &model.File{
+			ID:              newfile.ID,
+			Name:            newfile.Name,
+			Slug:            newfile.Slug,
+			FilePath:        newfile.FilePath,
+			FileType:        newfile.FileType,
+			FileBytes:       newfile.FileBytes,
+			FileContentType: newfile.FileContentType,
+			AutoDownload:    newfile.AutoDownload,
+			FolderID:        newfile.FolderID,
+			CreatedAt:       newfile.CreatedAt,
+			UpdatedAt:       newfile.UpdatedAt,
+			CreatedBy:       newfile.CreatedBy,
+			UpdatedBy:       newfile.UpdatedBy,
+		})
+	}
+
+	// Return the list of uploaded files
+	return uploadedFiles, nil
 }
 
 // Files is the resolver for the files field.
@@ -317,17 +446,19 @@ func (r *queryResolver) Files(ctx context.Context, first int64, after *int64, fi
 		edges[i] = &model.FileEdge{
 			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
 			Node: &model.File{
-				ID:           file.ID,
-				Name:         file.Name,
-				Slug:         file.Slug,
-				FilePath:     file.FilePath,
-				FileBytes:    file.FileBytes,
-				AutoDownload: file.AutoDownload,
-				FolderID:     file.FolderID,
-				CreatedAt:    file.CreatedAt,
-				UpdatedAt:    file.UpdatedAt,
-				CreatedBy:    file.CreatedBy,
-				UpdatedBy:    file.UpdatedBy,
+				ID:              file.ID,
+				Name:            file.Name,
+				Slug:            file.Slug,
+				FilePath:        file.FilePath,
+				FileType:        file.FileType,
+				FileBytes:       file.FileBytes,
+				FileContentType: file.FileContentType,
+				AutoDownload:    file.AutoDownload,
+				FolderID:        file.FolderID,
+				CreatedAt:       file.CreatedAt,
+				UpdatedAt:       file.UpdatedAt,
+				CreatedBy:       file.CreatedBy,
+				UpdatedBy:       file.UpdatedBy,
 			},
 		}
 	}
@@ -362,15 +493,19 @@ func (r *queryResolver) GetFile(ctx context.Context, id int64) (*model.File, err
 
 	// Convert the SQL result to GraphQL model
 	return &model.File{
-		ID:           file.ID,
-		Name:         file.Name,
-		Slug:         file.Slug,
-		FilePath:     file.FilePath,
-		FileBytes:    file.FileBytes,
-		AutoDownload: file.AutoDownload,
-		FolderID:     file.FolderID,
-		CreatedAt:    file.CreatedAt, // assuming you're using timestamptz
-		UpdatedAt:    file.UpdatedAt, // assuming you're using timestamptz
+		ID:              file.ID,
+		Name:            file.Name,
+		Slug:            file.Slug,
+		FilePath:        file.FilePath,
+		FileType:        file.FileType,
+		FileBytes:       file.FileBytes,
+		FileContentType: file.FileContentType,
+		AutoDownload:    file.AutoDownload,
+		FolderID:        file.FolderID,
+		CreatedAt:       file.CreatedAt, // assuming you're using epoch
+		UpdatedAt:       file.UpdatedAt, // assuming you're using epoch
+		CreatedBy:       file.CreatedBy,
+		UpdatedBy:       file.UpdatedBy,
 	}, nil
 }
 
@@ -390,15 +525,17 @@ func (r *queryResolver) GetFilesByFolder(ctx context.Context, folderID int64) ([
 	var result []*model.File
 	for _, file := range files {
 		result = append(result, &model.File{
-			ID:           file.ID,
-			Name:         file.Name,
-			Slug:         file.Slug,
-			FilePath:     file.FilePath,
-			FileBytes:    file.FileBytes,
-			AutoDownload: file.AutoDownload,
-			FolderID:     file.FolderID,
-			CreatedAt:    file.CreatedAt,
-			UpdatedAt:    file.UpdatedAt,
+			ID:              file.ID,
+			Name:            file.Name,
+			Slug:            file.Slug,
+			FilePath:        file.FilePath,
+			FileType:        file.FileType,
+			FileBytes:       file.FileBytes,
+			FileContentType: file.FileContentType,
+			AutoDownload:    file.AutoDownload,
+			FolderID:        file.FolderID,
+			CreatedAt:       file.CreatedAt,
+			UpdatedAt:       file.UpdatedAt,
 		})
 	}
 	return result, nil
