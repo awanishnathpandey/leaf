@@ -1,0 +1,17 @@
+type AppConfig {
+    id: ID!
+    configKey: String!
+    configData: Map!
+    createdAt: Int!
+    updatedAt: Int!
+    createdBy: String!
+    updatedBy: String!
+}
+
+extend type Query {
+   getAppConfig(configKey: String!): AppConfig!
+}
+
+extend type Mutation {
+  updateAppConfig(configKey: String!, configData: Map!): AppConfig!
+}

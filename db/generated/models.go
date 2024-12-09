@@ -8,6 +8,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AppConfig struct {
+	ID         int64  `db:"id" json:"id"`
+	ConfigKey  string `db:"config_key" json:"config_key"`
+	ConfigData []byte `db:"config_data" json:"config_data"`
+	CreatedAt  int64  `db:"created_at" json:"created_at"`
+	UpdatedAt  int64  `db:"updated_at" json:"updated_at"`
+	CreatedBy  string `db:"created_by" json:"created_by"`
+	UpdatedBy  string `db:"updated_by" json:"updated_by"`
+}
+
 type AuditLog struct {
 	ID          int32  `db:"id" json:"id"`
 	TableName   string `db:"table_name" json:"table_name"`

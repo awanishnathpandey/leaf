@@ -1,0 +1,9 @@
+CREATE TABLE app_config (
+    id BIGSERIAL PRIMARY KEY,
+    config_key TEXT UNIQUE NOT NULL,
+    config_data JSONB NOT NULL,
+    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+    created_by VARCHAR(255) NOT NULL DEFAULT 'system',
+    updated_by VARCHAR(255) NOT NULL DEFAULT 'system'
+);

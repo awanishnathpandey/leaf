@@ -14,7 +14,6 @@ import (
 
 	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/external/mail"
-	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/utils"
@@ -448,12 +447,3 @@ func (r *queryResolver) GetMyVideos(ctx context.Context) ([]*model.MyFile, error
 func (r *queryResolver) GetMySupportDocuments(ctx context.Context) ([]*model.MyFile, error) {
 	panic(fmt.Errorf("not implemented: GetMySupportDocuments - getMySupportDocuments"))
 }
-
-// Mutation returns graph.MutationResolver implementation.
-func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
-
-// Query returns graph.QueryResolver implementation.
-func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
