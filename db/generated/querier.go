@@ -24,6 +24,8 @@ type Querier interface {
 	CreatePermission(ctx context.Context, arg CreatePermissionParams) (Role, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	DeleteAuditLog(ctx context.Context, id int64) error
+	DeleteAuditLogsByIDs(ctx context.Context, dollar_1 []int64) error
 	DeleteFile(ctx context.Context, id int64) error
 	DeleteFilesByIDs(ctx context.Context, dollar_1 []int64) error
 	DeleteFolder(ctx context.Context, id int64) error
@@ -38,6 +40,8 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id int64) error
 	DeleteUsersByIDs(ctx context.Context, dollar_1 []int64) error
 	GetAppConfigByKey(ctx context.Context, configKey string) (AppConfig, error)
+	GetAuditLog(ctx context.Context, id int64) (AuditLog, error)
+	GetAuditLogsByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error)
 	GetDashboardKPICount(ctx context.Context) (GetDashboardKPICountRow, error)
 	GetEmailTemplateByName(ctx context.Context, name string) (EmailTemplate, error)
 	GetFile(ctx context.Context, id int64) (File, error)
@@ -63,6 +67,10 @@ type Querier interface {
 	GetGroupsByFolderID(ctx context.Context, folderID int64) ([]Group, error)
 	GetGroupsByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error)
 	GetGroupsByUserID(ctx context.Context, userID int64) ([]Group, error)
+	GetPaginatedAuditLogs(ctx context.Context, arg GetPaginatedAuditLogsParams) ([]AuditLog, error)
+	GetPaginatedAuditLogsByUserEmail(ctx context.Context, arg GetPaginatedAuditLogsByUserEmailParams) ([]GetPaginatedAuditLogsByUserEmailRow, error)
+	GetPaginatedAuditLogsByUserEmailCount(ctx context.Context, arg GetPaginatedAuditLogsByUserEmailCountParams) (int64, error)
+	GetPaginatedAuditLogsCount(ctx context.Context, arg GetPaginatedAuditLogsCountParams) (int64, error)
 	GetPaginatedFilesByFolderID(ctx context.Context, arg GetPaginatedFilesByFolderIDParams) ([]File, error)
 	GetPaginatedFilesByFolderIDCount(ctx context.Context, arg GetPaginatedFilesByFolderIDCountParams) (int64, error)
 	GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginatedFilesByGroupIDParams) ([]GetPaginatedFilesByGroupIDRow, error)

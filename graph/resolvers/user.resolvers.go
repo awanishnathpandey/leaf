@@ -316,6 +316,8 @@ func (r *queryResolver) GetUser(ctx context.Context, id int64) (*model.User, err
 		CreatedAt:       user.CreatedAt,
 		UpdatedAt:       user.UpdatedAt,
 		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+		CreatedBy:       user.CreatedBy,
+		UpdatedBy:       user.UpdatedBy,
 	}, nil
 }
 
@@ -348,6 +350,8 @@ func (r *queryResolver) GetUserByEmail(ctx context.Context, email string) (*mode
 		CreatedAt:       user.CreatedAt,
 		UpdatedAt:       user.UpdatedAt,
 		DeletedAt:       (*int64)(&user.DeletedAt.Int64),
+		CreatedBy:       user.CreatedBy,
+		UpdatedBy:       user.UpdatedBy,
 	}, nil
 }
 
@@ -506,6 +510,100 @@ func (r *userResolver) Roles(ctx context.Context, obj *model.User, first int64, 
 	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(roles)), totalCount)
 
 	return &model.RoleConnection{
+		TotalCount: totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
+}
+
+// AuditLogs is the resolver for the auditLogs field.
+func (r *userResolver) AuditLogs(ctx context.Context, obj *model.User, first int64, after *int64, filter *model.AuditLogFilter, sort *model.AuditLogSort) (*model.AuditLogConnection, error) {
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_log"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+
+	// Prepare sorting
+	sortField := "TIMESTAMP" // Default sort field
+	sortOrder := "DESC"      // Default sort order
+	if sort != nil {
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("TIMESTAMP", "ASC", string(sort.Field), string(sort.Order))
+	}
+
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
+
+	// Prepare filter values
+	var tableNameFilter, actorFilter, ipAddressFilter, actionFilter, recordKeyFilter, descriptionFilter *string
+	if filter != nil {
+		tableNameFilter = filter.TableName
+		actorFilter = filter.Actor
+		ipAddressFilter = filter.IPAddress
+		actionFilter = filter.Action
+		recordKeyFilter = filter.RecordKey
+		descriptionFilter = filter.Description
+	}
+
+	auditLogs, err := r.DB.GetPaginatedAuditLogsByUserEmail(ctx, generated.GetPaginatedAuditLogsByUserEmailParams{
+		UserEmail:         pgtype.Text{String: obj.Email, Valid: true}, // Group ID from the Group object
+		Limit:             int32(first),                                // Limit based on 'first' argument
+		Offset:            int32(offset),                               // Offset based on 'after' cursor
+		TableNameFilter:   tableNameFilter,
+		ActorFilter:       actorFilter,
+		IpAddressFilter:   ipAddressFilter,
+		ActionFilter:      actionFilter,      // action filter (optional)
+		RecordKeyFilter:   recordKeyFilter,   // Record key filter (optional)
+		DescriptionFilter: descriptionFilter, // Description filter (optional)
+		SortField:         sortField,         // Sorting field
+		SortOrder:         sortOrder,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch audit logs for user %d: %v", obj.ID, err)
+	}
+
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedAuditLogsByUserEmailCount(ctx, generated.GetPaginatedAuditLogsByUserEmailCountParams{
+		UserEmail:         pgtype.Text{String: obj.Email, Valid: true},
+		TableNameFilter:   tableNameFilter,
+		ActorFilter:       actorFilter,
+		IpAddressFilter:   ipAddressFilter,
+		ActionFilter:      actionFilter,      // action filter (optional)
+		RecordKeyFilter:   recordKeyFilter,   // Record key filter (optional)
+		DescriptionFilter: descriptionFilter, // Description filter (optional)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query audit logs for user %d: %v", obj.ID, err)
+	}
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.AuditLogEdge, len(auditLogs))
+	for i, auditLog := range auditLogs {
+		edges[i] = &model.AuditLogEdge{
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
+			Node: &model.AuditLog{
+				ID:          auditLog.ID,
+				TableName:   auditLog.TableName,
+				Actor:       auditLog.Actor,
+				Action:      auditLog.Action,
+				RecordKey:   auditLog.RecordKey,
+				IPAddress:   auditLog.IpAddress,
+				Description: auditLog.Description,
+				Timestamp:   auditLog.Timestamp,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(auditLogs)), totalCount)
+
+	return &model.AuditLogConnection{
 		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{

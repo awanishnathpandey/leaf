@@ -19,7 +19,7 @@ type AppConfig struct {
 }
 
 type AuditLog struct {
-	ID          int32  `db:"id" json:"id"`
+	ID          int64  `db:"id" json:"id"`
 	TableName   string `db:"table_name" json:"table_name"`
 	Actor       string `db:"actor" json:"actor"`
 	Action      string `db:"action" json:"action"`

@@ -126,6 +126,8 @@ models:
         resolver: true
       roles:
         resolver: true
+      auditLogs:
+        resolver: true
   Role:
     fields:
       users:
@@ -135,4 +137,12 @@ models:
   Permission:
     fields:
       roles:
+        resolver: true
+  CronJob:
+    fields:
+      cronJobLogs:
+        resolver: true
+  AuditLogs:
+    fields:
+      actorUser:
         resolver: true

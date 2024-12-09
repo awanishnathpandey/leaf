@@ -1,5 +1,5 @@
 CREATE TABLE audit_logs (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     table_name VARCHAR(255) NOT NULL,
     actor VARCHAR(255) NOT NULL DEFAULT 'anonymous',
     action VARCHAR(255) NOT NULL,

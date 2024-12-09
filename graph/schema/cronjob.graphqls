@@ -1,0 +1,119 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type CronJob {
+    id: ID!
+    active: Boolean!
+    name: String!
+    slug: String!
+    description: String!
+    schedule: String!
+    lastRunAt: Int!
+    createdAt: Int!
+    updatedAt: Int!
+    createdBy: String!
+    updatedBy: String!
+    cronJobLogs(first: Int!, after: Int, filter: CronJobLogFilter, sort: CronJobLogSort): CronJobLogConnection!
+}
+
+type CronJobLog {
+    id: ID!
+    cronSlug: String!
+    status: String!
+    message: String!
+    startTime: Int!
+    endTime: Int!
+    affectedRecords: Int!
+    cronJob: CronJob!
+}
+
+
+input UpdateCronJob {
+  name: String!
+  slug: String!
+  description: String!
+  schedule: String!
+}
+
+
+# Filters for CronJobs
+input CronJobFilter {
+  name: String
+  description: String
+  schedule: String
+}
+
+# Sorting for CronJobs
+input CronJobSort {
+  field: CronJobSortField!
+  order: SortOrder!
+}
+
+enum CronJobSortField {
+  NAME
+  DESCRIPTION
+  SCHEDULE
+}
+
+type CronJobConnection {
+  totalCount: Int!
+  edges: [CronJobEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CronJobEdge {
+  cursor: String!
+  node: CronJob!
+}
+
+# Filters for CronJobLogs
+input CronJobLogFilter {
+  slug: String
+  message: String
+}
+
+# Sorting for CronJobLogs
+input CronJobLogSort {
+  field: CronJobLogSortField!
+  order: SortOrder!
+}
+
+enum CronJobLogSortField {
+  SLUG
+  MESSAGE
+}
+
+type CronJobLogConnection {
+  totalCount: Int!
+  edges: [CronJobLogEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CronJobLogEdge {
+  cursor: String!
+  node: CronJobLog!
+}
+
+extend type Query {
+  cronJobs(
+    first: Int!
+    after: Int
+    filter: CronJobFilter
+    sort: CronJobSort
+  ): CronJobConnection!
+  cronJobLogs(
+    first: Int!
+    after: Int
+    filter: CronJobLogFilter
+    sort: CronJobLogSort
+  ): CronJobLogConnection!
+  getCronJob(slug: String!): CronJob!
+  getCronJobLog(id: ID!): CronJobLog!
+}
+
+extend type Mutation {
+  UpdateCronJob(input: UpdateCronJob!): CronJob!
+  deleteCronJobLog(id: ID!): Boolean!
+  deleteCronJobLogs(ids: [ID!]!): Boolean!
+}

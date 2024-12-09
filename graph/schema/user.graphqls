@@ -20,6 +20,7 @@ type User {
   updatedBy: String!
   groups(first: Int!, after: Int, filter: GroupFilter, sort: GroupSort): GroupConnection!
   roles(first: Int!, after: Int, filter: RoleFilter, sort: RoleSort): RoleConnection!
+  auditLogs(first: Int!, after: Int, filter: AuditLogFilter, sort: AuditLogSort): AuditLogConnection!
 }
 
 input CreateUser {

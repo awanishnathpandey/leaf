@@ -1,0 +1,68 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type AuditLog {
+    id: ID!
+    tableName: String!
+    actor: String!
+    action: String!
+    ipAddress: String!
+    recordKey: String!
+    description: String!
+    actorUser: User!
+    timestamp: Int!
+}
+
+
+# Filters for CronJobs
+input AuditLogFilter {
+  tableName: String
+  actor: String
+  ipAddress: String
+  action: String
+  recordKey: String
+  description: String
+}
+
+# Sorting for CronJobs
+input AuditLogSort {
+  field: AuditLogSortField!
+  order: SortOrder!
+}
+
+enum AuditLogSortField {
+  TABLENAME
+  ACTOR
+  ACTION
+  IPADDRESS
+  RECORDKEY
+  DESCRIPTION
+  TIMESTAMP
+}
+
+type AuditLogConnection {
+  totalCount: Int!
+  edges: [AuditLogEdge!]!
+  pageInfo: PageInfo!
+}
+
+type AuditLogEdge {
+  cursor: String!
+  node: AuditLog!
+}
+
+extend type Query {
+  auditLogs(
+    first: Int!
+    after: Int
+    filter: AuditLogFilter
+    sort: AuditLogSort
+  ): AuditLogConnection!
+  getAuditLog(id: ID!): AuditLog!
+}
+
+extend type Mutation {
+  deleteAuditLog(id: ID!): Boolean!
+  deleteAuditLogs(ids: [ID!]!): Boolean!
+}

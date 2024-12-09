@@ -18,6 +18,43 @@ type AppConfig struct {
 	UpdatedBy  string `json:"updatedBy"`
 }
 
+type AuditLog struct {
+	ID          int64  `json:"id"`
+	TableName   string `json:"tableName"`
+	Actor       string `json:"actor"`
+	Action      string `json:"action"`
+	IPAddress   string `json:"ipAddress"`
+	RecordKey   string `json:"recordKey"`
+	Description string `json:"description"`
+	ActorUser   *User  `json:"actorUser"`
+	Timestamp   int64  `json:"timestamp"`
+}
+
+type AuditLogConnection struct {
+	TotalCount int64           `json:"totalCount"`
+	Edges      []*AuditLogEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+}
+
+type AuditLogEdge struct {
+	Cursor string    `json:"cursor"`
+	Node   *AuditLog `json:"node"`
+}
+
+type AuditLogFilter struct {
+	TableName   *string `json:"tableName,omitempty"`
+	Actor       *string `json:"actor,omitempty"`
+	IPAddress   *string `json:"ipAddress,omitempty"`
+	Action      *string `json:"action,omitempty"`
+	RecordKey   *string `json:"recordKey,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type AuditLogSort struct {
+	Field AuditLogSortField `json:"field"`
+	Order SortOrder         `json:"order"`
+}
+
 type AuthUser struct {
 	ID             int64   `json:"id"`
 	FirstName      string  `json:"firstName"`
@@ -57,6 +94,75 @@ type CreateUser struct {
 	LastName  string `json:"lastName"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
+}
+
+type CronJob struct {
+	ID          int64                 `json:"id"`
+	Active      bool                  `json:"active"`
+	Name        string                `json:"name"`
+	Slug        string                `json:"slug"`
+	Description string                `json:"description"`
+	Schedule    string                `json:"schedule"`
+	LastRunAt   int64                 `json:"lastRunAt"`
+	CreatedAt   int64                 `json:"createdAt"`
+	UpdatedAt   int64                 `json:"updatedAt"`
+	CreatedBy   string                `json:"createdBy"`
+	UpdatedBy   string                `json:"updatedBy"`
+	CronJobLogs *CronJobLogConnection `json:"cronJobLogs"`
+}
+
+type CronJobConnection struct {
+	TotalCount int64          `json:"totalCount"`
+	Edges      []*CronJobEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+}
+
+type CronJobEdge struct {
+	Cursor string   `json:"cursor"`
+	Node   *CronJob `json:"node"`
+}
+
+type CronJobFilter struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Schedule    *string `json:"schedule,omitempty"`
+}
+
+type CronJobLog struct {
+	ID              int64    `json:"id"`
+	CronSlug        string   `json:"cronSlug"`
+	Status          string   `json:"status"`
+	Message         string   `json:"message"`
+	StartTime       int64    `json:"startTime"`
+	EndTime         int64    `json:"endTime"`
+	AffectedRecords int64    `json:"affectedRecords"`
+	CronJob         *CronJob `json:"cronJob"`
+}
+
+type CronJobLogConnection struct {
+	TotalCount int64             `json:"totalCount"`
+	Edges      []*CronJobLogEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+}
+
+type CronJobLogEdge struct {
+	Cursor string      `json:"cursor"`
+	Node   *CronJobLog `json:"node"`
+}
+
+type CronJobLogFilter struct {
+	Slug    *string `json:"slug,omitempty"`
+	Message *string `json:"message,omitempty"`
+}
+
+type CronJobLogSort struct {
+	Field CronJobLogSortField `json:"field"`
+	Order SortOrder           `json:"order"`
+}
+
+type CronJobSort struct {
+	Field CronJobSortField `json:"field"`
+	Order SortOrder        `json:"order"`
 }
 
 type DashboardKPICount struct {
@@ -295,6 +401,13 @@ type SendEmailInput struct {
 	TemplateName string `json:"templateName"`
 }
 
+type UpdateCronJob struct {
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Description string `json:"description"`
+	Schedule    string `json:"schedule"`
+}
+
 type UpdateFile struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
@@ -323,23 +436,24 @@ type UpdateUser struct {
 }
 
 type User struct {
-	ID              int64            `json:"id"`
-	FirstName       string           `json:"firstName"`
-	LastName        string           `json:"lastName"`
-	Email           string           `json:"email"`
-	Password        string           `json:"password"`
-	JobTitle        *string          `json:"jobTitle,omitempty"`
-	LineOfBusiness  *string          `json:"lineOfBusiness,omitempty"`
-	LineManager     *string          `json:"lineManager,omitempty"`
-	EmailVerifiedAt *int64           `json:"emailVerifiedAt,omitempty"`
-	LastSeenAt      int64            `json:"lastSeenAt"`
-	CreatedAt       int64            `json:"createdAt"`
-	UpdatedAt       int64            `json:"updatedAt"`
-	DeletedAt       *int64           `json:"deletedAt,omitempty"`
-	CreatedBy       string           `json:"createdBy"`
-	UpdatedBy       string           `json:"updatedBy"`
-	Groups          *GroupConnection `json:"groups"`
-	Roles           *RoleConnection  `json:"roles"`
+	ID              int64               `json:"id"`
+	FirstName       string              `json:"firstName"`
+	LastName        string              `json:"lastName"`
+	Email           string              `json:"email"`
+	Password        string              `json:"password"`
+	JobTitle        *string             `json:"jobTitle,omitempty"`
+	LineOfBusiness  *string             `json:"lineOfBusiness,omitempty"`
+	LineManager     *string             `json:"lineManager,omitempty"`
+	EmailVerifiedAt *int64              `json:"emailVerifiedAt,omitempty"`
+	LastSeenAt      int64               `json:"lastSeenAt"`
+	CreatedAt       int64               `json:"createdAt"`
+	UpdatedAt       int64               `json:"updatedAt"`
+	DeletedAt       *int64              `json:"deletedAt,omitempty"`
+	CreatedBy       string              `json:"createdBy"`
+	UpdatedBy       string              `json:"updatedBy"`
+	Groups          *GroupConnection    `json:"groups"`
+	Roles           *RoleConnection     `json:"roles"`
+	AuditLogs       *AuditLogConnection `json:"auditLogs"`
 }
 
 type UserConnection struct {
@@ -378,6 +492,141 @@ type ResetPassword struct {
 	ResetToken  string `json:"resetToken"`
 	Email       string `json:"email"`
 	NewPassword string `json:"newPassword"`
+}
+
+type AuditLogSortField string
+
+const (
+	AuditLogSortFieldTablename   AuditLogSortField = "TABLENAME"
+	AuditLogSortFieldActor       AuditLogSortField = "ACTOR"
+	AuditLogSortFieldAction      AuditLogSortField = "ACTION"
+	AuditLogSortFieldIpaddress   AuditLogSortField = "IPADDRESS"
+	AuditLogSortFieldRecordkey   AuditLogSortField = "RECORDKEY"
+	AuditLogSortFieldDescription AuditLogSortField = "DESCRIPTION"
+	AuditLogSortFieldTimestamp   AuditLogSortField = "TIMESTAMP"
+)
+
+var AllAuditLogSortField = []AuditLogSortField{
+	AuditLogSortFieldTablename,
+	AuditLogSortFieldActor,
+	AuditLogSortFieldAction,
+	AuditLogSortFieldIpaddress,
+	AuditLogSortFieldRecordkey,
+	AuditLogSortFieldDescription,
+	AuditLogSortFieldTimestamp,
+}
+
+func (e AuditLogSortField) IsValid() bool {
+	switch e {
+	case AuditLogSortFieldTablename, AuditLogSortFieldActor, AuditLogSortFieldAction, AuditLogSortFieldIpaddress, AuditLogSortFieldRecordkey, AuditLogSortFieldDescription, AuditLogSortFieldTimestamp:
+		return true
+	}
+	return false
+}
+
+func (e AuditLogSortField) String() string {
+	return string(e)
+}
+
+func (e *AuditLogSortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AuditLogSortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AuditLogSortField", str)
+	}
+	return nil
+}
+
+func (e AuditLogSortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type CronJobLogSortField string
+
+const (
+	CronJobLogSortFieldSlug    CronJobLogSortField = "SLUG"
+	CronJobLogSortFieldMessage CronJobLogSortField = "MESSAGE"
+)
+
+var AllCronJobLogSortField = []CronJobLogSortField{
+	CronJobLogSortFieldSlug,
+	CronJobLogSortFieldMessage,
+}
+
+func (e CronJobLogSortField) IsValid() bool {
+	switch e {
+	case CronJobLogSortFieldSlug, CronJobLogSortFieldMessage:
+		return true
+	}
+	return false
+}
+
+func (e CronJobLogSortField) String() string {
+	return string(e)
+}
+
+func (e *CronJobLogSortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CronJobLogSortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CronJobLogSortField", str)
+	}
+	return nil
+}
+
+func (e CronJobLogSortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type CronJobSortField string
+
+const (
+	CronJobSortFieldName        CronJobSortField = "NAME"
+	CronJobSortFieldDescription CronJobSortField = "DESCRIPTION"
+	CronJobSortFieldSchedule    CronJobSortField = "SCHEDULE"
+)
+
+var AllCronJobSortField = []CronJobSortField{
+	CronJobSortFieldName,
+	CronJobSortFieldDescription,
+	CronJobSortFieldSchedule,
+}
+
+func (e CronJobSortField) IsValid() bool {
+	switch e {
+	case CronJobSortFieldName, CronJobSortFieldDescription, CronJobSortFieldSchedule:
+		return true
+	}
+	return false
+}
+
+func (e CronJobSortField) String() string {
+	return string(e)
+}
+
+func (e *CronJobSortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CronJobSortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CronJobSortField", str)
+	}
+	return nil
+}
+
+func (e CronJobSortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type FileSortField string
