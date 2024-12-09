@@ -7,6 +7,8 @@ package generated
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const CreateCronJobLog = `-- name: CreateCronJobLog :one
@@ -26,6 +28,388 @@ func (q *Queries) CreateCronJobLog(ctx context.Context, cronSlug string) (int64,
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const DeleteCronJobLog = `-- name: DeleteCronJobLog :exec
+DELETE FROM cron_job_logs
+WHERE id = $1
+`
+
+func (q *Queries) DeleteCronJobLog(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, DeleteCronJobLog, id)
+	return err
+}
+
+const DeleteCronJobLogsByIDs = `-- name: DeleteCronJobLogsByIDs :exec
+DELETE FROM cron_job_logs
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) DeleteCronJobLogsByIDs(ctx context.Context, dollar_1 []int64) error {
+	_, err := q.db.Exec(ctx, DeleteCronJobLogsByIDs, dollar_1)
+	return err
+}
+
+const GetCronJob = `-- name: GetCronJob :one
+SELECT id, slug, name, schedule, active, description, last_run_at, created_at, updated_at, created_by, updated_by FROM cron_jobs
+WHERE slug = $1 LIMIT 1
+`
+
+func (q *Queries) GetCronJob(ctx context.Context, slug string) (CronJob, error) {
+	row := q.db.QueryRow(ctx, GetCronJob, slug)
+	var i CronJob
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Name,
+		&i.Schedule,
+		&i.Active,
+		&i.Description,
+		&i.LastRunAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const GetCronJobLog = `-- name: GetCronJobLog :one
+SELECT id, cron_slug, status, message, start_time, end_time, affected_records FROM cron_job_logs
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetCronJobLog(ctx context.Context, id int64) (CronJobLog, error) {
+	row := q.db.QueryRow(ctx, GetCronJobLog, id)
+	var i CronJobLog
+	err := row.Scan(
+		&i.ID,
+		&i.CronSlug,
+		&i.Status,
+		&i.Message,
+		&i.StartTime,
+		&i.EndTime,
+		&i.AffectedRecords,
+	)
+	return i, err
+}
+
+const GetCronJobLogsByIDs = `-- name: GetCronJobLogsByIDs :many
+SELECT id FROM cron_job_logs
+WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) GetCronJobLogsByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error) {
+	rows, err := q.db.Query(ctx, GetCronJobLogsByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []int64{}
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const GetPaginatedCronJobLogs = `-- name: GetPaginatedCronJobLogs :many
+SELECT id, cron_slug, status, message, start_time, end_time, affected_records FROM cron_job_logs cjl
+WHERE 
+    (coalesce($3, '') = '' OR cjl.cron_slug ILIKE '%' || $3 || '%')
+    AND (coalesce($4, '') = '' OR cjl.message ILIKE '%' || $4 || '%')
+ORDER BY 
+    CASE 
+        WHEN $5 = 'SLUG' AND $6 = 'ASC' THEN cjl.cron_slug 
+        WHEN $5 = 'MESSAGE' AND $6 = 'ASC' THEN cjl.message 
+    END ASC,
+    CASE 
+        WHEN $5 = 'SLUG' AND $6 = 'DESC' THEN cjl.cron_slug 
+        WHEN $5 = 'MESSAGE' AND $6 = 'DESC' THEN cjl.message 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedCronJobLogsParams struct {
+	Limit         int32       `db:"limit" json:"limit"`
+	Offset        int32       `db:"offset" json:"offset"`
+	SlugFilter    interface{} `db:"slug_filter" json:"slug_filter"`
+	MessageFilter interface{} `db:"message_filter" json:"message_filter"`
+	SortField     interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder     interface{} `db:"sort_order" json:"sort_order"`
+}
+
+func (q *Queries) GetPaginatedCronJobLogs(ctx context.Context, arg GetPaginatedCronJobLogsParams) ([]CronJobLog, error) {
+	rows, err := q.db.Query(ctx, GetPaginatedCronJobLogs,
+		arg.Limit,
+		arg.Offset,
+		arg.SlugFilter,
+		arg.MessageFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CronJobLog{}
+	for rows.Next() {
+		var i CronJobLog
+		if err := rows.Scan(
+			&i.ID,
+			&i.CronSlug,
+			&i.Status,
+			&i.Message,
+			&i.StartTime,
+			&i.EndTime,
+			&i.AffectedRecords,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const GetPaginatedCronJobLogsByCronSlug = `-- name: GetPaginatedCronJobLogsByCronSlug :many
+SELECT cjl.id, cron_slug, status, message, start_time, end_time, affected_records, cj.id, slug, name, schedule, active, description, last_run_at, created_at, updated_at, created_by, updated_by FROM cron_job_logs cjl
+JOIN cron_jobs cj ON cjl.cron_slug = cj.slug
+WHERE 
+    cj.slug = $3  -- Filter by cron job slug
+    AND (coalesce($4, '') = '' OR cjl.cron_slug ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR cjl.message ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'SLUG' AND $7 = 'ASC' THEN cjl.cron_slug 
+        WHEN $6 = 'MESSAGE' AND $7 = 'ASC' THEN cjl.message 
+    END ASC,
+    CASE 
+        WHEN $6 = 'SLUG' AND $7 = 'DESC' THEN cjl.cron_slug 
+        WHEN $6 = 'MESSAGE' AND $7 = 'DESC' THEN cjl.message 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedCronJobLogsByCronSlugParams struct {
+	Limit         int32       `db:"limit" json:"limit"`
+	Offset        int32       `db:"offset" json:"offset"`
+	CronJobSlug   pgtype.Text `db:"cron_job_slug" json:"cron_job_slug"`
+	SlugFilter    interface{} `db:"slug_filter" json:"slug_filter"`
+	MessageFilter interface{} `db:"message_filter" json:"message_filter"`
+	SortField     interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder     interface{} `db:"sort_order" json:"sort_order"`
+}
+
+type GetPaginatedCronJobLogsByCronSlugRow struct {
+	ID              int64       `db:"id" json:"id"`
+	CronSlug        string      `db:"cron_slug" json:"cron_slug"`
+	Status          string      `db:"status" json:"status"`
+	Message         string      `db:"message" json:"message"`
+	StartTime       int64       `db:"start_time" json:"start_time"`
+	EndTime         int64       `db:"end_time" json:"end_time"`
+	AffectedRecords int64       `db:"affected_records" json:"affected_records"`
+	ID_2            int64       `db:"id_2" json:"id_2"`
+	Slug            string      `db:"slug" json:"slug"`
+	Name            string      `db:"name" json:"name"`
+	Schedule        string      `db:"schedule" json:"schedule"`
+	Active          pgtype.Bool `db:"active" json:"active"`
+	Description     string      `db:"description" json:"description"`
+	LastRunAt       int64       `db:"last_run_at" json:"last_run_at"`
+	CreatedAt       int64       `db:"created_at" json:"created_at"`
+	UpdatedAt       int64       `db:"updated_at" json:"updated_at"`
+	CreatedBy       string      `db:"created_by" json:"created_by"`
+	UpdatedBy       string      `db:"updated_by" json:"updated_by"`
+}
+
+func (q *Queries) GetPaginatedCronJobLogsByCronSlug(ctx context.Context, arg GetPaginatedCronJobLogsByCronSlugParams) ([]GetPaginatedCronJobLogsByCronSlugRow, error) {
+	rows, err := q.db.Query(ctx, GetPaginatedCronJobLogsByCronSlug,
+		arg.Limit,
+		arg.Offset,
+		arg.CronJobSlug,
+		arg.SlugFilter,
+		arg.MessageFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPaginatedCronJobLogsByCronSlugRow{}
+	for rows.Next() {
+		var i GetPaginatedCronJobLogsByCronSlugRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CronSlug,
+			&i.Status,
+			&i.Message,
+			&i.StartTime,
+			&i.EndTime,
+			&i.AffectedRecords,
+			&i.ID_2,
+			&i.Slug,
+			&i.Name,
+			&i.Schedule,
+			&i.Active,
+			&i.Description,
+			&i.LastRunAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const GetPaginatedCronJobLogsByCronSlugCount = `-- name: GetPaginatedCronJobLogsByCronSlugCount :one
+SELECT COUNT(*) FROM cron_job_logs cjl
+JOIN cron_jobs cj ON cjl.cron_slug = cj.slug
+WHERE 
+    cj.slug = $1  -- Filter by cron job slug
+    AND (coalesce($2, '') = '' OR cjl.cron_slug ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR cjl.message ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedCronJobLogsByCronSlugCountParams struct {
+	CronJobSlug   pgtype.Text `db:"cron_job_slug" json:"cron_job_slug"`
+	SlugFilter    interface{} `db:"slug_filter" json:"slug_filter"`
+	MessageFilter interface{} `db:"message_filter" json:"message_filter"`
+}
+
+func (q *Queries) GetPaginatedCronJobLogsByCronSlugCount(ctx context.Context, arg GetPaginatedCronJobLogsByCronSlugCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, GetPaginatedCronJobLogsByCronSlugCount, arg.CronJobSlug, arg.SlugFilter, arg.MessageFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const GetPaginatedCronJobLogsCount = `-- name: GetPaginatedCronJobLogsCount :one
+SELECT COUNT(*) FROM cron_job_logs cjl
+WHERE 
+    (coalesce($1, '') = '' OR cjl.slug ILIKE '%' || $1 || '%')
+    AND (coalesce($2, '') = '' OR cjl.message ILIKE '%' || $2 || '%')
+`
+
+type GetPaginatedCronJobLogsCountParams struct {
+	SlugFilter    interface{} `db:"slug_filter" json:"slug_filter"`
+	MessageFilter interface{} `db:"message_filter" json:"message_filter"`
+}
+
+func (q *Queries) GetPaginatedCronJobLogsCount(ctx context.Context, arg GetPaginatedCronJobLogsCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, GetPaginatedCronJobLogsCount, arg.SlugFilter, arg.MessageFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const GetPaginatedCronJobs = `-- name: GetPaginatedCronJobs :many
+SELECT id, slug, name, schedule, active, description, last_run_at, created_at, updated_at, created_by, updated_by FROM cron_jobs cj
+WHERE 
+    (coalesce($3, '') = '' OR cj.name ILIKE '%' || $3 || '%')
+    AND (coalesce($4, '') = '' OR cj.description ILIKE '%' || $4 || '%')
+    AND (coalesce($5, '') = '' OR cj.schedule ILIKE '%' || $5 || '%')
+ORDER BY 
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'ASC' THEN cj.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'ASC' THEN cj.description 
+        WHEN $6 = 'SCHEDULE' AND $7 = 'ASC' THEN cj.schedule 
+    END ASC,
+    CASE 
+        WHEN $6 = 'NAME' AND $7 = 'DESC' THEN cj.name 
+        WHEN $6 = 'DESCRIPTION' AND $7 = 'DESC' THEN cj.description 
+        WHEN $6 = 'SCHEDULE' AND $7 = 'DESC' THEN cj.schedule 
+    END DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetPaginatedCronJobsParams struct {
+	Limit             int32       `db:"limit" json:"limit"`
+	Offset            int32       `db:"offset" json:"offset"`
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
+	ScheduleFilter    interface{} `db:"schedule_filter" json:"schedule_filter"`
+	SortField         interface{} `db:"sort_field" json:"sort_field"`
+	SortOrder         interface{} `db:"sort_order" json:"sort_order"`
+}
+
+func (q *Queries) GetPaginatedCronJobs(ctx context.Context, arg GetPaginatedCronJobsParams) ([]CronJob, error) {
+	rows, err := q.db.Query(ctx, GetPaginatedCronJobs,
+		arg.Limit,
+		arg.Offset,
+		arg.NameFilter,
+		arg.DescriptionFilter,
+		arg.ScheduleFilter,
+		arg.SortField,
+		arg.SortOrder,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CronJob{}
+	for rows.Next() {
+		var i CronJob
+		if err := rows.Scan(
+			&i.ID,
+			&i.Slug,
+			&i.Name,
+			&i.Schedule,
+			&i.Active,
+			&i.Description,
+			&i.LastRunAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const GetPaginatedCronJobsCount = `-- name: GetPaginatedCronJobsCount :one
+SELECT COUNT(*) FROM cron_jobs cj
+WHERE 
+    (coalesce($1, '') = '' OR cj.name ILIKE '%' || $1 || '%')
+    AND (coalesce($2, '') = '' OR cj.description ILIKE '%' || $2 || '%')
+    AND (coalesce($3, '') = '' OR cj.schedule ILIKE '%' || $3 || '%')
+`
+
+type GetPaginatedCronJobsCountParams struct {
+	NameFilter        interface{} `db:"name_filter" json:"name_filter"`
+	DescriptionFilter interface{} `db:"description_filter" json:"description_filter"`
+	ScheduleFilter    interface{} `db:"schedule_filter" json:"schedule_filter"`
+}
+
+func (q *Queries) GetPaginatedCronJobsCount(ctx context.Context, arg GetPaginatedCronJobsCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, GetPaginatedCronJobsCount, arg.NameFilter, arg.DescriptionFilter, arg.ScheduleFilter)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const ListCronJobs = `-- name: ListCronJobs :many
@@ -62,6 +446,48 @@ func (q *Queries) ListCronJobs(ctx context.Context) ([]CronJob, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const UpdateCronJob = `-- name: UpdateCronJob :one
+UPDATE cron_jobs
+SET active = $2, name=$3, description = $4, schedule = $5, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $6
+WHERE slug = $1
+RETURNING id, slug, name, schedule, active, description, last_run_at, created_at, updated_at, created_by, updated_by
+`
+
+type UpdateCronJobParams struct {
+	Slug        string      `db:"slug" json:"slug"`
+	Active      pgtype.Bool `db:"active" json:"active"`
+	Name        string      `db:"name" json:"name"`
+	Description string      `db:"description" json:"description"`
+	Schedule    string      `db:"schedule" json:"schedule"`
+	UpdatedBy   string      `db:"updated_by" json:"updated_by"`
+}
+
+func (q *Queries) UpdateCronJob(ctx context.Context, arg UpdateCronJobParams) (CronJob, error) {
+	row := q.db.QueryRow(ctx, UpdateCronJob,
+		arg.Slug,
+		arg.Active,
+		arg.Name,
+		arg.Description,
+		arg.Schedule,
+		arg.UpdatedBy,
+	)
+	var i CronJob
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Name,
+		&i.Schedule,
+		&i.Active,
+		&i.Description,
+		&i.LastRunAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
 }
 
 const UpdateCronJobLogFailed = `-- name: UpdateCronJobLogFailed :exec

@@ -8,48 +8,414 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/awanishnathpandey/leaf/db/generated"
 	"github.com/awanishnathpandey/leaf/graph"
 	"github.com/awanishnathpandey/leaf/graph/model"
+	"github.com/awanishnathpandey/leaf/internal/middleware"
+	"github.com/awanishnathpandey/leaf/internal/utils"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // CronJobLogs is the resolver for the cronJobLogs field.
 func (r *cronJobResolver) CronJobLogs(ctx context.Context, obj *model.CronJob, first int64, after *int64, filter *model.CronJobLogFilter, sort *model.CronJobLogSort) (*model.CronJobLogConnection, error) {
-	panic(fmt.Errorf("not implemented: CronJobLogs - cronJobLogs"))
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_log"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+
+	// Prepare sorting
+	sortField := "SLUG" // Default sort field
+	sortOrder := "ASC"  // Default sort order
+	if sort != nil {
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("SLUG", "ASC", string(sort.Field), string(sort.Order))
+	}
+
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
+
+	// Prepare filter values
+	var slugFilter, messageFilter *string
+	if filter != nil {
+		slugFilter = filter.Slug
+		messageFilter = filter.Message
+	}
+
+	cronJobLogs, err := r.DB.GetPaginatedCronJobLogsByCronSlug(ctx, generated.GetPaginatedCronJobLogsByCronSlugParams{
+		CronJobSlug:   pgtype.Text{String: obj.Slug, Valid: true}, // Group ID from the Group object
+		Limit:         int32(first),                               // Limit based on 'first' argument
+		Offset:        int32(offset),                              // Offset based on 'after' cursor
+		SlugFilter:    slugFilter,
+		MessageFilter: messageFilter,
+		SortField:     sortField, // Sorting field
+		SortOrder:     sortOrder,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch cron job logs for cron job %d: %v", obj.ID, err)
+	}
+
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedCronJobLogsByCronSlugCount(ctx, generated.GetPaginatedCronJobLogsByCronSlugCountParams{
+		CronJobSlug:   pgtype.Text{String: obj.Slug, Valid: true},
+		SlugFilter:    slugFilter,
+		MessageFilter: messageFilter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query cron job logs for cron job %d: %v", obj.ID, err)
+	}
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.CronJobLogEdge, len(cronJobLogs))
+	for i, cronJobLog := range cronJobLogs {
+		edges[i] = &model.CronJobLogEdge{
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
+			Node: &model.CronJobLog{
+				ID:              cronJobLog.ID,
+				CronSlug:        cronJobLog.CronSlug,
+				Status:          cronJobLog.Status,
+				Message:         cronJobLog.Message,
+				StartTime:       cronJobLog.StartTime,
+				EndTime:         cronJobLog.EndTime,
+				AffectedRecords: cronJobLog.AffectedRecords,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(cronJobLogs)), totalCount)
+
+	return &model.CronJobLogConnection{
+		TotalCount: totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // UpdateCronJob is the resolver for the UpdateCronJob field.
 func (r *mutationResolver) UpdateCronJob(ctx context.Context, input model.UpdateCronJob) (*model.CronJob, error) {
-	panic(fmt.Errorf("not implemented: UpdateCronJob - UpdateCronJob"))
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "update_cron_job"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+	// Check if the cronjob exists
+	_, err := r.DB.GetCronJob(ctx, input.Slug)
+	if err != nil {
+		return nil, fmt.Errorf("cron job not found: %w", err)
+	}
+
+	// Call the sqlc generated query to update the cron job in the database
+	cronJob, err := r.DB.UpdateCronJob(ctx, generated.UpdateCronJobParams{
+		Active: pgtype.Bool{
+			Bool:  input.Active,
+			Valid: true, // Ensure the value is considered valid
+		},
+		Name:        input.Name,
+		Slug:        input.Slug,
+		Description: input.Description,
+		Schedule:    input.Schedule,
+		UpdatedBy:   ctx.Value("userEmail").(string),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update cronjob: %w", err)
+	}
+
+	// Map the SQLC model to the GraphQL model
+	return &model.CronJob{
+		ID:          cronJob.ID,
+		Active:      cronJob.Active.Bool,
+		Name:        cronJob.Name,
+		Slug:        cronJob.Slug,
+		Description: cronJob.Description,
+		Schedule:    cronJob.Schedule,
+		LastRunAt:   cronJob.LastRunAt,
+		CreatedAt:   cronJob.CreatedAt,
+		UpdatedAt:   cronJob.UpdatedAt,
+		CreatedBy:   cronJob.CreatedBy,
+		UpdatedBy:   cronJob.UpdatedBy,
+	}, nil
 }
 
 // DeleteCronJobLog is the resolver for the deleteCronJobLog field.
 func (r *mutationResolver) DeleteCronJobLog(ctx context.Context, id int64) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteCronJobLog - deleteCronJobLog"))
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_log"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
+	// Check if the cron job log exists (optional)
+	_, err := r.DB.GetCronJobLog(ctx, id)
+	if err != nil {
+		return false, fmt.Errorf("cron job log not found: %w", err)
+	}
+
+	// Attempt to delete the cron job log
+	err = r.DB.DeleteCronJobLog(ctx, id)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete cron job log: %w", err)
+	}
+	return true, nil
 }
 
 // DeleteCronJobLogs is the resolver for the deleteCronJobLogs field.
 func (r *mutationResolver) DeleteCronJobLogs(ctx context.Context, ids []int64) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteCronJobLogs - deleteCronJobLogs"))
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "delete_log"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return false, err
+	}
+	// Validate that all IDs exist
+	existingIDs, err := r.DB.GetCronJobLogsByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch cron job logs: %w", err)
+	}
+	if len(existingIDs) != len(ids) {
+		return false, fmt.Errorf("validation failed: some cron job logs do not exist")
+	}
+
+	// Proceed to delete the audit logs
+	err = r.DB.DeleteCronJobLogsByIDs(ctx, ids)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete audit logs: %w", err)
+	}
+
+	// All files successfully deleted
+	return true, nil
 }
 
 // CronJobs is the resolver for the cronJobs field.
 func (r *queryResolver) CronJobs(ctx context.Context, first int64, after *int64, filter *model.CronJobFilter, sort *model.CronJobSort) (*model.CronJobConnection, error) {
-	panic(fmt.Errorf("not implemented: CronJobs - cronJobs"))
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_cron_job"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+
+	// Prepare sorting
+	sortField := "NAME" // Default sort field
+	sortOrder := "ASC"  // Default sort order
+	if sort != nil {
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("NAME", "ASC", string(sort.Field), string(sort.Order))
+	}
+
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
+
+	// Prepare filter values
+	var nameFilter, scheduleFilter, descriptionFilter *string
+	if filter != nil {
+		nameFilter = filter.Name
+		descriptionFilter = filter.Description
+		scheduleFilter = filter.Schedule
+	}
+
+	cronJobs, err := r.DB.GetPaginatedCronJobs(ctx, generated.GetPaginatedCronJobsParams{
+		Limit:             int32(first),  // Limit based on 'first' argument
+		Offset:            int32(offset), // Offset based on 'after' cursor
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter, // Description filter (optional)
+		ScheduleFilter:    scheduleFilter,    // Schedule filter (optional)
+		SortField:         sortField,         // Sorting field
+		SortOrder:         sortOrder,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch cron jobs: %v", err)
+	}
+
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedCronJobsCount(ctx, generated.GetPaginatedCronJobsCountParams{
+		NameFilter:        nameFilter,
+		DescriptionFilter: descriptionFilter, // Description filter (optional)
+		ScheduleFilter:    scheduleFilter,    // Schedule filter (optional)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query cron jobs: %v", err)
+	}
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.CronJobEdge, len(cronJobs))
+	for i, cronJob := range cronJobs {
+		edges[i] = &model.CronJobEdge{
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
+			Node: &model.CronJob{
+				ID:          cronJob.ID,
+				Name:        cronJob.Name,
+				Active:      cronJob.Active.Bool,
+				Slug:        cronJob.Slug,
+				Description: cronJob.Description,
+				Schedule:    cronJob.Schedule,
+				LastRunAt:   cronJob.LastRunAt,
+				CreatedAt:   cronJob.CreatedAt,
+				UpdatedAt:   cronJob.UpdatedAt,
+				CreatedBy:   cronJob.CreatedBy,
+				UpdatedBy:   cronJob.UpdatedBy,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(cronJobs)), totalCount)
+
+	return &model.CronJobConnection{
+		TotalCount: totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // CronJobLogs is the resolver for the cronJobLogs field.
 func (r *queryResolver) CronJobLogs(ctx context.Context, first int64, after *int64, filter *model.CronJobLogFilter, sort *model.CronJobLogSort) (*model.CronJobLogConnection, error) {
-	panic(fmt.Errorf("not implemented: CronJobLogs - cronJobLogs"))
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_cron_job"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+
+	// Prepare sorting
+	sortField := "SLUG" // Default sort field
+	sortOrder := "ASC"  // Default sort order
+	if sort != nil {
+		// Prepare sorting using the utility
+		sortField, sortOrder = utils.PrepareSorting("SLUG", "ASC", string(sort.Field), string(sort.Order))
+	}
+
+	// Calculate pagination and sorting
+	offset, first := utils.PreparePaginationParams(after, first)
+
+	// Prepare filter values
+	var slugFilter, messageFilter *string
+	if filter != nil {
+		slugFilter = filter.Slug
+		messageFilter = filter.Message
+	}
+
+	cronJobLogs, err := r.DB.GetPaginatedCronJobLogs(ctx, generated.GetPaginatedCronJobLogsParams{
+		Limit:         int32(first),  // Limit based on 'first' argument
+		Offset:        int32(offset), // Offset based on 'after' cursor
+		SlugFilter:    slugFilter,
+		MessageFilter: messageFilter, // Message filter (optional)
+		SortField:     sortField,     // Sorting field
+		SortOrder:     sortOrder,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch cron job logs: %v", err)
+	}
+
+	// Fetch filtered count using sqlc
+	totalCount, err := r.DB.GetPaginatedCronJobLogsCount(ctx, generated.GetPaginatedCronJobLogsCountParams{
+		SlugFilter:    slugFilter,
+		MessageFilter: messageFilter, // Message filter (optional)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query cron job logs: %v", err)
+	}
+	// Prepare edges and PageInfo for the connection
+	edges := make([]*model.CronJobLogEdge, len(cronJobLogs))
+	for i, cronJobLog := range cronJobLogs {
+		edges[i] = &model.CronJobLogEdge{
+			Cursor: utils.GenerateCursor(offset, int64(i)), // Create cursor from index
+			Node: &model.CronJobLog{
+				ID:              cronJobLog.ID,
+				CronSlug:        cronJobLog.CronSlug,
+				Message:         cronJobLog.Message,
+				Status:          cronJobLog.Status,
+				StartTime:       cronJobLog.StartTime,
+				EndTime:         cronJobLog.EndTime,
+				AffectedRecords: cronJobLog.AffectedRecords,
+			},
+		}
+	}
+
+	// Calculate hasNextPage
+	hasNextPage := utils.CalculateHasNextPage(offset, int64(len(cronJobLogs)), totalCount)
+
+	return &model.CronJobLogConnection{
+		TotalCount: totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNextPage,
+			HasPreviousPage: offset > 0,
+		},
+	}, nil
 }
 
 // GetCronJob is the resolver for the getCronJob field.
 func (r *queryResolver) GetCronJob(ctx context.Context, slug string) (*model.CronJob, error) {
-	panic(fmt.Errorf("not implemented: GetCronJob - getCronJob"))
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_log"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+	// Call the generated GetCronJobLog query
+	cronJob, err := r.DB.GetCronJob(ctx, slug) // assuming input.ID is of type string
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cron job log: %w", err)
+	}
+
+	// Convert the SQL result to GraphQL model
+	return &model.CronJob{
+		ID:          cronJob.ID,
+		Active:      cronJob.Active.Bool,
+		Name:        cronJob.Name,
+		Slug:        cronJob.Slug,
+		Description: cronJob.Description,
+		Schedule:    cronJob.Schedule,
+		LastRunAt:   cronJob.LastRunAt,
+		CreatedAt:   cronJob.CreatedAt,
+		UpdatedAt:   cronJob.UpdatedAt,
+		CreatedBy:   cronJob.CreatedBy,
+		UpdatedBy:   cronJob.UpdatedBy,
+	}, nil
 }
 
 // GetCronJobLog is the resolver for the getCronJobLog field.
 func (r *queryResolver) GetCronJobLog(ctx context.Context, id int64) (*model.CronJobLog, error) {
-	panic(fmt.Errorf("not implemented: GetCronJobLog - getCronJobLog"))
+	// Define the required permissions for this action
+	requiredPermissions := []string{"all", "read_log"}
+
+	// Check if the user has the required permissions
+	if err := middleware.CheckUserPermissions(ctx, requiredPermissions, r.DB); err != nil {
+		return nil, err
+	}
+	// Call the generated GetCronJobLog query
+	cronJobLog, err := r.DB.GetCronJobLog(ctx, id) // assuming input.ID is of type string
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cron job log: %w", err)
+	}
+
+	// Convert the SQL result to GraphQL model
+	return &model.CronJobLog{
+		ID:              cronJobLog.ID,
+		CronSlug:        cronJobLog.CronSlug,
+		Status:          cronJobLog.Status,
+		Message:         cronJobLog.Message,
+		StartTime:       cronJobLog.StartTime,
+		EndTime:         cronJobLog.EndTime,
+		AffectedRecords: cronJobLog.AffectedRecords,
+	}, nil
 }
 
 // CronJob returns graph.CronJobResolver implementation.

@@ -402,6 +402,7 @@ type SendEmailInput struct {
 }
 
 type UpdateCronJob struct {
+	Active      bool   `json:"active"`
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`

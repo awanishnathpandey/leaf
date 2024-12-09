@@ -30,6 +30,7 @@ type CronJobLog {
 
 
 input UpdateCronJob {
+  active: Boolean!
   name: String!
   slug: String!
   description: String!

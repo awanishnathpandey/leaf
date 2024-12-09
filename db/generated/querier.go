@@ -26,6 +26,8 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeleteAuditLog(ctx context.Context, id int64) error
 	DeleteAuditLogsByIDs(ctx context.Context, dollar_1 []int64) error
+	DeleteCronJobLog(ctx context.Context, id int64) error
+	DeleteCronJobLogsByIDs(ctx context.Context, dollar_1 []int64) error
 	DeleteFile(ctx context.Context, id int64) error
 	DeleteFilesByIDs(ctx context.Context, dollar_1 []int64) error
 	DeleteFolder(ctx context.Context, id int64) error
@@ -42,6 +44,9 @@ type Querier interface {
 	GetAppConfigByKey(ctx context.Context, configKey string) (AppConfig, error)
 	GetAuditLog(ctx context.Context, id int64) (AuditLog, error)
 	GetAuditLogsByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error)
+	GetCronJob(ctx context.Context, slug string) (CronJob, error)
+	GetCronJobLog(ctx context.Context, id int64) (CronJobLog, error)
+	GetCronJobLogsByIDs(ctx context.Context, dollar_1 []int64) ([]int64, error)
 	GetDashboardKPICount(ctx context.Context) (GetDashboardKPICountRow, error)
 	GetEmailTemplateByName(ctx context.Context, name string) (EmailTemplate, error)
 	GetFile(ctx context.Context, id int64) (File, error)
@@ -71,6 +76,12 @@ type Querier interface {
 	GetPaginatedAuditLogsByUserEmail(ctx context.Context, arg GetPaginatedAuditLogsByUserEmailParams) ([]GetPaginatedAuditLogsByUserEmailRow, error)
 	GetPaginatedAuditLogsByUserEmailCount(ctx context.Context, arg GetPaginatedAuditLogsByUserEmailCountParams) (int64, error)
 	GetPaginatedAuditLogsCount(ctx context.Context, arg GetPaginatedAuditLogsCountParams) (int64, error)
+	GetPaginatedCronJobLogs(ctx context.Context, arg GetPaginatedCronJobLogsParams) ([]CronJobLog, error)
+	GetPaginatedCronJobLogsByCronSlug(ctx context.Context, arg GetPaginatedCronJobLogsByCronSlugParams) ([]GetPaginatedCronJobLogsByCronSlugRow, error)
+	GetPaginatedCronJobLogsByCronSlugCount(ctx context.Context, arg GetPaginatedCronJobLogsByCronSlugCountParams) (int64, error)
+	GetPaginatedCronJobLogsCount(ctx context.Context, arg GetPaginatedCronJobLogsCountParams) (int64, error)
+	GetPaginatedCronJobs(ctx context.Context, arg GetPaginatedCronJobsParams) ([]CronJob, error)
+	GetPaginatedCronJobsCount(ctx context.Context, arg GetPaginatedCronJobsCountParams) (int64, error)
 	GetPaginatedFilesByFolderID(ctx context.Context, arg GetPaginatedFilesByFolderIDParams) ([]File, error)
 	GetPaginatedFilesByFolderIDCount(ctx context.Context, arg GetPaginatedFilesByFolderIDCountParams) (int64, error)
 	GetPaginatedFilesByGroupID(ctx context.Context, arg GetPaginatedFilesByGroupIDParams) ([]GetPaginatedFilesByGroupIDRow, error)
@@ -134,6 +145,7 @@ type Querier interface {
 	RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUserParams) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
 	UpdateAppConfigByKey(ctx context.Context, arg UpdateAppConfigByKeyParams) error
+	UpdateCronJob(ctx context.Context, arg UpdateCronJobParams) (CronJob, error)
 	UpdateCronJobLogFailed(ctx context.Context, arg UpdateCronJobLogFailedParams) error
 	UpdateCronJobLogSuccess(ctx context.Context, arg UpdateCronJobLogSuccessParams) error
 	UpdateFile(ctx context.Context, arg UpdateFileParams) (File, error)
