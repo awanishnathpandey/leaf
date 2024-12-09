@@ -212,7 +212,7 @@ type ComplexityRoot struct {
 		ResetPassword             func(childComplexity int, input model.ResetPassword) int
 		SendEmail                 func(childComplexity int, input model.SendEmailInput) int
 		SingleUpload              func(childComplexity int, file graphql.Upload, folderID int64) int
-		UpdateAppConfig           func(childComplexity int, configKey string, configData map[string]interface{}) int
+		UpdateAppConfig           func(childComplexity int, configKey string, configData any) int
 		UpdateFile                func(childComplexity int, input model.UpdateFile) int
 		UpdateFolder              func(childComplexity int, input model.UpdateFolder) int
 		UpdateGroup               func(childComplexity int, input model.UpdateGroup) int
@@ -369,7 +369,7 @@ type GroupResolver interface {
 	Files(ctx context.Context, obj *model.Group, first int64, after *int64, filter *model.FileFilter, sort *model.FileSort) (*model.FileConnection, error)
 }
 type MutationResolver interface {
-	UpdateAppConfig(ctx context.Context, configKey string, configData map[string]interface{}) (*model.AppConfig, error)
+	UpdateAppConfig(ctx context.Context, configKey string, configData any) (*model.AppConfig, error)
 	Register(ctx context.Context, input model.Register) (*model.User, error)
 	Login(ctx context.Context, input model.Login) (*model.LoginResponse, error)
 	ForgotPassword(ctx context.Context, input model.ForgotPassword) (bool, error)
@@ -1505,7 +1505,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateAppConfig(childComplexity, args["configKey"].(string), args["configData"].(map[string]interface{})), true
+		return e.complexity.Mutation.UpdateAppConfig(childComplexity, args["configKey"].(string), args["configData"].(any)), true
 
 	case "Mutation.updateFile":
 		if e.complexity.Mutation.UpdateFile == nil {
@@ -4081,13 +4081,13 @@ func (ec *executionContext) field_Mutation_updateAppConfig_argsConfigKey(
 func (ec *executionContext) field_Mutation_updateAppConfig_argsConfigData(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (map[string]interface{}, error) {
+) (any, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("configData"))
 	if tmp, ok := rawArgs["configData"]; ok {
-		return ec.unmarshalNMap2map(ctx, tmp)
+		return ec.unmarshalNAny2interface(ctx, tmp)
 	}
 
-	var zeroVal map[string]interface{}
+	var zeroVal any
 	return zeroVal, nil
 }
 
@@ -5474,9 +5474,9 @@ func (ec *executionContext) _AppConfig_configData(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(map[string]interface{})
+	res := resTmp.(any)
 	fc.Result = res
-	return ec.marshalNMap2map(ctx, field.Selections, res)
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AppConfig_configData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5486,7 +5486,7 @@ func (ec *executionContext) fieldContext_AppConfig_configData(_ context.Context,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
+			return nil, errors.New("field of type Any does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9111,7 +9111,13 @@ func (ec *executionContext) _Mutation_updateAppConfig(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateAppConfig(rctx, fc.Args["configKey"].(string), fc.Args["configData"].(map[string]interface{}))
+		return ec.resolvers.Mutation().UpdateAppConfig(rctx, fc.Args["configKey"].(string),
+			func() interface{} {
+				if fc.Args["configData"] == nil {
+					return nil
+				}
+				return fc.Args["configData"].(interface{})
+			}())
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -23123,6 +23129,27 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNAny2interface(ctx context.Context, v interface{}) (any, error) {
+	res, err := graphql.UnmarshalAny(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalAny(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNAppConfig2githubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐAppConfig(ctx context.Context, sel ast.SelectionSet, v model.AppConfig) graphql.Marshaler {
 	return ec._AppConfig(ctx, sel, &v)
 }
@@ -23614,27 +23641,6 @@ func (ec *executionContext) marshalNLoginResponse2ᚖgithubᚗcomᚋawanishnathp
 		return graphql.Null
 	}
 	return ec._LoginResponse(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
-	res, err := graphql.UnmarshalMap(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	res := graphql.MarshalMap(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
 }
 
 func (ec *executionContext) marshalNMyFile2ᚕᚖgithubᚗcomᚋawanishnathpandeyᚋleafᚋgraphᚋmodelᚐMyFileᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MyFile) graphql.Marshaler {

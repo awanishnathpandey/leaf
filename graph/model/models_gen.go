@@ -9,13 +9,13 @@ import (
 )
 
 type AppConfig struct {
-	ID         int64                  `json:"id"`
-	ConfigKey  string                 `json:"configKey"`
-	ConfigData map[string]interface{} `json:"configData"`
-	CreatedAt  int64                  `json:"createdAt"`
-	UpdatedAt  int64                  `json:"updatedAt"`
-	CreatedBy  string                 `json:"createdBy"`
-	UpdatedBy  string                 `json:"updatedBy"`
+	ID         int64  `json:"id"`
+	ConfigKey  string `json:"configKey"`
+	ConfigData any    `json:"configData"`
+	CreatedAt  int64  `json:"createdAt"`
+	UpdatedAt  int64  `json:"updatedAt"`
+	CreatedBy  string `json:"createdBy"`
+	UpdatedBy  string `json:"updatedBy"`
 }
 
 type AuthUser struct {

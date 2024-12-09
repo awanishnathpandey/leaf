@@ -125,7 +125,7 @@ type Querier interface {
 	RemovePermissionFromRole(ctx context.Context, arg RemovePermissionFromRoleParams) error
 	RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUserParams) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
-	UpdateAppConfigByKey(ctx context.Context, arg UpdateAppConfigByKeyParams) (AppConfig, error)
+	UpdateAppConfigByKey(ctx context.Context, arg UpdateAppConfigByKeyParams) error
 	UpdateCronJobLogFailed(ctx context.Context, arg UpdateCronJobLogFailedParams) error
 	UpdateCronJobLogSuccess(ctx context.Context, arg UpdateCronJobLogSuccessParams) error
 	UpdateFile(ctx context.Context, arg UpdateFileParams) (File, error)

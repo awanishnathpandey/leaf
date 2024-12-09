@@ -30,11 +30,10 @@ func (q *Queries) GetAppConfigByKey(ctx context.Context, configKey string) (AppC
 	return i, err
 }
 
-const UpdateAppConfigByKey = `-- name: UpdateAppConfigByKey :one
+const UpdateAppConfigByKey = `-- name: UpdateAppConfigByKey :exec
 UPDATE app_config
 SET config_data = $2, updated_at = EXTRACT(EPOCH FROM NOW()), updated_by = $3
 WHERE config_key = $1
-RETURNING id, config_key, config_data, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateAppConfigByKeyParams struct {
@@ -43,17 +42,7 @@ type UpdateAppConfigByKeyParams struct {
 	UpdatedBy  string `db:"updated_by" json:"updated_by"`
 }
 
-func (q *Queries) UpdateAppConfigByKey(ctx context.Context, arg UpdateAppConfigByKeyParams) (AppConfig, error) {
-	row := q.db.QueryRow(ctx, UpdateAppConfigByKey, arg.ConfigKey, arg.ConfigData, arg.UpdatedBy)
-	var i AppConfig
-	err := row.Scan(
-		&i.ID,
-		&i.ConfigKey,
-		&i.ConfigData,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.CreatedBy,
-		&i.UpdatedBy,
-	)
-	return i, err
+func (q *Queries) UpdateAppConfigByKey(ctx context.Context, arg UpdateAppConfigByKeyParams) error {
+	_, err := q.db.Exec(ctx, UpdateAppConfigByKey, arg.ConfigKey, arg.ConfigData, arg.UpdatedBy)
+	return err
 }

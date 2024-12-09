@@ -15,17 +15,15 @@ import (
 )
 
 // UpdateAppConfig is the resolver for the updateAppConfig field.
-func (r *mutationResolver) UpdateAppConfig(ctx context.Context, configKey string, configData map[string]interface{}) (*model.AppConfig, error) {
-	// Convert the configData map into JSON
+func (r *mutationResolver) UpdateAppConfig(ctx context.Context, configKey string, configData any) (*model.AppConfig, error) {
+	// Convert the configData to JSON string
 	configDataBytes, err := json.Marshal(configData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal configData: %w", err)
 	}
 
 	// Update the configuration in the database using sqlc
-	// updatedConfig, err := r.DB.UpdateAppConfigByKey(ctx, generated.UpdateAppConfigByKeyParams{})(ctx, configKey, configDataBytes)
-	// Call the sqlc generated query to update the folder in the database
-	updatedConfig, err := r.DB.UpdateAppConfigByKey(ctx, generated.UpdateAppConfigByKeyParams{
+	err = r.DB.UpdateAppConfigByKey(ctx, generated.UpdateAppConfigByKeyParams{
 		ConfigKey:  configKey,
 		ConfigData: configDataBytes,
 		UpdatedBy:  ctx.Value("userEmail").(string),
@@ -34,43 +32,27 @@ func (r *mutationResolver) UpdateAppConfig(ctx context.Context, configKey string
 		return nil, fmt.Errorf("failed to update configuration for key %s: %w", configKey, err)
 	}
 
-	// Dynamically unmarshal the updated configData to handle both map and array cases
-	var configDataInterface interface{}
-	if err := json.Unmarshal(updatedConfig.ConfigData, &configDataInterface); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal configData for key %s: %w", configKey, err)
+	// Fetch the updated configuration
+	config, err := r.DB.GetAppConfigByKey(ctx, configKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated configuration for key %s: %w", configKey, err)
 	}
 
-	// Check the dynamic type of configData
-	switch v := configDataInterface.(type) {
-	case map[string]interface{}:
-		// If it's a map, use it directly
-		return &model.AppConfig{
-			ID:         updatedConfig.ID,
-			ConfigKey:  updatedConfig.ConfigKey,
-			ConfigData: v, // Directly assign map
-			CreatedAt:  updatedConfig.CreatedAt,
-			UpdatedAt:  updatedConfig.UpdatedAt,
-			CreatedBy:  updatedConfig.CreatedBy,
-			UpdatedBy:  updatedConfig.UpdatedBy,
-		}, nil
-	case []interface{}:
-		// If it's an array, you can either leave it as-is or convert to a map as needed
-		convertedMap := make(map[string]interface{})
-		for i, item := range v {
-			convertedMap[fmt.Sprintf("item_%d", i)] = item
-		}
-		return &model.AppConfig{
-			ID:         updatedConfig.ID,
-			ConfigKey:  updatedConfig.ConfigKey,
-			ConfigData: convertedMap, // Convert array to map with item indices as keys
-			CreatedAt:  updatedConfig.CreatedAt,
-			UpdatedAt:  updatedConfig.UpdatedAt,
-			CreatedBy:  updatedConfig.CreatedBy,
-			UpdatedBy:  updatedConfig.UpdatedBy,
-		}, nil
-	default:
-		return nil, fmt.Errorf("unsupported configData type for key %s: %T", configKey, configDataInterface)
+	// Unmarshal the updated configData to handle both map and array cases
+	var updatedConfigData interface{}
+	if err := json.Unmarshal([]byte(config.ConfigData), &updatedConfigData); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal updated configData: %w", err)
 	}
+
+	return &model.AppConfig{
+		ID:         config.ID,
+		ConfigKey:  config.ConfigKey,
+		ConfigData: updatedConfigData, // Allow it to handle both map and array
+		CreatedAt:  config.CreatedAt,
+		UpdatedAt:  config.UpdatedAt,
+		CreatedBy:  config.CreatedBy,
+		UpdatedBy:  config.UpdatedBy,
+	}, nil
 }
 
 // GetAppConfig is the resolver for the getAppConfig field.
@@ -87,38 +69,16 @@ func (r *queryResolver) GetAppConfig(ctx context.Context, configKey string) (*mo
 		return nil, fmt.Errorf("failed to unmarshal configData: %w", err)
 	}
 
-	// Check the dynamic type of configData
-	switch v := configData.(type) {
-	case map[string]interface{}:
-		// If it's a map, use it directly
-		return &model.AppConfig{
-			ID:         config.ID,
-			ConfigKey:  config.ConfigKey,
-			ConfigData: v, // Directly assign map
-			CreatedAt:  config.CreatedAt,
-			UpdatedAt:  config.UpdatedAt,
-			CreatedBy:  config.CreatedBy,
-			UpdatedBy:  config.UpdatedBy,
-		}, nil
-	case []interface{}:
-		// If it's an array, you can either leave it as-is or convert to a map as needed
-		// For example, we convert the array into a simple map with numeric keys
-		convertedMap := make(map[string]interface{})
-		for i, item := range v {
-			convertedMap[fmt.Sprintf("item_%d", i)] = item
-		}
-		return &model.AppConfig{
-			ID:         config.ID,
-			ConfigKey:  config.ConfigKey,
-			ConfigData: convertedMap, // Convert array to map with item indices as keys
-			CreatedAt:  config.CreatedAt,
-			UpdatedAt:  config.UpdatedAt,
-			CreatedBy:  config.CreatedBy,
-			UpdatedBy:  config.UpdatedBy,
-		}, nil
-	default:
-		return nil, fmt.Errorf("unsupported configData type for key %s: %T", configKey, configData)
-	}
+	// Return the AppConfig struct
+	return &model.AppConfig{
+		ID:         config.ID,
+		ConfigKey:  config.ConfigKey,
+		ConfigData: configData, // Directly use interface{} to support both map and array
+		CreatedAt:  config.CreatedAt,
+		UpdatedAt:  config.UpdatedAt,
+		CreatedBy:  config.CreatedBy,
+		UpdatedBy:  config.UpdatedBy,
+	}, nil
 }
 
 // Mutation returns graph.MutationResolver implementation.

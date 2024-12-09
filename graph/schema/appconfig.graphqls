@@ -1,7 +1,8 @@
+scalar Any
 type AppConfig {
     id: ID!
     configKey: String!
-    configData: Map!
+    configData: Any!
     createdAt: Int!
     updatedAt: Int!
     createdBy: String!
@@ -13,5 +14,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  updateAppConfig(configKey: String!, configData: Map!): AppConfig!
+  updateAppConfig(configKey: String!, configData: Any!): AppConfig!
 }
