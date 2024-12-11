@@ -1,0 +1,92 @@
+# union NotificationPayload = AppNotificationPayload | FileNotificationPayload
+
+type FileNotificationPayload {
+  fileId: ID!
+  folderId: ID!
+  fileName: String!
+  folderName: String!
+  eventType: String!
+}
+
+type AppNotificationPayload {
+  notificationId: ID!
+  title: String!
+  body: String!
+  description: String!
+  responseOptions: [String]
+}
+
+type NotificationTemplate {
+  id: ID!
+  title: String!
+  body: String!
+  description: String!
+  responseOptions: [String!]
+  createdAt: Int!
+  createdBy: String!
+  updatedAt: Int!
+  updatedBy: String!
+}
+
+type Notification {
+  id: ID!
+  notificationType: String!
+  recordKeyId: ID!
+  payload: Map!
+  startTimeAt: Int!
+  endTimeAt: Int!
+  isPushNotification: Boolean!
+  status: String!
+  groupIds: [ID!]
+  userIds: [ID!]
+  createdAt: Int!
+  createdBy: String!
+}
+
+type UserNotificationResponse {
+  id: ID!
+  notificationId: ID!
+  userId: ID!
+  response: String
+  createdAt: Int!
+  createdBy: String!
+}
+
+input NotificationTemplateInput {
+  title: String!
+  body: String!
+  description: String!
+  responseOptions: [String]
+}
+
+input NotificationInput {
+  notificationType: String!
+  recordKeyId: ID!
+  payload: Map!
+  startTimeAt: Int!
+  endTimeAt: Int!
+  status: String!
+  isPushNotification: Boolean!
+  groupIds: [ID!]
+  userIds: [ID!]
+}
+
+input UserNotificationResponseInput {
+  userId: ID!
+  notificationId: ID!
+  response: String!
+}
+
+extend type Query {
+    getNotification(id: ID!): Notification!
+    getNotifications: [Notification!]!
+    getNotificationTemplate(id: ID!): NotificationTemplate!
+    getNotificationTemplates: [NotificationTemplate!]!
+    getUserNotificationResponses(userId: ID!): [UserNotificationResponse!]!
+}
+
+extend type Mutation {
+    createNotification(input: NotificationInput!): Notification!
+    createNotificationTemplate(input: NotificationTemplateInput!): NotificationTemplate!
+    respondToNotification(input: UserNotificationResponseInput!): UserNotificationResponse!
+}

@@ -129,6 +129,33 @@ type GroupUser struct {
 	UpdatedBy string `db:"updated_by" json:"updated_by"`
 }
 
+type Notification struct {
+	ID                 int64   `db:"id" json:"id"`
+	NotificationType   string  `db:"notification_type" json:"notification_type"`
+	RecordKeyID        int64   `db:"record_key_id" json:"record_key_id"`
+	Payload            []byte  `db:"payload" json:"payload"`
+	StartTimeAt        int64   `db:"start_time_at" json:"start_time_at"`
+	EndTimeAt          int64   `db:"end_time_at" json:"end_time_at"`
+	IsPushNotification bool    `db:"is_push_notification" json:"is_push_notification"`
+	Status             string  `db:"status" json:"status"`
+	GroupIds           []int64 `db:"group_ids" json:"group_ids"`
+	UserIds            []int64 `db:"user_ids" json:"user_ids"`
+	CreatedAt          int64   `db:"created_at" json:"created_at"`
+	CreatedBy          string  `db:"created_by" json:"created_by"`
+}
+
+type NotificationTemplate struct {
+	ID              int64    `db:"id" json:"id"`
+	Title           string   `db:"title" json:"title"`
+	Body            string   `db:"body" json:"body"`
+	Description     string   `db:"description" json:"description"`
+	ResponseOptions []string `db:"response_options" json:"response_options"`
+	CreatedAt       int64    `db:"created_at" json:"created_at"`
+	UpdatedAt       int64    `db:"updated_at" json:"updated_at"`
+	CreatedBy       string   `db:"created_by" json:"created_by"`
+	UpdatedBy       string   `db:"updated_by" json:"updated_by"`
+}
+
 type PasswordReset struct {
 	ID         int64  `db:"id" json:"id"`
 	UserID     int64  `db:"user_id" json:"user_id"`
@@ -169,21 +196,31 @@ type RolePermission struct {
 }
 
 type User struct {
-	ID              int64       `db:"id" json:"id"`
-	FirstName       string      `db:"first_name" json:"first_name"`
-	LastName        string      `db:"last_name" json:"last_name"`
-	Email           string      `db:"email" json:"email"`
-	Password        string      `db:"password" json:"password"`
-	JobTitle        pgtype.Text `db:"job_title" json:"job_title"`
-	LineOfBusiness  pgtype.Text `db:"line_of_business" json:"line_of_business"`
-	LineManager     pgtype.Text `db:"line_manager" json:"line_manager"`
-	EmailVerifiedAt pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
-	LastSeenAt      int64       `db:"last_seen_at" json:"last_seen_at"`
-	CreatedAt       int64       `db:"created_at" json:"created_at"`
-	UpdatedAt       int64       `db:"updated_at" json:"updated_at"`
-	DeletedAt       pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
-	CreatedBy       string      `db:"created_by" json:"created_by"`
-	UpdatedBy       string      `db:"updated_by" json:"updated_by"`
+	ID                     int64       `db:"id" json:"id"`
+	FirstName              string      `db:"first_name" json:"first_name"`
+	LastName               string      `db:"last_name" json:"last_name"`
+	Email                  string      `db:"email" json:"email"`
+	Password               string      `db:"password" json:"password"`
+	JobTitle               pgtype.Text `db:"job_title" json:"job_title"`
+	LineOfBusiness         pgtype.Text `db:"line_of_business" json:"line_of_business"`
+	LineManager            pgtype.Text `db:"line_manager" json:"line_manager"`
+	EmailVerifiedAt        pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
+	LastSeenAt             int64       `db:"last_seen_at" json:"last_seen_at"`
+	LastNotificationReadAt int64       `db:"last_notification_read_at" json:"last_notification_read_at"`
+	CreatedAt              int64       `db:"created_at" json:"created_at"`
+	UpdatedAt              int64       `db:"updated_at" json:"updated_at"`
+	DeletedAt              pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
+	CreatedBy              string      `db:"created_by" json:"created_by"`
+	UpdatedBy              string      `db:"updated_by" json:"updated_by"`
+}
+
+type UserNotificationResponse struct {
+	ID             int64  `db:"id" json:"id"`
+	NotificationID int64  `db:"notification_id" json:"notification_id"`
+	UserID         int64  `db:"user_id" json:"user_id"`
+	Response       string `db:"response" json:"response"`
+	CreatedAt      int64  `db:"created_at" json:"created_at"`
+	CreatedBy      string `db:"created_by" json:"created_by"`
 }
 
 type UserRole struct {

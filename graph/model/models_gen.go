@@ -18,6 +18,14 @@ type AppConfig struct {
 	UpdatedBy  string `json:"updatedBy"`
 }
 
+type AppNotificationPayload struct {
+	NotificationID  int64     `json:"notificationId"`
+	Title           string    `json:"title"`
+	Body            string    `json:"body"`
+	Description     string    `json:"description"`
+	ResponseOptions []*string `json:"responseOptions,omitempty"`
+}
+
 type AuditLog struct {
 	ID          int64  `json:"id"`
 	TableName   string `json:"tableName"`
@@ -56,16 +64,17 @@ type AuditLogSort struct {
 }
 
 type AuthUser struct {
-	ID             int64   `json:"id"`
-	FirstName      string  `json:"firstName"`
-	LastName       string  `json:"lastName"`
-	Email          string  `json:"email"`
-	JobTitle       *string `json:"jobTitle,omitempty"`
-	LineOfBusiness *string `json:"lineOfBusiness,omitempty"`
-	LineManager    *string `json:"lineManager,omitempty"`
-	LastSeenAt     int64   `json:"lastSeenAt"`
-	CreatedAt      int64   `json:"createdAt"`
-	UpdatedAt      int64   `json:"updatedAt"`
+	ID                     int64   `json:"id"`
+	FirstName              string  `json:"firstName"`
+	LastName               string  `json:"lastName"`
+	Email                  string  `json:"email"`
+	JobTitle               *string `json:"jobTitle,omitempty"`
+	LineOfBusiness         *string `json:"lineOfBusiness,omitempty"`
+	LineManager            *string `json:"lineManager,omitempty"`
+	LastSeenAt             int64   `json:"lastSeenAt"`
+	LastNotificationReadAt int64   `json:"lastNotificationReadAt"`
+	CreatedAt              int64   `json:"createdAt"`
+	UpdatedAt              int64   `json:"updatedAt"`
 }
 
 type CreateFile struct {
@@ -213,6 +222,14 @@ type FileFilter struct {
 	Slug *string `json:"slug,omitempty"`
 }
 
+type FileNotificationPayload struct {
+	FileID     int64  `json:"fileId"`
+	FolderID   int64  `json:"folderId"`
+	FileName   string `json:"fileName"`
+	FolderName string `json:"folderName"`
+	EventType  string `json:"eventType"`
+}
+
 type FileSort struct {
 	Field FileSortField `json:"field"`
 	Order SortOrder     `json:"order"`
@@ -322,6 +339,52 @@ type MyFolder struct {
 	CreatedAt   int64     `json:"createdAt"`
 	UpdatedAt   int64     `json:"updatedAt"`
 	MyFiles     []*MyFile `json:"myFiles"`
+}
+
+type Notification struct {
+	ID                 int64                  `json:"id"`
+	NotificationType   string                 `json:"notificationType"`
+	RecordKeyID        int64                  `json:"recordKeyId"`
+	Payload            map[string]interface{} `json:"payload"`
+	StartTimeAt        int64                  `json:"startTimeAt"`
+	EndTimeAt          int64                  `json:"endTimeAt"`
+	IsPushNotification bool                   `json:"isPushNotification"`
+	Status             string                 `json:"status"`
+	GroupIds           []int64                `json:"groupIds,omitempty"`
+	UserIds            []int64                `json:"userIds,omitempty"`
+	CreatedAt          int64                  `json:"createdAt"`
+	CreatedBy          string                 `json:"createdBy"`
+}
+
+type NotificationInput struct {
+	NotificationType   string                 `json:"notificationType"`
+	RecordKeyID        int64                  `json:"recordKeyId"`
+	Payload            map[string]interface{} `json:"payload"`
+	StartTimeAt        int64                  `json:"startTimeAt"`
+	EndTimeAt          int64                  `json:"endTimeAt"`
+	Status             string                 `json:"status"`
+	IsPushNotification bool                   `json:"isPushNotification"`
+	GroupIds           []int64                `json:"groupIds,omitempty"`
+	UserIds            []int64                `json:"userIds,omitempty"`
+}
+
+type NotificationTemplate struct {
+	ID              int64    `json:"id"`
+	Title           string   `json:"title"`
+	Body            string   `json:"body"`
+	Description     string   `json:"description"`
+	ResponseOptions []string `json:"responseOptions,omitempty"`
+	CreatedAt       int64    `json:"createdAt"`
+	CreatedBy       string   `json:"createdBy"`
+	UpdatedAt       int64    `json:"updatedAt"`
+	UpdatedBy       string   `json:"updatedBy"`
+}
+
+type NotificationTemplateInput struct {
+	Title           string    `json:"title"`
+	Body            string    `json:"body"`
+	Description     string    `json:"description"`
+	ResponseOptions []*string `json:"responseOptions,omitempty"`
 }
 
 type PageInfo struct {
@@ -437,24 +500,25 @@ type UpdateUser struct {
 }
 
 type User struct {
-	ID              int64               `json:"id"`
-	FirstName       string              `json:"firstName"`
-	LastName        string              `json:"lastName"`
-	Email           string              `json:"email"`
-	Password        string              `json:"password"`
-	JobTitle        *string             `json:"jobTitle,omitempty"`
-	LineOfBusiness  *string             `json:"lineOfBusiness,omitempty"`
-	LineManager     *string             `json:"lineManager,omitempty"`
-	EmailVerifiedAt *int64              `json:"emailVerifiedAt,omitempty"`
-	LastSeenAt      int64               `json:"lastSeenAt"`
-	CreatedAt       int64               `json:"createdAt"`
-	UpdatedAt       int64               `json:"updatedAt"`
-	DeletedAt       *int64              `json:"deletedAt,omitempty"`
-	CreatedBy       string              `json:"createdBy"`
-	UpdatedBy       string              `json:"updatedBy"`
-	Groups          *GroupConnection    `json:"groups"`
-	Roles           *RoleConnection     `json:"roles"`
-	AuditLogs       *AuditLogConnection `json:"auditLogs"`
+	ID                     int64               `json:"id"`
+	FirstName              string              `json:"firstName"`
+	LastName               string              `json:"lastName"`
+	Email                  string              `json:"email"`
+	Password               string              `json:"password"`
+	JobTitle               *string             `json:"jobTitle,omitempty"`
+	LineOfBusiness         *string             `json:"lineOfBusiness,omitempty"`
+	LineManager            *string             `json:"lineManager,omitempty"`
+	EmailVerifiedAt        *int64              `json:"emailVerifiedAt,omitempty"`
+	LastSeenAt             int64               `json:"lastSeenAt"`
+	LastNotificationReadAt int64               `json:"lastNotificationReadAt"`
+	CreatedAt              int64               `json:"createdAt"`
+	UpdatedAt              int64               `json:"updatedAt"`
+	DeletedAt              *int64              `json:"deletedAt,omitempty"`
+	CreatedBy              string              `json:"createdBy"`
+	UpdatedBy              string              `json:"updatedBy"`
+	Groups                 *GroupConnection    `json:"groups"`
+	Roles                  *RoleConnection     `json:"roles"`
+	AuditLogs              *AuditLogConnection `json:"auditLogs"`
 }
 
 type UserConnection struct {
@@ -471,6 +535,21 @@ type UserEdge struct {
 type UserFilter struct {
 	Name  *string `json:"name,omitempty"`
 	Email *string `json:"email,omitempty"`
+}
+
+type UserNotificationResponse struct {
+	ID             int64   `json:"id"`
+	NotificationID int64   `json:"notificationId"`
+	UserID         int64   `json:"userId"`
+	Response       *string `json:"response,omitempty"`
+	CreatedAt      int64   `json:"createdAt"`
+	CreatedBy      string  `json:"createdBy"`
+}
+
+type UserNotificationResponseInput struct {
+	UserID         int64  `json:"userId"`
+	NotificationID int64  `json:"notificationId"`
+	Response       string `json:"response"`
 }
 
 type UserSort struct {

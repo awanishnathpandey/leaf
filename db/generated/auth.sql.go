@@ -15,7 +15,7 @@ INSERT INTO users (
 ) VALUES (
   $1, $2, $3, $4
 )
-RETURNING id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by
+RETURNING id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, last_notification_read_at, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type RegisterUserParams struct {
@@ -44,6 +44,7 @@ func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (Use
 		&i.LineManager,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
+		&i.LastNotificationReadAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

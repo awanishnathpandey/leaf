@@ -196,7 +196,7 @@ func (q *Queries) GetPaginatedAuditLogs(ctx context.Context, arg GetPaginatedAud
 }
 
 const GetPaginatedAuditLogsByUserEmail = `-- name: GetPaginatedAuditLogsByUserEmail :many
-SELECT al.id, table_name, actor, action, ip_address, record_key, description, timestamp, u.id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM audit_logs al
+SELECT al.id, table_name, actor, action, ip_address, record_key, description, timestamp, u.id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, last_notification_read_at, created_at, updated_at, deleted_at, created_by, updated_by FROM audit_logs al
 JOIN users u ON al.actor = u.email
 WHERE 
     u.email = $3  -- Filter by user_id
@@ -248,29 +248,30 @@ type GetPaginatedAuditLogsByUserEmailParams struct {
 }
 
 type GetPaginatedAuditLogsByUserEmailRow struct {
-	ID              int64       `db:"id" json:"id"`
-	TableName       string      `db:"table_name" json:"table_name"`
-	Actor           string      `db:"actor" json:"actor"`
-	Action          string      `db:"action" json:"action"`
-	IpAddress       string      `db:"ip_address" json:"ip_address"`
-	RecordKey       string      `db:"record_key" json:"record_key"`
-	Description     string      `db:"description" json:"description"`
-	Timestamp       int64       `db:"timestamp" json:"timestamp"`
-	ID_2            int64       `db:"id_2" json:"id_2"`
-	FirstName       string      `db:"first_name" json:"first_name"`
-	LastName        string      `db:"last_name" json:"last_name"`
-	Email           string      `db:"email" json:"email"`
-	Password        string      `db:"password" json:"password"`
-	JobTitle        pgtype.Text `db:"job_title" json:"job_title"`
-	LineOfBusiness  pgtype.Text `db:"line_of_business" json:"line_of_business"`
-	LineManager     pgtype.Text `db:"line_manager" json:"line_manager"`
-	EmailVerifiedAt pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
-	LastSeenAt      int64       `db:"last_seen_at" json:"last_seen_at"`
-	CreatedAt       int64       `db:"created_at" json:"created_at"`
-	UpdatedAt       int64       `db:"updated_at" json:"updated_at"`
-	DeletedAt       pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
-	CreatedBy       string      `db:"created_by" json:"created_by"`
-	UpdatedBy       string      `db:"updated_by" json:"updated_by"`
+	ID                     int64       `db:"id" json:"id"`
+	TableName              string      `db:"table_name" json:"table_name"`
+	Actor                  string      `db:"actor" json:"actor"`
+	Action                 string      `db:"action" json:"action"`
+	IpAddress              string      `db:"ip_address" json:"ip_address"`
+	RecordKey              string      `db:"record_key" json:"record_key"`
+	Description            string      `db:"description" json:"description"`
+	Timestamp              int64       `db:"timestamp" json:"timestamp"`
+	ID_2                   int64       `db:"id_2" json:"id_2"`
+	FirstName              string      `db:"first_name" json:"first_name"`
+	LastName               string      `db:"last_name" json:"last_name"`
+	Email                  string      `db:"email" json:"email"`
+	Password               string      `db:"password" json:"password"`
+	JobTitle               pgtype.Text `db:"job_title" json:"job_title"`
+	LineOfBusiness         pgtype.Text `db:"line_of_business" json:"line_of_business"`
+	LineManager            pgtype.Text `db:"line_manager" json:"line_manager"`
+	EmailVerifiedAt        pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
+	LastSeenAt             int64       `db:"last_seen_at" json:"last_seen_at"`
+	LastNotificationReadAt int64       `db:"last_notification_read_at" json:"last_notification_read_at"`
+	CreatedAt              int64       `db:"created_at" json:"created_at"`
+	UpdatedAt              int64       `db:"updated_at" json:"updated_at"`
+	DeletedAt              pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
+	CreatedBy              string      `db:"created_by" json:"created_by"`
+	UpdatedBy              string      `db:"updated_by" json:"updated_by"`
 }
 
 func (q *Queries) GetPaginatedAuditLogsByUserEmail(ctx context.Context, arg GetPaginatedAuditLogsByUserEmailParams) ([]GetPaginatedAuditLogsByUserEmailRow, error) {
@@ -313,6 +314,7 @@ func (q *Queries) GetPaginatedAuditLogsByUserEmail(ctx context.Context, arg GetP
 			&i.LineManager,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
+			&i.LastNotificationReadAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,

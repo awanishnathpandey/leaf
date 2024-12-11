@@ -13,6 +13,7 @@ type User {
   lineManager: String
   emailVerifiedAt: Int
   lastSeenAt: Int!
+  lastNotificationReadAt: Int!
   createdAt: Int!
   updatedAt: Int!
   deletedAt: Int

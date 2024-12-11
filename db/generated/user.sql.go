@@ -94,7 +94,7 @@ func (q *Queries) DeleteUsersByIDs(ctx context.Context, dollar_1 []int64) error 
 }
 
 const GetUser = `-- name: GetUser :one
-SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
+SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, last_notification_read_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -112,6 +112,7 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.LineManager,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
+		&i.LastNotificationReadAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -122,7 +123,7 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 }
 
 const GetUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
+SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, last_notification_read_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -140,6 +141,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.LineManager,
 		&i.EmailVerifiedAt,
 		&i.LastSeenAt,
+		&i.LastNotificationReadAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -186,7 +188,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []int64) ([]int64,
 }
 
 const ListUsers = `-- name: ListUsers :many
-SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
+SELECT id, first_name, last_name, email, password, job_title, line_of_business, line_manager, email_verified_at, last_seen_at, last_notification_read_at, created_at, updated_at, deleted_at, created_by, updated_by FROM users
 ORDER BY email
 `
 
@@ -210,6 +212,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.LineManager,
 			&i.EmailVerifiedAt,
 			&i.LastSeenAt,
+			&i.LastNotificationReadAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -269,7 +272,25 @@ type PaginatedUsersParams struct {
 	SortOrder   interface{} `db:"sort_order" json:"sort_order"`
 }
 
-func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) ([]User, error) {
+type PaginatedUsersRow struct {
+	ID              int64       `db:"id" json:"id"`
+	FirstName       string      `db:"first_name" json:"first_name"`
+	LastName        string      `db:"last_name" json:"last_name"`
+	Email           string      `db:"email" json:"email"`
+	Password        string      `db:"password" json:"password"`
+	JobTitle        pgtype.Text `db:"job_title" json:"job_title"`
+	LineOfBusiness  pgtype.Text `db:"line_of_business" json:"line_of_business"`
+	LineManager     pgtype.Text `db:"line_manager" json:"line_manager"`
+	EmailVerifiedAt pgtype.Int8 `db:"email_verified_at" json:"email_verified_at"`
+	LastSeenAt      int64       `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt       int64       `db:"created_at" json:"created_at"`
+	UpdatedAt       int64       `db:"updated_at" json:"updated_at"`
+	DeletedAt       pgtype.Int8 `db:"deleted_at" json:"deleted_at"`
+	CreatedBy       string      `db:"created_by" json:"created_by"`
+	UpdatedBy       string      `db:"updated_by" json:"updated_by"`
+}
+
+func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) ([]PaginatedUsersRow, error) {
 	rows, err := q.db.Query(ctx, PaginatedUsers,
 		arg.Limit,
 		arg.Offset,
@@ -282,9 +303,9 @@ func (q *Queries) PaginatedUsers(ctx context.Context, arg PaginatedUsersParams) 
 		return nil, err
 	}
 	defer rows.Close()
-	items := []User{}
+	items := []PaginatedUsersRow{}
 	for rows.Next() {
-		var i User
+		var i PaginatedUsersRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FirstName,

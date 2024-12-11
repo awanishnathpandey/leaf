@@ -11,6 +11,7 @@ type AuthUser {
   lineOfBusiness: String
   lineManager: String
   lastSeenAt: Int!
+  lastNotificationReadAt: Int!
   createdAt: Int!
   updatedAt: Int!
 }
