@@ -16,7 +16,7 @@ CREATE TABLE cron_jobs (
 INSERT INTO cron_jobs (slug, name, schedule, active, description) VALUES
 ('sync_users', 'Sync Users', '0 0 * * *', false, 'Runs every day at midnight'),
 ('clean_audit_logs', 'Clean Audit Logs', '0 0 * * *', false, 'Runs every day at midnight'),
-('push_notifications', 'Push Notifications', '@every 10s', false, 'Sends notifications every 5 minutes');
+('push_notifications', 'Push Notifications', '*/5 * * * *', false, 'Sends notifications every 5 minutes'); -- can support '@every 10s'
 -- +goose StatementEnd
 
 -- +goose Down

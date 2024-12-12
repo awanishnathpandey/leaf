@@ -13,6 +13,7 @@ import (
 	"github.com/awanishnathpandey/leaf/graph/model"
 	"github.com/awanishnathpandey/leaf/internal/middleware"
 	"github.com/awanishnathpandey/leaf/internal/utils"
+	"github.com/awanishnathpandey/leaf/internal/validations"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -289,9 +290,14 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, input model.CreateGr
 		return nil, err
 	}
 	// Validate input
-	if err := input.Validate(); err != nil {
-		// Call the reusable validation error formatter
-		return nil, utils.FormatValidationErrors(err)
+	// if err := input.Validate(); err != nil {
+	// 	// Call the reusable validation error formatter
+	// 	return nil, utils.FormatValidationErrors(err)
+	// }
+
+	err := validations.ValidateCreateGroup(input.Name, input.Description)
+	if err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
 	// Call the generated CreateGroup function with the params
